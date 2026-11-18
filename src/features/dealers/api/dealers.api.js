@@ -330,6 +330,42 @@ export async function createDealerBill(payload) {
     .single();
 
   if (error) throw error;
+
+  // If initial payment(s) were provided (Fully Paid or Partially Paid / Split), record payment vouchers
+  const initialPayments = Array.isArray(payload.initial_payments)
+    ? payload.initial_payments
+    : payload.initial_payment && Number(payload.initial_payment.amount) > 0
+    ? [payload.initial_payment]
+    : [];
+
+  for (const pmt of initialPayments) {
+    if (Number(pmt.amount) > 0) {
+      try {
+        await recordDealerPayment({
+          dealer_id: payload.dealer_id,
+          bill_id: data.id,
+          store_id: payload.store_id || null,
+          payment_date: pmt.payment_date || billDate,
+          amount: Number(pmt.amount),
+          payment_mode: pmt.payment_mode || 'cash',
+          payment_channel:
+            payload.bill_type === 'kaccha'
+              ? 'secondary_cash'
+              : (pmt.payment_channel || 'official_bank'),
+          transaction_ref: pmt.transaction_ref || null,
+          cheque_date: pmt.payment_mode === 'cheque' ? pmt.cheque_date || null : null,
+          notes:
+            pmt.notes?.trim() ||
+            (pmt.cheque_bank
+              ? `Initial payment via ${pmt.payment_mode?.toUpperCase()} (${pmt.cheque_bank}) on bill ${payload.bill_number}`
+              : `Initial payment on bill ${payload.bill_number}`),
+        });
+      } catch (paymentErr) {
+        console.error('[createDealerBill] Error recording initial payment voucher:', paymentErr);
+      }
+    }
+  }
+
   return data;
 }
 
@@ -427,10 +463,10 @@ export async function listDealerPayments({ dealerId, billId, limit = 100 } = {})
  */
 export async function getDealerStatement(dealerId, { billType = 'all' } = {}) {
   const [dealerRes, billsRes, paymentsRes, debitsRes] = await Promise.all([
-    supabase.from('dealers').select('*').eq('id', dealerId).single(),
-    supabase.from('dealer_bills').select('*').eq('dealer_id', dealerId).order('bill_date', { ascending: true }),
-    supabase.from('dealer_payments').select('*, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('payment_date', { ascending: true }),
-    supabase.from('dealer_debit_notes').select('*, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('note_date', { ascending: true }),
+    supabase.from('dealers').select('id, name, brand_name, phone, gstin, billing_mode, default_credit_days, opening_balance, is_active').eq('id', dealerId).single(),
+    supabase.from('dealer_bills').select('id, dealer_id, store_id, bill_number, bill_date, credit_days, due_date, total_amount, paid_amount, balance_amount, payment_status, bill_type, taxable_amount, cgst_amount, sgst_amount, igst_amount, items, notes, created_at').eq('dealer_id', dealerId).order('bill_date', { ascending: true }),
+    supabase.from('dealer_payments').select('id, dealer_id, bill_id, payment_date, amount, payment_mode, payment_channel, transaction_ref, cheque_date, cheque_bank, notes, created_at, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('payment_date', { ascending: true }),
+    supabase.from('dealer_debit_notes').select('id, dealer_id, bill_id, note_number, note_date, amount, reason, created_at, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('note_date', { ascending: true }),
   ]);
 
   if (dealerRes.error) throw dealerRes.error;

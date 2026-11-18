@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   useDealers,
   useDealerBills,
@@ -11,17 +11,19 @@ import { DealerStatsHeader } from '../components/DealerStatsHeader';
 import { DealerDirectoryTable } from '../components/DealerDirectoryTable';
 import { BillsRegisterTable } from '../components/BillsRegisterTable';
 import { AddDealerModal } from '../components/AddDealerModal';
-import { AddBillModal } from '../components/AddBillModal';
 import { RecordPaymentModal } from '../components/RecordPaymentModal';
 import { DebitNoteModal } from '../components/DebitNoteModal';
 import { BillTimelineModal } from '../components/BillTimelineModal';
+import { DealerBillPrintModal } from '../components/DealerBillPrintModal';
 import {
   Building2,
   FileText,
+  Plus,
 } from 'lucide-react';
 
 export function DealersHubPage() {
   const { storeCode } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: stores = [] } = useStores();
 
   const currentStore = stores.find((s) => s.code === storeCode);
@@ -31,10 +33,10 @@ export function DealersHubPage() {
 
   // Modals state
   const [isAddDealerOpen, setIsAddDealerOpen] = useState(false);
-  const [isAddBillOpen, setIsAddBillOpen] = useState(false);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isDebitNoteOpen, setIsDebitNoteOpen] = useState(false);
   const [timelineBillId, setTimelineBillId] = useState(null);
+  const [printingBill, setPrintingBill] = useState(null);
 
   // Selected item contexts for modals
   const [selectedDealer, setSelectedDealer] = useState(null);
@@ -49,17 +51,32 @@ export function DealersHubPage() {
   });
   const { data: analytics, isLoading: isLoadingAnalytics } = useDealerAnalytics(storeId);
 
+  // Auto-open print preview if redirected from PurchaseBillingPage via ?print=id
+  const printParamId = searchParams.get('print');
+  useEffect(() => {
+    if (printParamId && bills.length > 0) {
+      const match = bills.find((b) => b.id === printParamId);
+      if (match) {
+        setPrintingBill(match);
+      }
+    }
+  }, [printParamId, bills]);
+
+  function handleClosePrintModal() {
+    setPrintingBill(null);
+    if (searchParams.has('print')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('print');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }
+
   const isInitialLoading =
     (isLoadingBills && bills.length === 0) ||
     (isLoadingDealers && dealers.length === 0) ||
     (isLoadingAnalytics && !analytics);
 
   const basePath = storeCode ? `/admin/${storeCode}/dealers` : '/admin/dealers';
-
-  function handleOpenAddBill(dealer = null) {
-    setSelectedDealer(dealer);
-    setIsAddBillOpen(true);
-  }
 
   function handleOpenRecordPayment(dealer = null, bill = null) {
     setSelectedDealer(dealer);
@@ -110,16 +127,28 @@ export function DealersHubPage() {
   return (
     <div className="w-full space-y-6 min-w-0 pb-12">
       {/* 1. Page Header */}
-      <div className="pb-4 border-b border-border min-w-0">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-1">
-          ACCOUNTS PAYABLE & PROCUREMENT
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text">
-          Dealer & Supplier Khata
-        </h1>
-        <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed max-w-3xl">
-          Multi-dealer central ledgers (Godrej, Samsung, Onida), partial payments, aging timeline, and strict GST vs. Kaccha separation.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border min-w-0">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-1">
+            ACCOUNTS PAYABLE & PROCUREMENT
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text">
+            Dealer & Supplier Khata
+          </h1>
+          <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed max-w-3xl">
+            Multi-dealer central ledgers (Godrej, Samsung, Onida), partial payments, aging timeline, and strict GST vs. Kaccha separation.
+          </p>
+        </div>
+
+        <div>
+          <Link
+            to={`${basePath}/billing`}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer shrink-0"
+          >
+            <Plus size={15} />
+            <span>Record Purchase Bill</span>
+          </Link>
+        </div>
       </div>
 
       {/* 2. Executive Analytics & Aging Header */}
@@ -161,7 +190,6 @@ export function DealersHubPage() {
           dealers={dealers}
           currentStore={currentStore}
           isLoading={isLoadingBills}
-          onOpenAddBill={handleOpenAddBill}
           onOpenRecordPayment={handleOpenRecordPayment}
           onOpenTimeline={handleOpenTimeline}
         />
@@ -172,7 +200,6 @@ export function DealersHubPage() {
           dealers={dealers}
           isLoading={isLoadingDealers}
           onOpenAddDealer={() => setIsAddDealerOpen(true)}
-          onOpenAddBill={handleOpenAddBill}
           onOpenRecordPayment={handleOpenRecordPayment}
           basePath={basePath}
         />
@@ -182,14 +209,6 @@ export function DealersHubPage() {
       <AddDealerModal
         isOpen={isAddDealerOpen}
         onClose={() => setIsAddDealerOpen(false)}
-        storeId={storeId}
-      />
-
-      <AddBillModal
-        isOpen={isAddBillOpen}
-        onClose={() => setIsAddBillOpen(false)}
-        dealers={dealers}
-        preselectedDealer={selectedDealer}
         storeId={storeId}
       />
 
@@ -216,6 +235,15 @@ export function DealersHubPage() {
           onClose={() => setTimelineBillId(null)}
           billId={timelineBillId}
           onOpenRecordPayment={handleOpenRecordPayment}
+        />
+      )}
+
+      {printingBill && (
+        <DealerBillPrintModal
+          isOpen={Boolean(printingBill)}
+          onClose={handleClosePrintModal}
+          bill={printingBill}
+          currentStore={currentStore}
         />
       )}
     </div>

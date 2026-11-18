@@ -1,11 +1,11 @@
 export { DealersHubPage } from './routes/DealersHubPage';
 export { DealerKhataPage } from './routes/DealerKhataPage';
+export { PurchaseBillingPage } from './routes/PurchaseBillingPage';
 export { DealerStatsHeader } from './components/DealerStatsHeader';
 export { DealerDirectoryTable } from './components/DealerDirectoryTable';
 export { BillsRegisterTable } from './components/BillsRegisterTable';
 export { DealerKhataLedger } from './components/DealerKhataLedger';
 export { AddDealerModal } from './components/AddDealerModal';
-export { AddBillModal } from './components/AddBillModal';
 export { RecordPaymentModal } from './components/RecordPaymentModal';
 export { BillTimelineModal } from './components/BillTimelineModal';
 export { DebitNoteModal } from './components/DebitNoteModal';

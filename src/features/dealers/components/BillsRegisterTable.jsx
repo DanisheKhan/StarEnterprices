@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge, LoadingState } from '@/shared/ui';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -26,7 +27,6 @@ export function BillsRegisterTable({
   dealers = [],
   currentStore,
   isLoading,
-  onOpenAddBill,
   onOpenRecordPayment,
   onOpenTimeline,
 }) {
@@ -152,7 +152,7 @@ Kindly verify your khata records and arrange the settlement.
             <select
               value={dealerFilter}
               onChange={(e) => setDealerFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage cursor-pointer max-w-[200px]"
+              className="px-2.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage cursor-pointer max-w-48"
             >
               <option value="all">All Dealers / Suppliers</option>
               {dealerOptions.map((d) => (
@@ -182,18 +182,6 @@ Kindly verify your khata records and arrange the settlement.
               <option value="partially_paid">Partially Paid</option>
               <option value="paid">Fully Settled / Paid</option>
             </select>
-
-            {/* Section Actions: Primary Add Bill */}
-            {onOpenAddBill && (
-              <button
-                type="button"
-                onClick={onOpenAddBill}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1B382B] text-white hover:bg-[#142d22] active:scale-[0.99] shadow-2xs transition-all cursor-pointer shrink-0"
-              >
-                <Plus size={13} className="stroke-[2.5]" />
-                <span>Add Bill</span>
-              </button>
-            )}
           </div>
         </div>
 
