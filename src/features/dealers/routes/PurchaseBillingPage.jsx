@@ -238,6 +238,8 @@ export function PurchaseBillingPage() {
         id: Date.now() + Math.random(),
         product_id: prod.id,
         name: prod.name,
+        sku: prod.sku,
+        category: prod.categories?.name,
         quantity: 1,
         gstRate: prod.gst_rate != null ? Number(prod.gst_rate) : 18,
         unitPrice: String(prod.cost_price || prod.selling_price || ''),
@@ -799,66 +801,69 @@ export function PurchaseBillingPage() {
                 No matching catalog products found. Type product name in the box above to add as custom item.
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {displayItems.map((p) => {
                   const stockQty = p.inventory?.[0]?.quantity_on_hand ?? 0;
                   return (
                     <div
                       key={p.id}
                       onClick={() => handleAddCatalogProduct(p)}
-                      className="p-2.5 rounded-xl border border-border bg-surface hover:border-brand-sage hover:bg-surface-subtle transition-all cursor-pointer flex items-center justify-between gap-2.5 shadow-2xs group"
+                      className="group relative p-3 rounded-xl border border-border bg-surface hover:border-brand-sage hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between shadow-2xs"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        {/* Compact Thumbnail */}
-                        <div className="w-11 h-11 rounded-lg border border-border/70 bg-surface-subtle overflow-hidden shrink-0 flex items-center justify-center">
+                      <div>
+                        {/* Compact Product Image Container */}
+                        <div className="relative w-full h-24 rounded-lg bg-surface-subtle/70 border border-border/60 overflow-hidden flex items-center justify-center p-2 mb-2.5 group-hover:border-brand-sage/40 transition-colors">
                           <ProductThumbnail
                             imageUrl={p.image_url}
                             sku={p.sku}
                             name={p.name}
                           />
+
+                          {/* Floating Stock Badge */}
+                          <span
+                            className={cn(
+                              'absolute top-1.5 right-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shadow-2xs',
+                              stockQty > 2
+                                ? 'bg-surface text-brand-sage border-brand-sage-border'
+                                : stockQty > 0
+                                ? 'bg-surface text-brand-gold-text border-brand-gold-border'
+                                : 'bg-surface text-brand-crimson border-brand-crimson-border'
+                            )}
+                          >
+                            Stock: {stockQty}
+                          </span>
                         </div>
 
-                        {/* Product Info */}
-                        <div className="min-w-0 flex-1 space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono text-muted uppercase truncate">
-                              {p.sku}
-                            </span>
-                            <span
-                              className={cn(
-                                'text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded border shrink-0',
-                                stockQty > 2
-                                  ? 'bg-brand-sage-subtle text-brand-sage border-brand-sage-border'
-                                  : stockQty > 0
-                                  ? 'bg-brand-gold-subtle text-brand-gold-text border-brand-gold-border'
-                                  : 'bg-brand-crimson-subtle text-brand-crimson border-brand-crimson-border'
-                              )}
-                            >
-                              Stock: {stockQty}
-                            </span>
+                        {/* Product Identification */}
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-mono text-muted uppercase tracking-wider truncate">
+                            {p.sku}
                           </div>
-
-                          <div className="text-xs font-bold text-text truncate group-hover:text-brand-sage transition-colors">
+                          <div
+                            className="text-xs font-semibold text-text line-clamp-1 leading-snug group-hover:text-brand-sage transition-colors"
+                            title={p.name}
+                          >
                             {p.name}
-                          </div>
-
-                          <div className="text-xs font-mono font-bold text-text flex items-center gap-1">
-                            <span>{formatCurrency(p.cost_price || p.selling_price || 0)}</span>
-                            <span className="text-[10px] text-muted font-sans font-normal">
-                              cost
-                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Quick Add Button */}
-                      <button
-                        type="button"
-                        className="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-md border border-border bg-surface text-text group-hover:bg-accent group-hover:text-accent-fg group-hover:border-accent transition-colors flex items-center gap-1 cursor-pointer"
-                      >
-                        <Plus size={12} />
-                        <span>Add</span>
-                      </button>
+                      {/* Pricing & Add Row */}
+                      <div className="pt-2 mt-2 border-t border-border/60 flex items-center justify-between">
+                        <div>
+                          <div className="font-bold font-mono text-xs sm:text-sm text-text">
+                            {formatCurrency(p.cost_price || p.selling_price || 0)}
+                          </div>
+                          <div className="text-[10px] text-muted leading-tight">
+                            cost
+                          </div>
+                        </div>
+
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-md border border-border bg-surface text-text group-hover:bg-accent group-hover:text-accent-fg group-hover:border-accent transition-colors">
+                          <Plus size={11} />
+                          <span>Add</span>
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -866,16 +871,16 @@ export function PurchaseBillingPage() {
             )}
           </div>
 
-          {/* Active Bill Intake Table */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
+          {/* Active Bill Intake Items Card - 100% Consistent with Sales Billing */}
+          <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 space-y-4 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <FileText size={15} className="text-brand-sage" />
-                <span className="text-xs font-bold uppercase tracking-wider text-text">
-                  Purchase Intake Line Items
-                </span>
-                <Badge variant="outline" className="text-[10px] font-mono">
-                  {cart.length} rows
+                <FileText size={16} className="text-brand-sage" />
+                <h2 className="text-base sm:text-lg font-bold text-text">
+                  Bill Items
+                </h2>
+                <Badge variant="default" className="text-xs font-mono">
+                  {cart.length} {cart.length === 1 ? 'line' : 'lines'}
                 </Badge>
               </div>
 
@@ -914,177 +919,201 @@ export function PurchaseBillingPage() {
                 <button
                   type="button"
                   onClick={handleAddCustomRow}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 transition-all cursor-pointer shadow-2xs"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle transition-all cursor-pointer"
                 >
-                  <Plus size={13} className="stroke-[2.5]" />
-                  <span>Add Intake Row</span>
+                  <Plus size={13} className="text-brand-sage" />
+                  <span>Add Line Item</span>
                 </button>
               </div>
             </div>
 
             {/* Table */}
-            <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-2xs">
-              <div className="bg-surface-subtle/80 px-4 py-2 border-b border-border text-[10px] uppercase font-bold text-muted grid grid-cols-12 gap-3 items-center">
-                <div className="col-span-5">Product / Item Intake</div>
-                <div className="col-span-2 text-center">Intake Qty</div>
-                <div className="col-span-2 text-center">GST Rate</div>
-                <div className="col-span-2 text-right">Cost Rate (₹)</div>
-                <div className="col-span-1 text-right">Total</div>
+            {cart.length === 0 ? (
+              <div className="py-12 text-center space-y-2 border border-dashed border-border rounded-xl">
+                <FileText size={28} className="text-muted mx-auto" />
+                <p className="text-xs font-semibold text-text">Your intake list is currently empty</p>
+                <p className="text-[11px] text-muted max-w-sm mx-auto">
+                  Click on any product catalog card above or click &ldquo;Add Line Item&rdquo; to add purchase intake items.
+                </p>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs divide-y divide-border min-w-130">
+                    <thead>
+                      <tr className="text-[10px] uppercase font-semibold text-muted bg-surface-subtle">
+                        <th className="py-2.5 px-3">Item Description</th>
+                        <th className="py-2.5 px-3 text-right">Cost Rate (₹)</th>
+                        <th className="py-2.5 px-3 text-center">Quantity</th>
+                        <th className="py-2.5 px-3 text-center">GST %</th>
+                        <th className="py-2.5 px-3 text-right">Line Total (₹)</th>
+                        <th className="py-2.5 px-2 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {cart.map((it) => {
+                        const q = Math.max(1, Number(it.quantity) || 1);
+                        const p = Math.max(0, Number(it.unitPrice) || 0);
+                        const lineTotal = q * p;
 
-              <div className="divide-y divide-border/60">
-                {cart.map((it) => {
-                  const q = Math.max(1, Number(it.quantity) || 1);
-                  const p = Math.max(0, Number(it.unitPrice) || 0);
-                  const lineTotal = q * p;
+                        return (
+                          <tr key={it.id} className="hover:bg-surface-subtle/40 transition-colors">
+                            {/* Name / Description */}
+                            <td className="py-3 px-3 min-w-48">
+                              <input
+                                type="text"
+                                required
+                                placeholder="Item name / model intake"
+                                value={it.name}
+                                onChange={(e) => handleItemChange(it.id, 'name', e.target.value)}
+                                className="w-full px-2.5 py-1.5 text-xs rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage font-medium"
+                              />
+                              {(it.sku || it.category) && (
+                                <div className="text-[10px] text-muted font-mono mt-1 flex items-center gap-1.5">
+                                  {it.sku && <span>SKU: {it.sku}</span>}
+                                  {it.sku && it.category && <span>•</span>}
+                                  {it.category && <span>{it.category}</span>}
+                                </div>
+                              )}
+                            </td>
 
-                  return (
-                    <div
-                      key={it.id}
-                      className="p-3 sm:px-4 sm:py-2.5 grid grid-cols-12 gap-3 items-center hover:bg-surface-subtle/40 transition-colors"
-                    >
-                      {/* Name */}
-                      <div className="col-span-5">
-                        <input
-                          type="text"
-                          required
-                          placeholder="Item name / model intake"
-                          value={it.name}
-                          onChange={(e) => handleItemChange(it.id, 'name', e.target.value)}
-                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage font-medium"
-                        />
-                      </div>
+                            {/* Cost Rate */}
+                            <td className="py-3 px-3 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center gap-1">
+                                <span className="text-muted text-xs font-mono">₹</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  value={it.unitPrice}
+                                  onChange={(e) => handleItemChange(it.id, 'unitPrice', e.target.value)}
+                                  className="w-24 px-2 py-1.5 text-xs text-right font-mono font-semibold rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                                />
+                              </div>
+                            </td>
 
-                      {/* Quantity with +/- controls */}
-                      <div className="col-span-2 flex items-center justify-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleItemChange(it.id, 'quantity', Math.max(1, q - 1))
-                          }
-                          className="w-6 h-6 rounded flex items-center justify-center bg-surface-subtle border border-border text-muted hover:text-text cursor-pointer"
-                        >
-                          <Minus size={11} />
-                        </button>
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          required
-                          value={it.quantity}
-                          onChange={(e) =>
-                            handleItemChange(it.id, 'quantity', e.target.value)
-                          }
-                          className="w-12 px-1 py-1 text-xs text-center font-mono font-bold rounded border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleItemChange(it.id, 'quantity', q + 1)}
-                          className="w-6 h-6 rounded flex items-center justify-center bg-surface-subtle border border-border text-muted hover:text-text cursor-pointer"
-                        >
-                          <Plus size={11} />
-                        </button>
-                      </div>
+                            {/* Quantity with +/- controls */}
+                            <td className="py-3 px-3 text-center whitespace-nowrap">
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleItemChange(it.id, 'quantity', Math.max(1, q - 1))
+                                  }
+                                  className="w-6 h-6 rounded flex items-center justify-center bg-surface-subtle border border-border text-muted hover:text-text cursor-pointer transition-colors"
+                                >
+                                  <Minus size={11} />
+                                </button>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  required
+                                  value={it.quantity}
+                                  onChange={(e) =>
+                                    handleItemChange(it.id, 'quantity', e.target.value)
+                                  }
+                                  className="w-12 px-1 py-1 text-xs text-center font-mono font-bold rounded border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleItemChange(it.id, 'quantity', q + 1)}
+                                  className="w-6 h-6 rounded flex items-center justify-center bg-surface-subtle border border-border text-muted hover:text-text cursor-pointer transition-colors"
+                                >
+                                  <Plus size={11} />
+                                </button>
+                              </div>
+                            </td>
 
-                      {/* GST */}
-                      <div className="col-span-2">
-                        {billType === 'gst' ? (
-                          <select
-                            value={it.gstRate ?? 18}
-                            onChange={(e) =>
-                              handleItemChange(it.id, 'gstRate', Number(e.target.value))
-                            }
-                            className="w-full px-2 py-1.5 text-xs text-center font-mono font-semibold rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage cursor-pointer"
-                          >
-                            <option value={18}>18% GST</option>
-                            <option value={12}>12% GST</option>
-                            <option value={5}>5% GST</option>
-                            <option value={28}>28% GST</option>
-                            <option value={0}>0% (Nil)</option>
-                          </select>
-                        ) : (
-                          <div className="w-full py-1.5 text-center text-xs text-muted font-mono bg-surface-subtle rounded-md border border-border">
-                            0% Kaccha
-                          </div>
-                        )}
-                      </div>
+                            {/* GST Rate */}
+                            <td className="py-3 px-3 text-center whitespace-nowrap">
+                              {billType === 'gst' ? (
+                                <select
+                                  value={it.gstRate ?? 18}
+                                  onChange={(e) =>
+                                    handleItemChange(it.id, 'gstRate', Number(e.target.value))
+                                  }
+                                  className="w-24 px-2 py-1.5 text-xs text-center font-mono font-semibold rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage cursor-pointer"
+                                >
+                                  <option value={18}>18% GST</option>
+                                  <option value={12}>12% GST</option>
+                                  <option value={5}>5% GST</option>
+                                  <option value={28}>28% GST</option>
+                                  <option value={0}>0% (Nil)</option>
+                                </select>
+                              ) : (
+                                <span className="font-mono text-xs text-muted px-2 py-1 bg-surface-subtle border border-border rounded">
+                                  0% Kaccha
+                                </span>
+                              )}
+                            </td>
 
-                      {/* Unit Price */}
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="Rate ₹"
-                          value={it.unitPrice}
-                          onChange={(e) =>
-                            handleItemChange(it.id, 'unitPrice', e.target.value)
-                          }
-                          className="w-full px-2 py-1.5 text-xs text-right font-mono font-medium rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                        />
-                      </div>
+                            {/* Line Total */}
+                            <td className="py-3 px-3 text-right font-mono font-bold text-base text-text whitespace-nowrap">
+                              {formatCurrency(lineTotal)}
+                            </td>
 
-                      {/* Line Total & Remove */}
-                      <div className="col-span-1 flex items-center justify-end gap-1.5">
-                        <span className="font-mono text-xs font-bold text-text truncate">
-                          {formatCurrency(lineTotal)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(it.id)}
-                          className="p-1 rounded text-muted hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer shrink-0"
-                          title="Remove item"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                            {/* Action */}
+                            <td className="py-3 px-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem(it.id)}
+                                className="p-1 rounded text-muted hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer shrink-0"
+                                title="Remove item"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
 
-              {/* Items Summary Footer */}
-              <div className="p-3 bg-surface-subtle/80 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3 text-muted">
-                  <span>
-                    Total Units: <strong className="font-mono text-text">{totalUnits}</strong>
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Taxable Base: <strong className="font-mono text-text">{formatCurrency(itemsSubtotal)}</strong>
-                  </span>
-                  {billType === 'gst' && itemsTaxTotal > 0 && (
-                    <>
+                {/* Step 1 Footer Action Bar - Consistent with POS Billing */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-border">
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted flex items-center gap-2 flex-wrap">
+                      <span>
+                        Total Units: <strong className="font-mono text-text">{totalUnits}</strong>
+                      </span>
                       <span>•</span>
                       <span>
-                        GST Tax: <strong className="font-mono text-text">{formatCurrency(itemsTaxTotal)}</strong>
+                        Taxable Base: <strong className="font-mono text-text">{formatCurrency(itemsSubtotal)}</strong>
                       </span>
-                    </>
-                  )}
-                </div>
+                      {billType === 'gst' && itemsTaxTotal > 0 && (
+                        <>
+                          <span>•</span>
+                          <span>
+                            GST Tax: <strong className="font-mono text-text">{formatCurrency(itemsTaxTotal)}</strong>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted">
+                      Estimated Total:{' '}
+                      <strong className="text-lg sm:text-xl font-extrabold text-text font-mono ml-1">
+                        {formatCurrency(grandTotal)}
+                      </strong>
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-muted font-medium">Grand Total Payable:</span>
-                  <span className="font-mono text-lg font-bold text-text">
-                    {formatCurrency(grandTotal)}
-                  </span>
+                  <Button
+                    size="lg"
+                    type="button"
+                    onClick={() => {
+                      if (validateStep1()) setCurrentStep(2);
+                    }}
+                    className="rounded-lg gap-2 text-xs font-semibold px-6 shadow-2xs cursor-pointer"
+                  >
+                    <span>Proceed to Supplier Details ({cart.length} {cart.length === 1 ? 'item' : 'items'})</span>
+                    <ArrowRight size={14} />
+                  </Button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Step 1 Footer Action */}
-          <div className="flex items-center justify-end pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={() => {
-                if (validateStep1()) setCurrentStep(2);
-              }}
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer"
-            >
-              <span>Continue to Supplier & Invoice Details</span>
-              <ArrowRight size={14} />
-            </button>
+            )}
           </div>
         </div>
       )}

@@ -42,6 +42,31 @@ const STEPS = [
   { id: 3, label: 'Payment & Settlement', icon: Banknote },
 ];
 
+function ProductThumbnail({ imageUrl, sku, name }) {
+  const [error, setError] = useState(false);
+
+  if (imageUrl && !error) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        loading="lazy"
+        className="w-full h-full object-contain p-0.5 group-hover:opacity-90 transition-opacity duration-200"
+        onError={() => setError(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center text-muted">
+      <Package size={22} />
+      <span className="text-[9px] font-mono leading-none mt-1">
+        {sku?.slice(-4) || 'ITEM'}
+      </span>
+    </div>
+  );
+}
+
 export function POSPage() {
   const { store } = useOutletContext();
   const navigate = useNavigate();
@@ -86,16 +111,27 @@ export function POSPage() {
 
   // Data Queries
   const { data: products = [] } = useProducts(store?.id);
-  const { data: productUnits = [], isLoading: unitsLoading } = useProductUnits(
+
+  // Pre-load all store serialized units upfront with 0ms persistent cache
+  // This guarantees lightning-fast, instantaneous serial number modal display
+  const { data: allStoreUnits = [], isLoading: storeUnitsLoading } = useProductUnits(
     store?.id,
-    pendingProduct?.id,
+    null,
     null,
     {
-      enabled: Boolean(store?.id && pendingProduct?.id && isUnitSelectorOpen),
+      enabled: Boolean(store?.id),
     }
   );
-  const unusedUnits = productUnits.filter((u) => u.status === 'in_stock');
-  const usedUnits = productUnits.filter((u) => u.status === 'sold');
+
+  // Instantly derive the selected product's units from the pre-loaded inventory
+  const productUnits = useMemo(() => {
+    if (!pendingProduct) return [];
+    return allStoreUnits.filter((u) => u.product_id === pendingProduct.id);
+  }, [allStoreUnits, pendingProduct]);
+
+  const unitsLoading = storeUnitsLoading && productUnits.length === 0;
+  const unusedUnits = useMemo(() => productUnits.filter((u) => u.status === 'in_stock'), [productUnits]);
+  const usedUnits = useMemo(() => productUnits.filter((u) => u.status === 'sold'), [productUnits]);
   const hasUsedSerial = cart.some((item) => item.is_used_serial);
   const { data: invoiceDetail } = useInvoiceDetail(completedInvoiceId);
   const placeSaleMutation = usePlaceSale();
@@ -157,31 +193,12 @@ export function POSPage() {
     setIsUnitSelectorOpen(true);
   }
 
-  // Handle barcode scanner Enter key
-  function handleSearchKeyDown(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const q = search.trim().toLowerCase();
-      if (!q) return;
-
-      const exact = products.find(
-        (p) => p.sku?.toLowerCase() === q || p.name?.toLowerCase() === q
-      );
-      const target = exact || (displayItems.length === 1 ? displayItems[0] : null);
-
-      if (target) {
-        handleAddProduct(target);
-        setSearch('');
-      }
-    }
-  }
-
-  // Select Unit for Serialized Item
-  function handleSelectUnit(unit) {
-    if (!pendingProduct) return;
+  // Core helper to add a validated serialized unit to the active bill
+  function addUnitToBill(product, unit) {
+    if (!product || !unit) return;
 
     if (cart.some((item) => item.unit_id === unit.id)) {
-      alert('This unit is already added to the bill.');
+      setErrorMessage('This serial number unit is already added to the bill.');
       return;
     }
 
@@ -196,13 +213,13 @@ export function POSPage() {
     setCart((prev) => [
       ...prev,
       {
-        product_id: pendingProduct.id,
+        product_id: product.id,
         unit_id: unit.id,
-        name: pendingProduct.name,
-        sku: pendingProduct.sku,
-        hsn_code: pendingProduct.hsn_code || (store?.code === 'mobiles' ? '8517' : '9401'),
-        selling_price: parseFloat(pendingProduct.selling_price) || 0,
-        gst_rate: !isNaN(parseFloat(pendingProduct.gst_rate)) ? parseFloat(pendingProduct.gst_rate) : 18,
+        name: product.name,
+        sku: product.sku,
+        hsn_code: product.hsn_code || (store?.code === 'mobiles' ? '8517' : '9401'),
+        selling_price: parseFloat(product.selling_price) || 0,
+        gst_rate: !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18,
         is_serialized: true,
         serial_number: unit.serial_number,
         is_used_serial: isUsedSerial,
@@ -213,7 +230,47 @@ export function POSPage() {
 
     setIsUnitSelectorOpen(false);
     setPendingProduct(null);
+    setErrorMessage('');
     searchInputRef.current?.focus();
+  }
+
+  // Handle barcode scanner Enter key (supports scanning product SKU OR exact serial barcode directly)
+  function handleSearchKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const q = search.trim().toLowerCase();
+      if (!q) return;
+
+      // 1. Direct serial number / IMEI barcode scan match (instant bypass)
+      const matchingSerialUnit = allStoreUnits.find(
+        (u) => u.serial_number?.toLowerCase() === q
+      );
+      if (matchingSerialUnit) {
+        const parentProduct = products.find((p) => p.id === matchingSerialUnit.product_id);
+        if (parentProduct) {
+          addUnitToBill(parentProduct, matchingSerialUnit);
+          setSearch('');
+          return;
+        }
+      }
+
+      // 2. Product SKU or Name match
+      const exact = products.find(
+        (p) => p.sku?.toLowerCase() === q || p.name?.toLowerCase() === q
+      );
+      const target = exact || (displayItems.length === 1 ? displayItems[0] : null);
+
+      if (target) {
+        handleAddProduct(target);
+        setSearch('');
+      }
+    }
+  }
+
+  // Select Unit for Serialized Item from Modal
+  function handleSelectUnit(unit) {
+    if (!pendingProduct) return;
+    addUnitToBill(pendingProduct, unit);
   }
 
   // Remove single line item
@@ -650,68 +707,68 @@ export function POSPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {displayItems.map((p) => {
                 const stockQty = p.inventory?.[0]?.quantity_on_hand ?? 0;
                 return (
                   <div
                     key={p.id}
                     onClick={() => handleAddProduct(p)}
-                    className="p-3 rounded-xl border border-border bg-surface hover:border-text/40 hover:bg-surface-subtle transition-all cursor-pointer flex flex-col justify-between shadow-2xs group"
+                    className="group relative p-3 rounded-xl border border-border bg-surface hover:border-brand-sage hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between shadow-2xs"
                   >
                     <div>
-                      {/* Product Image */}
-                      <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border/60 bg-surface-subtle flex items-center justify-center p-2 mb-2 group-hover:border-border transition-colors">
-                        {p.image_url ? (
-                          <img
-                            src={p.image_url}
-                            alt={p.name}
-                            loading="lazy"
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center gap-1 text-muted">
-                            <Package size={28} />
-                            <span className="text-[9px] font-mono">{p.sku}</span>
-                          </div>
-                        )}
+                      {/* Compact Product Image Container */}
+                      <div className="relative w-full h-24 rounded-lg bg-surface-subtle/70 border border-border/60 overflow-hidden flex items-center justify-center p-2 mb-2.5 group-hover:border-brand-sage/40 transition-colors">
+                        <ProductThumbnail
+                          imageUrl={p.image_url}
+                          sku={p.sku}
+                          name={p.name}
+                        />
+
+                        {/* Floating Stock Badge */}
+                        <span
+                          className={cn(
+                            'absolute top-1.5 right-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shadow-2xs',
+                            stockQty > 2
+                              ? 'bg-surface text-brand-sage border-brand-sage-border'
+                              : stockQty > 0
+                              ? 'bg-surface text-brand-gold-text border-brand-gold-border'
+                              : 'bg-surface text-brand-crimson border-brand-crimson-border'
+                          )}
+                        >
+                          Stock: {stockQty}
+                        </span>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-start justify-between gap-1.5">
-                          <span className="text-[10px] font-mono text-muted uppercase tracking-wider truncate">
-                            {p.sku}
-                          </span>
-                          <span className="text-xs text-muted font-mono font-medium">
-                            Stock: {stockQty}
-                          </span>
+                      {/* Product Identification */}
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-muted uppercase tracking-wider truncate">
+                          {p.sku}
                         </div>
-                        <div className="font-semibold text-sm text-text line-clamp-2 leading-snug group-hover:text-accent">
+                        <div
+                          className="text-xs font-semibold text-text line-clamp-1 leading-snug group-hover:text-brand-sage transition-colors"
+                          title={p.name}
+                        >
                           {p.name}
                         </div>
                       </div>
                     </div>
 
-                    <div className="pt-3 flex items-center justify-between border-t border-border/60 mt-2">
+                    {/* Pricing & Add Row */}
+                    <div className="pt-2 mt-2 border-t border-border/60 flex items-center justify-between">
                       <div>
-                        <div className="font-bold font-mono text-base text-text">
+                        <div className="font-bold font-mono text-xs sm:text-sm text-text">
                           {formatCurrency(p.selling_price)}
                         </div>
-                        <div className="text-xs text-muted">
+                        <div className="text-[10px] text-muted leading-tight">
                           +{p.gst_rate ?? 18}% GST
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                        className="h-7 px-2.5 text-xs rounded-md gap-1 font-semibold pointer-events-none"
-                      >
-                        <Plus size={12} /> Add
-                      </Button>
+
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-md border border-border bg-surface text-text group-hover:bg-accent group-hover:text-accent-fg group-hover:border-accent transition-colors">
+                        <Plus size={11} />
+                        <span>Add</span>
+                      </span>
                     </div>
                   </div>
                 );
@@ -1681,6 +1738,7 @@ export function POSPage() {
                 units={unusedUnits}
                 emptyText="No unused serial numbers left for this product."
                 onSelect={handleSelectUnit}
+                cartUnitIds={cart.map((c) => c.unit_id)}
               />
 
               <UnitPickerGroup
@@ -1689,6 +1747,7 @@ export function POSPage() {
                 units={usedUnits}
                 emptyText="No used serial numbers for this product."
                 onSelect={handleSelectUnit}
+                cartUnitIds={cart.map((c) => c.unit_id)}
                 isUsed
               />
             </div>
@@ -1711,7 +1770,7 @@ export function POSPage() {
   );
 }
 
-function UnitPickerGroup({ title, caption, units, emptyText, onSelect, isUsed = false }) {
+function UnitPickerGroup({ title, caption, units, emptyText, onSelect, cartUnitIds = [], isUsed = false }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -1730,31 +1789,37 @@ function UnitPickerGroup({ title, caption, units, emptyText, onSelect, isUsed = 
         </div>
       ) : (
         <div className="divide-y divide-border border border-border rounded-lg overflow-hidden max-h-60 overflow-y-auto">
-          {units.map((unit) => (
-            <div
-              key={unit.id}
-              className="p-3 flex items-center justify-between hover:bg-surface-subtle transition-colors text-xs"
-            >
-              <div>
-                <div className={cn('font-mono font-semibold', isUsed ? 'text-muted' : 'text-text')}>
-                  {unit.serial_number}
-                </div>
-                {unit.condition_grade && (
-                  <div className="text-[10px] text-muted uppercase">Grade: {unit.condition_grade}</div>
-                )}
-              </div>
-
-              <Button
-                size="sm"
-                variant={isUsed ? 'outline' : 'solid'}
-                onClick={() => onSelect(unit)}
-                className="text-xs font-medium rounded-md gap-1"
+          {units.map((unit) => {
+            const isAlreadyAdded = cartUnitIds.includes(unit.id);
+            return (
+              <div
+                key={unit.id}
+                className="p-3 flex items-center justify-between hover:bg-surface-subtle transition-colors text-xs"
               >
-                <Check size={12} />
-                <span>{isUsed ? 'Use on Cash Bill' : 'Select Unit'}</span>
-              </Button>
-            </div>
-          ))}
+                <div>
+                  <div className={cn('font-mono font-semibold', isUsed ? 'text-muted' : 'text-text')}>
+                    {unit.serial_number}
+                  </div>
+                  {unit.condition_grade && (
+                    <div className="text-[10px] text-muted uppercase">Grade: {unit.condition_grade}</div>
+                  )}
+                </div>
+
+                <Button
+                  size="sm"
+                  variant={isAlreadyAdded ? 'outline' : isUsed ? 'outline' : 'solid'}
+                  disabled={isAlreadyAdded}
+                  onClick={() => onSelect(unit)}
+                  className="text-xs font-medium rounded-md gap-1"
+                >
+                  <Check size={12} />
+                  <span>
+                    {isAlreadyAdded ? 'Already Added' : isUsed ? 'Use on Cash Bill' : 'Select Unit'}
+                  </span>
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

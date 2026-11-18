@@ -44,6 +44,15 @@ export function useProductUnits(storeId, productId = null, status = null, option
   return useQuery({
     queryKey: inventoryKeys.units(storeId, productId, status),
     queryFn: () => listProductUnits({ storeId, productId, status }),
+    placeholderData: () => {
+      if (!storeId) return undefined;
+      const cached = getPersistentCache(`store_product_units_${storeId}`);
+      if (!cached) return undefined;
+      if (productId) {
+        return cached.filter((u) => u.product_id === productId && (!status || u.status === status));
+      }
+      return cached;
+    },
     enabled: isEnabled,
     staleTime: 1000 * 60 * 3,
     refetchOnWindowFocus: false,
