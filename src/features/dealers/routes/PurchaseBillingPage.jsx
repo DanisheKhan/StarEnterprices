@@ -53,16 +53,15 @@ function ProductThumbnail({ imageUrl, sku, name }) {
         src={imageUrl}
         alt={name}
         loading="lazy"
-        className="w-full h-full object-contain p-1 group-hover:opacity-90 transition-opacity duration-200"
+        className="w-full h-full object-contain p-0.5 group-hover:opacity-90 transition-opacity duration-200"
         onError={() => setError(true)}
       />
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 text-muted p-2 text-center">
-      <Package size={28} className="text-muted/60 stroke-[1.5]" />
-      <span className="text-[10px] font-mono text-muted/80">{sku}</span>
+    <div className="flex items-center justify-center text-muted w-full h-full">
+      <Package size={18} className="text-muted/60 stroke-[1.5]" />
     </div>
   );
 }
@@ -578,13 +577,17 @@ export function PurchaseBillingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
-              PROCUREMENT & ACCOUNTS PAYABLE
-            </span>
+            <Link
+              to={`/admin/${effectiveStoreCode}/dealers`}
+              className="text-[11px] font-bold uppercase tracking-wider text-muted hover:text-accent flex items-center gap-1 transition-colors"
+            >
+              <ArrowLeft size={13} />
+              <span>Dealer Section</span>
+            </Link>
             <span className="text-xs text-muted">•</span>
             <span className="text-xs text-brand-sage font-semibold flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-brand-sage animate-pulse" />
-              Purchase Billing Active
+              Purchase Billing
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text">
@@ -610,87 +613,86 @@ export function PurchaseBillingPage() {
 
           <Link
             to={`/admin/${effectiveStoreCode}/dealers`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle transition-all cursor-pointer"
           >
             <Building2 size={14} className="text-brand-sage" />
-            <span>Dealer Khata</span>
+            <span>Back to Dealer Hub</span>
           </Link>
         </div>
       </div>
 
-      {/* 2. AUTHENTIC HIGH-VISIBILITY TIMELINE STEPPER BAR */}
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 shadow-2xs">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
+      {/* 2. Interactive Timeline Stepper */}
+      <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
           {STEPS.map((s, idx) => {
             const isCompleted = currentStep > s.id;
             const isCurrent = currentStep === s.id;
             const isAccessible =
               s.id <= currentStep ||
-              (s.id === 2 && itemsSubtotal > 0) ||
-              (s.id === 3 && itemsSubtotal > 0 && dealerId && billNumber.trim());
+              (s.id === 2 && validCartItems.length > 0) ||
+              (s.id === 3 && validCartItems.length > 0 && dealerId && billNumber.trim());
 
             return (
-              <div key={s.id} className="flex-1 flex items-center">
-                {/* Timeline Node */}
+              <div key={s.id} className="flex-1 flex items-center min-w-0 last:flex-initial">
+                {/* Timeline Step Node Button */}
                 <button
                   type="button"
                   disabled={!isAccessible}
                   onClick={() => handleTimelineStepClick(s.id)}
                   className={cn(
-                    'flex items-center gap-3 text-left focus:outline-none transition-all select-none',
+                    'flex items-center gap-2.5 sm:gap-3 text-left focus:outline-none transition-all select-none shrink-0',
                     isAccessible ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                   )}
                 >
-                  {/* Distinct, solid, high-visibility marker circle */}
+                  {/* Timeline Circle Marker */}
                   <div
-                    style={{
-                      backgroundColor: isCompleted ? 'var(--brand-sage)' : isCurrent ? 'var(--accent)' : 'var(--surface-subtle)',
-                      borderColor: isCompleted ? 'var(--brand-sage)' : isCurrent ? 'var(--accent)' : 'var(--border)',
-                      color: isCompleted || isCurrent ? 'var(--accent-fg)' : 'var(--text-muted)',
-                    }}
                     className={cn(
-                      'w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 border-2 transition-all',
-                      isCurrent && 'ring-4 ring-accent/20 scale-105 shadow-sm',
-                      isCompleted && 'shadow-xs'
+                      'w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all border-2',
+                      isCompleted && 'bg-brand-sage text-white border-brand-sage shadow-2xs',
+                      isCurrent && 'bg-accent text-accent-fg border-accent ring-4 ring-accent/15 shadow-2xs',
+                      !isCurrent && !isCompleted && 'bg-surface text-muted border-border'
                     )}
                   >
                     {isCompleted ? (
-                      <Check size={16} className="text-white stroke-[3]" />
+                      <Check size={14} className="stroke-[3]" />
                     ) : (
-                      <span className="font-bold text-xs sm:text-sm">{s.id}</span>
+                      <span>{s.id}</span>
                     )}
                   </div>
 
+                  {/* Step Label & Subtitle */}
                   <div className="min-w-0">
                     <div
                       className={cn(
-                        'text-xs sm:text-sm font-bold leading-tight truncate',
-                        isCurrent ? 'text-text font-extrabold' : isCompleted ? 'text-text' : 'text-muted'
+                        'text-xs sm:text-sm leading-tight truncate',
+                        isCurrent
+                          ? 'font-bold text-text'
+                          : isCompleted
+                          ? 'font-semibold text-text'
+                          : 'font-medium text-muted'
                       )}
                     >
-                      <span className="hidden sm:inline">{s.label}</span>
-                      <span className="sm:hidden">{s.shortLabel}</span>
+                      {s.label}
                     </div>
-
-                    <div className="text-[11px] text-muted truncate mt-0.5">
+                    <div className="text-[11px] text-muted truncate mt-0.5 hidden xs:block">
                       {s.id === 1 &&
                         (validCartItems.length > 0
                           ? `${validCartItems.length} ${
                               validCartItems.length === 1 ? 'item' : 'items'
                             } • ${formatCurrency(grandTotal)}`
-                          : 'Add intake items')}
+                          : '0 items')}
                       {s.id === 2 &&
                         (selectedDealer
                           ? selectedDealer.brand_name || selectedDealer.name
-                          : 'Supplier info')}
-                      {s.id === 3 && step3Subtitle}
+                          : 'Choose Supplier')}
+                      {s.id === 3 && (step3Subtitle || 'Terms & payment')}
                     </div>
                   </div>
                 </button>
 
-                {/* Visible Connecting Line between step nodes */}
+                {/* Timeline Connecting Line */}
                 {idx < STEPS.length - 1 && (
-                  <div className="flex-1 mx-3 sm:mx-6 h-0.5 bg-border relative">
+                  <div className="flex-1 mx-2 sm:mx-4 h-0.5 bg-border relative overflow-hidden">
                     <div
                       className="h-full bg-accent transition-all duration-300"
                       style={{ width: currentStep > s.id ? '100%' : '0%' }}
@@ -797,73 +799,66 @@ export function PurchaseBillingPage() {
                 No matching catalog products found. Type product name in the box above to add as custom item.
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
                 {displayItems.map((p) => {
                   const stockQty = p.inventory?.[0]?.quantity_on_hand ?? 0;
                   return (
                     <div
                       key={p.id}
                       onClick={() => handleAddCatalogProduct(p)}
-                      className="p-3 rounded-xl border border-border bg-surface hover:border-brand-sage hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group h-full"
+                      className="p-2.5 rounded-xl border border-border bg-surface hover:border-brand-sage hover:bg-surface-subtle transition-all cursor-pointer flex items-center justify-between gap-2.5 shadow-2xs group"
                     >
-                      <div>
-                        {/* Product Image Container */}
-                        <div className="relative w-full h-36 rounded-lg overflow-hidden border border-border/60 bg-surface-subtle flex items-center justify-center p-2 mb-2 group-hover:border-border transition-colors">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Compact Thumbnail */}
+                        <div className="w-11 h-11 rounded-lg border border-border/70 bg-surface-subtle overflow-hidden shrink-0 flex items-center justify-center">
                           <ProductThumbnail
                             imageUrl={p.image_url}
                             sku={p.sku}
                             name={p.name}
                           />
+                        </div>
 
-                          {/* Stock Pill in Corner */}
-                          <div className="absolute top-2 right-2 z-10">
+                        {/* Product Info */}
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-muted uppercase truncate">
+                              {p.sku}
+                            </span>
                             <span
                               className={cn(
-                                'px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono shadow-2xs',
+                                'text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded border shrink-0',
                                 stockQty > 2
-                                  ? 'bg-accent text-accent-fg'
+                                  ? 'bg-brand-sage-subtle text-brand-sage border-brand-sage-border'
                                   : stockQty > 0
-                                  ? 'bg-amber-600 text-white'
-                                  : 'bg-danger text-white'
+                                  ? 'bg-brand-gold-subtle text-brand-gold-text border-brand-gold-border'
+                                  : 'bg-brand-crimson-subtle text-brand-crimson border-brand-crimson-border'
                               )}
                             >
                               Stock: {stockQty}
                             </span>
                           </div>
-                        </div>
 
-                        {/* Product Details */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-start justify-between gap-1.5">
-                            <span className="text-[10px] font-mono text-muted uppercase tracking-wider truncate">
-                              {p.sku}
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-subtle border border-border text-muted font-medium">
-                              {p.categories?.name || 'General'}
-                            </span>
-                          </div>
-                          <div className="font-semibold text-xs sm:text-sm text-text line-clamp-2 leading-snug group-hover:text-brand-sage transition-colors">
+                          <div className="text-xs font-bold text-text truncate group-hover:text-brand-sage transition-colors">
                             {p.name}
                           </div>
+
+                          <div className="text-xs font-mono font-bold text-text flex items-center gap-1">
+                            <span>{formatCurrency(p.cost_price || p.selling_price || 0)}</span>
+                            <span className="text-[10px] text-muted font-sans font-normal">
+                              cost
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Pricing Footer */}
-                      <div className="pt-2.5 flex items-center justify-between border-t border-border/60 mt-2">
-                        <div>
-                          <div className="text-[10px] text-muted font-medium">Cost / Intake:</div>
-                          <div className="font-bold font-mono text-sm text-text">
-                            {formatCurrency(p.cost_price || p.selling_price || 0)}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-surface border border-border text-text group-hover:bg-accent group-hover:text-accent-fg group-hover:border-accent transition-colors"
-                        >
-                          <Plus size={12} />
-                          <span>Add</span>
-                        </button>
-                      </div>
+                      {/* Quick Add Button */}
+                      <button
+                        type="button"
+                        className="shrink-0 px-2.5 py-1 text-xs font-semibold rounded-md border border-border bg-surface text-text group-hover:bg-accent group-hover:text-accent-fg group-hover:border-accent transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus size={12} />
+                        <span>Add</span>
+                      </button>
                     </div>
                   );
                 })}

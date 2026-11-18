@@ -456,79 +456,109 @@ export function POSPage() {
         </div>
       </div>
 
-      {/* 2. Interactive Stepper Progress Bar */}
-      <div className="rounded-xl border border-border bg-surface p-2 shadow-2xs">
-        <div className="grid grid-cols-3 gap-2">
-          {STEPS.map((s) => {
-            const Icon = s.icon;
+      {/* 2. Interactive Timeline Stepper */}
+      <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          {STEPS.map((s, idx) => {
             const isCurrent = currentStep === s.id;
             const isCompleted = currentStep > s.id;
-            const isClickable = s.id < currentStep || (s.id === 2 && cart.length > 0) || (s.id === 3 && cart.length > 0);
+            const isClickable =
+              s.id < currentStep ||
+              (s.id === 2 && cart.length > 0) ||
+              (s.id === 3 && cart.length > 0);
 
             return (
-              <button
-                key={s.id}
-                type="button"
-                disabled={!isClickable && !isCurrent}
-                onClick={() => {
-                  if (s.id === 2 && cart.length === 0) return;
-                  if (s.id === 3) {
-                    if (cart.length === 0) return;
-                    if (!customerName.trim()) {
-                      setErrorMessage('Customer Name is mandatory before proceeding to payment.');
-                      setCurrentStep(2);
-                      return;
+              <div key={s.id} className="flex-1 flex items-center min-w-0 last:flex-initial">
+                {/* Timeline Step Node Button */}
+                <button
+                  type="button"
+                  disabled={!isClickable && !isCurrent}
+                  onClick={() => {
+                    if (s.id === 2 && cart.length === 0) return;
+                    if (s.id === 3) {
+                      if (cart.length === 0) return;
+                      if (!customerName.trim()) {
+                        setErrorMessage('Customer Name is mandatory before proceeding to payment.');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (!isValidIndianPhone(customerPhone)) {
+                        setErrorMessage('A valid 10-digit customer mobile number is mandatory (starts with 6-9).');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (customerType === 'registered' && !customerGstin.trim()) {
+                        setErrorMessage('Customer GSTIN is mandatory for B2B billing.');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (customerGstin.trim() && !isValidGstin(customerGstin)) {
+                        setErrorMessage('Please enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (!customerAddress.trim()) {
+                        setErrorMessage('Customer Address is mandatory before proceeding to payment.');
+                        setCurrentStep(2);
+                        return;
+                      }
                     }
-                    if (!isValidIndianPhone(customerPhone)) {
-                      setErrorMessage('A valid 10-digit customer mobile number is mandatory (starts with 6-9).');
-                      setCurrentStep(2);
-                      return;
-                    }
-                    if (customerType === 'registered' && !customerGstin.trim()) {
-                      setErrorMessage('Customer GSTIN is mandatory for B2B billing.');
-                      setCurrentStep(2);
-                      return;
-                    }
-                    if (customerGstin.trim() && !isValidGstin(customerGstin)) {
-                      setErrorMessage('Please enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).');
-                      setCurrentStep(2);
-                      return;
-                    }
-                    if (!customerAddress.trim()) {
-                      setErrorMessage('Customer Address is mandatory before proceeding to payment.');
-                      setCurrentStep(2);
-                      return;
-                    }
-                  }
-                  setCurrentStep(s.id);
-                  setErrorMessage('');
-                }}
-                className={cn(
-                  'flex items-center justify-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all text-left select-none',
-                  isCurrent && 'bg-accent text-accent-fg font-semibold shadow-2xs',
-                  isCompleted && 'bg-surface-subtle text-text hover:bg-surface-hover cursor-pointer border border-border',
-                  !isCurrent && !isCompleted && 'text-muted opacity-60 cursor-not-allowed'
-                )}
-              >
-                <div
+                    setCurrentStep(s.id);
+                    setErrorMessage('');
+                  }}
                   className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0',
-                    isCurrent && 'bg-white/20 text-white',
-                    isCompleted && 'bg-accent text-accent-fg',
-                    !isCurrent && !isCompleted && 'border border-border text-muted'
+                    'flex items-center gap-2.5 sm:gap-3 text-left focus:outline-none transition-all select-none shrink-0',
+                    isClickable || isCurrent ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                   )}
                 >
-                  {isCompleted ? <Check size={12} /> : <Icon size={12} />}
-                </div>
-                <div className="hidden sm:block min-w-0">
-                  <div className="truncate font-semibold">{s.label}</div>
-                  <div className="text-[10px] opacity-75 truncate">
-                    {s.id === 1 && `${cart.length} ${cart.length === 1 ? 'item' : 'items'}`}
-                    {s.id === 2 && (customerType === 'walkin' ? 'Walk-in B2C' : 'Registered B2B')}
-                    {s.id === 3 && formatCurrency(grandTotal)}
+                  {/* Timeline Circle Marker */}
+                  <div
+                    className={cn(
+                      'w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all border-2',
+                      isCompleted && 'bg-brand-sage text-white border-brand-sage shadow-2xs',
+                      isCurrent && 'bg-accent text-accent-fg border-accent ring-4 ring-accent/15 shadow-2xs',
+                      !isCurrent && !isCompleted && 'bg-surface text-muted border-border'
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check size={14} className="stroke-[3]" />
+                    ) : (
+                      <span>{s.id}</span>
+                    )}
                   </div>
-                </div>
-              </button>
+
+                  {/* Step Label & Subtitle */}
+                  <div className="min-w-0">
+                    <div
+                      className={cn(
+                        'text-xs sm:text-sm leading-tight truncate',
+                        isCurrent
+                          ? 'font-bold text-text'
+                          : isCompleted
+                          ? 'font-semibold text-text'
+                          : 'font-medium text-muted'
+                      )}
+                    >
+                      {s.label}
+                    </div>
+                    <div className="text-[11px] text-muted truncate mt-0.5 hidden xs:block">
+                      {s.id === 1 && `${cart.length} ${cart.length === 1 ? 'item' : 'items'}`}
+                      {s.id === 2 && (customerType === 'walkin' ? 'Walk-in B2C' : 'Registered B2B')}
+                      {s.id === 3 && formatCurrency(grandTotal)}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Timeline Connecting Line */}
+                {idx < STEPS.length - 1 && (
+                  <div className="flex-1 mx-2 sm:mx-4 h-0.5 bg-border relative overflow-hidden">
+                    <div
+                      className="h-full bg-accent transition-all duration-300"
+                      style={{ width: currentStep > s.id ? '100%' : '0%' }}
+                    />
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

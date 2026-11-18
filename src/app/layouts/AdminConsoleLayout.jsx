@@ -90,11 +90,10 @@ export function AdminConsoleLayout() {
   const basePath = `/admin/${currentStoreCode}`;
   const isDashboardActive = path === basePath || path === `${basePath}/` || path === `${basePath}/dashboard`;
   const isBillingActive = path === `${basePath}/billing`;
-  const isPurchaseBillingActive = path === `${basePath}/dealers/billing` || path === '/admin/dealers/billing';
   const isInvoicesActive = path.startsWith(`${basePath}/invoices`) || path === '/admin/invoices';
   const isInventoryActive = path.startsWith(`${basePath}/inventory`);
   const isSerialsActive = path.startsWith(`${basePath}/serials`);
-  const isDealersActive = (path.startsWith(`${basePath}/dealers`) || path.startsWith('/admin/dealers')) && !isPurchaseBillingActive;
+  const isDealersActive = path.startsWith(`${basePath}/dealers`) || path.startsWith('/admin/dealers');
 
   const activeStoreName =
     currentStore?.name ||
@@ -255,22 +254,7 @@ export function AdminConsoleLayout() {
                 <span>Sales Billing</span>
               </Link>
 
-              {/* 3. Purchase Billing */}
-              <Link
-                to={`${basePath}/dealers/billing`}
-                onMouseEnter={() => import('@/features/dealers').catch(() => {})}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors',
-                  isPurchaseBillingActive
-                    ? 'bg-sidebar-active text-sidebar-active-fg font-semibold border border-border shadow-2xs'
-                    : 'text-sidebar-text hover:text-sidebar-text-hover hover:bg-sidebar-surface font-medium'
-                )}
-              >
-                <FileText size={15} className="shrink-0" />
-                <span>Purchase Billing</span>
-              </Link>
-
-              {/* 4. Stock & Inventory */}
+              {/* 3. Stock & Inventory */}
               <Link
                 to={`${basePath}/inventory`}
                 onMouseEnter={() => import('@/features/inventory').catch(() => {})}
