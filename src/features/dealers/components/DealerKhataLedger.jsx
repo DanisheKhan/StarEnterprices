@@ -336,7 +336,7 @@ Thank you for your ongoing partnership!`;
                       <td className="py-2.5 px-3 text-center whitespace-nowrap min-w-0">
                         {isBill && onOpenTimeline && (
                           <button
-                            onClick={() => onOpenTimeline(row.id)}
+                            onClick={() => onOpenTimeline(row.id, row.metadata)}
                             title="Inspect Payment Speed & Timeline"
                             className="p-1 rounded text-muted hover:text-accent hover:bg-surface-subtle transition-colors cursor-pointer"
                           >

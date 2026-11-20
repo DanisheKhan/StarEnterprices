@@ -15,7 +15,7 @@ export function DealerKhataPage() {
 
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isDebitNoteOpen, setIsDebitNoteOpen] = useState(false);
-  const [timelineBillId, setTimelineBillId] = useState(null);
+  const [timelineBill, setTimelineBill] = useState(null);
 
   const backLink = storeCode ? `/admin/${storeCode}/dealers` : '/admin/dealers';
 
@@ -41,7 +41,7 @@ export function DealerKhataPage() {
         dealerId={dealerId}
         onOpenRecordPayment={() => setIsRecordPaymentOpen(true)}
         onOpenDebitNote={() => setIsDebitNoteOpen(true)}
-        onOpenTimeline={(id) => setTimelineBillId(id)}
+        onOpenTimeline={(id, bill) => setTimelineBill(bill || { id })}
       />
 
       {/* Modals with preselected dealer */}
@@ -63,11 +63,12 @@ export function DealerKhataPage() {
         </>
       )}
 
-      {timelineBillId && (
+      {timelineBill && (
         <BillTimelineModal
-          isOpen={Boolean(timelineBillId)}
-          onClose={() => setTimelineBillId(null)}
-          billId={timelineBillId}
+          isOpen={Boolean(timelineBill)}
+          onClose={() => setTimelineBill(null)}
+          billId={timelineBill.id}
+          initialBill={timelineBill}
           onOpenRecordPayment={() => setIsRecordPaymentOpen(true)}
         />
       )}

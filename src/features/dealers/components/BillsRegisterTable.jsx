@@ -454,7 +454,7 @@ Kindly verify your khata records and arrange the settlement.
                     {onOpenTimeline && (
                       <button
                         type="button"
-                        onClick={() => onOpenTimeline(b.id)}
+                        onClick={() => onOpenTimeline(b.id, b)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-muted hover:border-brand-sage hover:text-brand-sage hover:bg-brand-sage-subtle shadow-2xs transition-all cursor-pointer"
                         title="View payment vouchers and timeline for this bill"
                       >

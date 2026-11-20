@@ -111,7 +111,7 @@ export function PurchaseBillingPage() {
 
   // Step 3: Payment Tender State: 'fully_paid' | 'partially_paid' | 'unpaid'
   const [settlementType, setSettlementType] = useState('fully_paid');
-  const [partialPaidAmount, setPartialPaidAmount] = useState('');
+  const [partialPaidAmount, setPartialPaidAmount] = useState('0');
   const [paymentMode, setPaymentMode] = useState('cheque'); // 'cash' | 'cheque' | 'bank_transfer' | 'upi'
 
   // Instrument details
@@ -1123,251 +1123,278 @@ export function PurchaseBillingPage() {
       {/* ------------------------------------------------------------- */}
       {currentStep === 2 && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: Supplier & Category */}
-            <div className="lg:col-span-6 space-y-4">
-              {/* Bill Category (GST vs Kaccha) */}
-              <Card className="p-4 sm:p-5 rounded-xl border border-border bg-surface space-y-3 shadow-2xs">
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted">
-                  Bill Category (Two-Book Separation)
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectBillType('gst')}
-                    className={cn(
-                      'p-3.5 rounded-lg border text-left transition-all flex items-start gap-3 cursor-pointer',
-                      billType === 'gst'
-                        ? 'border-brand-sage bg-brand-sage-subtle/50 text-text ring-1 ring-brand-sage'
-                        : 'border-border bg-surface text-muted hover:bg-surface-subtle'
-                    )}
-                  >
-                    <FileText size={20} className={billType === 'gst' ? 'text-brand-sage' : 'text-muted'} />
-                    <div>
-                      <div className="text-xs font-bold">Tax Invoice (GST)</div>
-                      <div className="text-[11px] text-muted mt-0.5">
-                        Official invoice, ITC claim, GSTR-2B compliance
-                      </div>
-                    </div>
-                  </button>
+          <Card className="p-5 sm:p-6 rounded-xl border border-border bg-surface space-y-5 shadow-2xs">
+            {/* Header: Title & Two-Book Separation Switcher */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+                  <Building2 size={16} className="text-brand-sage" />
+                  <span>Supplier & Invoice Details</span>
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  Select verified supplier or wholesaler, billing category, and credit payment terms.
+                </p>
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleSelectBillType('kaccha')}
-                    className={cn(
-                      'p-3.5 rounded-lg border text-left transition-all flex items-start gap-3 cursor-pointer',
-                      billType === 'kaccha'
-                        ? 'border-amber-500 bg-amber-50/70 text-text ring-1 ring-amber-500'
-                        : 'border-border bg-surface text-muted hover:bg-surface-subtle'
-                    )}
-                  >
-                    <Layers size={20} className={billType === 'kaccha' ? 'text-amber-600' : 'text-muted'} />
-                    <div>
-                      <div className="text-xs font-bold text-amber-950">Kaccha (Estimate)</div>
-                      <div className="text-[11px] text-muted mt-0.5">
-                        Internal parchi, slip, cash wholesaler intake
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </Card>
-
-              {/* Supplier / Brand Dealer Selection */}
-              <Card className="p-4 sm:p-5 rounded-xl border border-border bg-surface space-y-3.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted">
-                    Supplier / Brand Dealer <span className="text-brand-crimson">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddDealerOpen(true)}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-sage hover:underline cursor-pointer"
-                  >
-                    <Plus size={12} />
-                    <span>Add New Dealer</span>
-                  </button>
-                </div>
-
-                <select
-                  value={dealerId}
-                  onChange={(e) => {
-                    const newId = e.target.value;
-                    setDealerId(newId);
-                    const found = dealers.find((d) => d.id === newId);
-                    if (found?.default_credit_days) {
-                      setCreditDays(found.default_credit_days);
-                    }
-                    if (billType === 'gst' && (!billNumber || billNumber.includes('/'))) {
-                      setBillNumber(generateSmartBillNumber('gst', newId));
-                    }
-                  }}
-                  className="w-full px-3 py-2.5 text-xs rounded-lg border border-border bg-surface text-text font-medium focus:outline-none focus:ring-1 focus:ring-brand-sage"
+              {/* Two-Book Separation Switcher */}
+              <div className="inline-flex rounded-lg border border-border bg-surface-subtle p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleSelectBillType('gst')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md font-semibold cursor-pointer transition-colors text-xs flex items-center gap-1.5',
+                    billType === 'gst'
+                      ? 'bg-accent text-accent-fg shadow-2xs'
+                      : 'text-muted hover:text-text'
+                  )}
                 >
-                  <option value="">-- Choose Brand / Dealer --</option>
-                  {dealers.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name || d.brand_name} {d.phone ? `(${d.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+                  <FileText size={13} />
+                  <span>Tax Invoice (GST)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectBillType('kaccha')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md font-semibold cursor-pointer transition-colors text-xs flex items-center gap-1.5',
+                    billType === 'kaccha'
+                      ? 'bg-amber-600 text-white shadow-2xs'
+                      : 'text-muted hover:text-text'
+                  )}
+                >
+                  <Layers size={13} />
+                  <span>Kaccha (Estimate)</span>
+                </button>
+              </div>
+            </div>
 
-                {/* Selected Dealer Summary Card */}
-                {selectedDealer && (
-                  <div className="p-3 rounded-lg bg-surface-subtle border border-border text-xs space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-text">
-                        {selectedDealer.brand_name || selectedDealer.name}
-                      </span>
+            {/* Supplier / Brand Dealer Selection */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-text flex items-center gap-1.5">
+                  <span>Select Supplier / Brand Dealer</span>
+                  <span className="text-brand-crimson">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsAddDealerOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-sage hover:underline cursor-pointer"
+                >
+                  <Plus size={12} />
+                  <span>Add New Dealer</span>
+                </button>
+              </div>
+
+              <select
+                value={dealerId}
+                onChange={(e) => {
+                  const newId = e.target.value;
+                  setDealerId(newId);
+                  const found = dealers.find((d) => d.id === newId);
+                  if (found?.default_credit_days) {
+                    setCreditDays(found.default_credit_days);
+                  }
+                  if (billType === 'gst' && (!billNumber || billNumber.includes('/'))) {
+                    setBillNumber(generateSmartBillNumber('gst', newId));
+                  }
+                }}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text font-medium focus:outline-none focus:ring-1 focus:ring-brand-sage cursor-pointer"
+              >
+                <option value="">-- Choose Brand / Dealer --</option>
+                {dealers.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name || d.brand_name} {d.phone ? `(${d.phone})` : ''}
+                  </option>
+                ))}
+              </select>
+
+              {/* Verified Supplier Profile Card */}
+              {selectedDealer && (
+                <div className="p-4 rounded-xl bg-surface-subtle border border-border space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-border/70">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center font-bold text-text text-sm shadow-2xs uppercase">
+                        {(selectedDealer.brand_name || selectedDealer.name || 'D').slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-text">
+                          {selectedDealer.name || selectedDealer.brand_name}
+                        </div>
+                        {selectedDealer.brand_name && selectedDealer.name !== selectedDealer.brand_name && (
+                          <div className="text-xs text-muted">
+                            Brand: <strong className="text-text font-medium">{selectedDealer.brand_name}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <Badge variant="outline" className="text-[10px] capitalize font-medium">
-                        {selectedDealer.dealer_type?.replace('_', ' ') || 'Dealer'}
+                        {selectedDealer.dealer_type?.replace('_', ' ') || 'Supplier'}
+                      </Badge>
+                      <Badge
+                        variant={billType === 'gst' ? (selectedDealer.gstin ? 'success' : 'amber') : 'default'}
+                        className="text-[10px] font-mono"
+                      >
+                        {billType === 'gst'
+                          ? selectedDealer.gstin
+                            ? 'GST Verified'
+                            : 'Missing GSTIN'
+                          : 'Kaccha Ledger'}
                       </Badge>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-[11px] text-muted">
-                      <div>
-                        <span>Phone: </span>
-                        <strong className="text-text font-mono">{formatPhone(selectedDealer.phone)}</strong>
-                      </div>
-                      {selectedDealer.gstin && (
-                        <div>
-                          <span>GSTIN: </span>
-                          <strong className="text-text font-mono">{selectedDealer.gstin}</strong>
-                        </div>
-                      )}
-                      <div>
-                        <span>Default Credit: </span>
-                        <strong className="text-text font-mono">{selectedDealer.default_credit_days || 30} days</strong>
-                      </div>
-                      <div>
-                        <span>Current Khata Bal: </span>
-                        <strong className="text-text font-mono">
-                          {formatCurrency(selectedDealer.metrics?.totalBalance || 0)}
-                        </strong>
-                      </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold text-muted block mb-0.5">Contact Phone</span>
+                      <span className="font-mono font-semibold text-text">{formatPhone(selectedDealer.phone) || 'Not provided'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold text-muted block mb-0.5">GSTIN Number</span>
+                      <span className="font-mono font-semibold text-text truncate block">{selectedDealer.gstin || 'Unregistered'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold text-muted block mb-0.5">Standard Credit</span>
+                      <span className="font-mono font-semibold text-text">{selectedDealer.default_credit_days || 30} Days</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold text-muted block mb-0.5">Current Khata Balance</span>
+                      <span className={cn('font-mono font-bold text-sm', (selectedDealer.metrics?.totalBalance || 0) > 0 ? 'text-brand-crimson' : 'text-text')}>
+                        {formatCurrency(selectedDealer.metrics?.totalBalance || 0)}
+                      </span>
                     </div>
                   </div>
-                )}
-              </Card>
+                </div>
+              )}
             </div>
 
-            {/* Right Column: Invoice Details */}
-            <div className="lg:col-span-6 space-y-4">
-              <Card className="p-4 sm:p-5 rounded-xl border border-border bg-surface space-y-3.5 shadow-2xs">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted block">
-                  Invoice & Terms Metadata
-                </span>
-
-                {/* Bill Number */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-text">
-                      {billType === 'gst' ? 'Invoice Number' : 'Parchi / Slip No'} <span className="text-brand-crimson">*</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleAutoGenerateNumber}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-sage hover:text-brand-sage/80 cursor-pointer"
-                    >
-                      <Sparkles size={11} />
-                      <span>Auto-Generate</span>
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      placeholder={billType === 'gst' ? 'e.g. GODREJ/2026/089' : 'e.g. EST-2026-402'}
-                      value={billNumber}
-                      onChange={(e) => setBillNumber(e.target.value)}
-                      className="w-full pl-3 pr-14 py-2 text-xs font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAutoGenerateNumber}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] font-semibold rounded bg-surface-subtle text-muted hover:text-text border border-border cursor-pointer"
-                    >
-                      Auto
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bill Date */}
-                <div>
-                  <label className="block text-xs font-semibold text-text mb-1">
-                    Bill Date <span className="text-brand-crimson">*</span>
+            {/* Inputs Grid: Invoice #, Date, Credit Terms */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Invoice Number */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-text">
+                    {billType === 'gst' ? 'Invoice Number' : 'Parchi / Slip No'} <span className="text-brand-crimson">*</span>
                   </label>
-                  <input
-                    type="date"
-                    required
-                    value={billDate}
-                    onChange={(e) => setBillDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                  />
+                  <button
+                    type="button"
+                    onClick={handleAutoGenerateNumber}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-sage hover:text-brand-sage/80 cursor-pointer"
+                  >
+                    <Sparkles size={11} />
+                    <span>Auto-Generate</span>
+                  </button>
                 </div>
-
-                {/* Credit Days & Computed Due Date */}
-                <div className="grid grid-cols-2 gap-2.5 items-end">
-                  <div>
-                    <label className="block text-xs font-semibold text-text mb-1">
-                      Credit Days
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="180"
-                      value={creditDays}
-                      onChange={(e) => setCreditDays(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text font-mono focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                    />
-                  </div>
-
-                  <div className="p-2 rounded-lg bg-surface-subtle border border-border text-xs">
-                    <span className="text-muted text-[10px] block">Computed Due Date</span>
-                    <span className="font-bold text-text font-mono text-[11px]">
-                      {computedDueDate ? formatDate(computedDueDate, false) : '-'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Consignment Remarks */}
-                <div>
-                  <label className="block text-xs font-semibold text-text mb-1">
-                    Consignment Remarks / Memo
-                  </label>
+                <div className="relative">
                   <input
                     type="text"
-                    placeholder="e.g. 15 ACs, 10 Refrigerators stock intake"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                    required
+                    placeholder={billType === 'gst' ? 'e.g. DANISH/2026/198' : 'e.g. EST-2026-402'}
+                    value={billNumber}
+                    onChange={(e) => setBillNumber(e.target.value)}
+                    className="w-full pl-3 pr-14 py-2 text-xs font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
                   />
+                  <button
+                    type="button"
+                    onClick={handleAutoGenerateNumber}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] font-semibold rounded bg-surface-subtle text-muted hover:text-text border border-border cursor-pointer"
+                  >
+                    Auto
+                  </button>
                 </div>
-              </Card>
+              </div>
+
+              {/* Bill Date */}
+              <div>
+                <label className="block text-xs font-semibold text-text mb-1">
+                  Bill Date <span className="text-brand-crimson">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={billDate}
+                  onChange={(e) => setBillDate(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                />
+              </div>
+
+              {/* Credit Terms (Days) & Computed Due Date */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-text">
+                    Credit Terms (Days)
+                  </label>
+                  <span className="text-[10px] text-muted font-mono">
+                    Due: {computedDueDate ? formatDate(computedDueDate, false) : '-'}
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  max="180"
+                  value={creditDays}
+                  onChange={(e) => setCreditDays(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text font-mono focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Step 2 Footer Navigation */}
-          <div className="flex items-center justify-between pt-4 border-t border-border">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle cursor-pointer"
-            >
-              <ArrowLeft size={14} />
-              <span>Back to Products</span>
-            </button>
+            {/* Consignment Remarks / Memo */}
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">
+                Consignment Remarks / Internal Memo (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 15 ACs, 10 Refrigerators stock intake, verified at warehouse gate"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+              />
+            </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (validateStep2()) setCurrentStep(3);
-              }}
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer"
-            >
-              <span>Continue to Payment & Settlement</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
+            {/* Mini Procurement Preview Strip */}
+            <div className="p-3.5 rounded-xl border border-border bg-surface-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+              <div className="flex items-center gap-2.5">
+                <FileText size={17} className="text-brand-sage shrink-0" />
+                <span className="text-muted text-xs sm:text-sm">
+                  Procuring <strong className="text-text font-semibold">{validCartItems.length} items ({totalUnits} units)</strong> for{' '}
+                  <strong className="text-text font-mono font-bold text-base sm:text-lg">{formatCurrency(grandTotal)}</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="text-xs text-brand-sage hover:underline font-semibold cursor-pointer"
+              >
+                Modify Intake Items
+              </button>
+            </div>
+
+            {/* Step 2 Footer Navigation - Inside Card */}
+            <div className="flex items-center justify-between pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="rounded-lg gap-2 text-xs font-medium cursor-pointer"
+              >
+                <ArrowLeft size={14} />
+                <span>Back to Products</span>
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => {
+                  if (validateStep2()) setCurrentStep(3);
+                }}
+                className="rounded-lg gap-2 text-xs font-semibold px-6 shadow-2xs cursor-pointer"
+              >
+                <span>Proceed to Payment & Settlement</span>
+                <ArrowRight size={14} />
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
 
@@ -1377,243 +1404,278 @@ export function PurchaseBillingPage() {
       {currentStep === 3 && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Payment Options & Instrument */}
-            <div className="lg:col-span-7 space-y-4">
-              {/* Settlement Type Selector Cards: FULL PAYMENT -> PARTIAL -> UNPAID */}
-              <Card className="p-4 sm:p-5 rounded-xl border border-border bg-surface space-y-3.5 shadow-2xs">
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted">
-                  Payment Settlement Status <span className="text-brand-crimson">*</span>
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {/* 1. Full Payment */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSettlementType('fully_paid');
-                      setPartialPaidAmount('');
-                    }}
-                    className={cn(
-                      'p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between',
-                      settlementType === 'fully_paid'
-                        ? 'border-emerald-600 bg-emerald-50/70 ring-1 ring-emerald-600 text-text'
-                        : 'border-border bg-surface text-muted hover:bg-surface-subtle'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
-                        <CheckCircle2 size={16} className="text-emerald-600" />
-                        <span>Full Payment</span>
-                      </div>
-                      {settlementType === 'fully_paid' && <CheckCircle2 size={14} className="text-emerald-600" />}
-                    </div>
-                    <div className="text-[11px] text-muted leading-tight">
-                      100% spot settlement ({formatCurrency(grandTotal)}). Cleared on intake.
-                    </div>
-                  </button>
-
-                  {/* 2. Partial Payment */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSettlementType('partially_paid');
-                      if (!partialPaidAmount && grandTotal > 0) {
-                        setPartialPaidAmount(String(Math.round(grandTotal / 2)));
-                      }
-                    }}
-                    className={cn(
-                      'p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between',
-                      settlementType === 'partially_paid'
-                        ? 'border-brand-sage bg-brand-sage-subtle/60 ring-1 ring-brand-sage text-text'
-                        : 'border-border bg-surface text-muted hover:bg-surface-subtle'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-text">
-                        <Coins size={16} className="text-brand-sage" />
-                        <span>Partial Payment</span>
-                      </div>
-                      {settlementType === 'partially_paid' && <CheckCircle2 size={14} className="text-brand-sage" />}
-                    </div>
-                    <div className="text-[11px] text-muted leading-tight">
-                      Pay advance now; balance deferred to credit khata.
-                    </div>
-                  </button>
-
-                  {/* 3. Unpaid */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSettlementType('unpaid');
-                      setPartialPaidAmount('');
-                    }}
-                    className={cn(
-                      'p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between',
-                      settlementType === 'unpaid'
-                        ? 'border-amber-500 bg-amber-50/70 ring-1 ring-amber-500 text-text'
-                        : 'border-border bg-surface text-muted hover:bg-surface-subtle'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-950">
-                        <Clock size={16} className="text-amber-600" />
-                        <span>Unpaid (Credit)</span>
-                      </div>
-                      {settlementType === 'unpaid' && <CheckCircle2 size={14} className="text-amber-600" />}
-                    </div>
-                    <div className="text-[11px] text-muted leading-tight">
-                      Full amount deferred to {computedDueDate ? formatDate(computedDueDate, false) : '-'}.
-                    </div>
-                  </button>
+            {/* Left: Payment Options & Instrument (Unified Card matching POS) */}
+            <div className="lg:col-span-7">
+              <Card className="p-5 sm:p-6 rounded-xl border border-border bg-surface space-y-5 shadow-2xs">
+                <div className="pb-3 border-b border-border">
+                  <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+                    <Coins size={16} className="text-brand-sage" />
+                    <span>Payment Tender & Settlement</span>
+                  </h2>
+                  <p className="text-xs text-muted mt-0.5">
+                    Select payment settlement status, record advance payments, and configure payment channel.
+                  </p>
                 </div>
-              </Card>
 
-              {/* Advance Amount (if Partially Paid) - Concise & Minimal */}
-              {settlementType === 'partially_paid' && (
-                <Card className="p-4 rounded-xl border border-border bg-surface space-y-2.5 shadow-2xs">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-text">
-                        Advance Paid Amount (₹) <span className="text-brand-crimson">*</span>
+                {/* Settlement Type Selector: FULL PAYMENT -> PARTIAL -> UNPAID */}
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted">
+                      Payment Settlement Status <span className="text-brand-crimson">*</span>
+                    </label>
+                    <Badge
+                      variant={settlementType === 'fully_paid' ? 'success' : settlementType === 'partially_paid' ? 'amber' : 'outline'}
+                      className="text-[10px] font-mono uppercase"
+                    >
+                      {settlementType === 'fully_paid'
+                        ? 'Full Settlement'
+                        : settlementType === 'partially_paid'
+                        ? 'Partial Advance'
+                        : 'Credit / Khata'}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {/* 1. Full Payment */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSettlementType('fully_paid');
+                        setPartialPaidAmount('0');
+                      }}
+                      className={cn(
+                        'p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between',
+                        settlementType === 'fully_paid'
+                          ? 'border-emerald-600 bg-emerald-50/70 ring-1 ring-emerald-600 text-text'
+                          : 'border-border bg-surface text-muted hover:bg-surface-subtle'
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+                          <CheckCircle2 size={16} className="text-emerald-600" />
+                          <span>Full Payment</span>
+                        </div>
+                        {settlementType === 'fully_paid' && <CheckCircle2 size={14} className="text-emerald-600" />}
+                      </div>
+                      <div className="text-[11px] text-muted leading-tight">
+                        100% spot settlement ({formatCurrency(grandTotal)}). Cleared on intake.
+                      </div>
+                    </button>
+
+                    {/* 2. Partial Payment */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSettlementType('partially_paid');
+                        setPartialPaidAmount('0');
+                      }}
+                      className={cn(
+                        'p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between',
+                        settlementType === 'partially_paid'
+                          ? 'border-brand-sage bg-brand-sage-subtle/60 ring-1 ring-brand-sage text-text'
+                          : 'border-border bg-surface text-muted hover:bg-surface-subtle'
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-text">
+                          <Coins size={16} className="text-brand-sage" />
+                          <span>Partial Payment</span>
+                        </div>
+                        {settlementType === 'partially_paid' && <CheckCircle2 size={14} className="text-brand-sage" />}
+                      </div>
+                      <div className="text-[11px] text-muted leading-tight">
+                        Pay advance now; balance deferred to credit khata.
+                      </div>
+                    </button>
+
+                    {/* 3. Unpaid */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSettlementType('unpaid');
+                        setPartialPaidAmount('0');
+                      }}
+                      className={cn(
+                        'p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between',
+                        settlementType === 'unpaid'
+                          ? 'border-amber-500 bg-amber-50/70 ring-1 ring-amber-500 text-text'
+                          : 'border-border bg-surface text-muted hover:bg-surface-subtle'
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-950">
+                          <Clock size={16} className="text-amber-600" />
+                          <span>Unpaid (Credit)</span>
+                        </div>
+                        {settlementType === 'unpaid' && <CheckCircle2 size={14} className="text-amber-600" />}
+                      </div>
+                      <div className="text-[11px] text-muted leading-tight">
+                        Full amount deferred to {computedDueDate ? formatDate(computedDueDate, false) : '-'}.
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Advance Amount (if Partially Paid) - Integrated Inside the Same Card without external box */}
+                  {settlementType === 'partially_paid' && (
+                    <div className="p-3.5 rounded-xl border border-border bg-surface-subtle space-y-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-text">
+                            Advance Paid Amount (₹) <span className="text-brand-crimson">*</span>
+                          </label>
+                          <span className="text-[11px] text-muted">
+                            Initial payment tendered at intake (defaults to 0 for credit)
+                          </span>
+                        </div>
+
+                        <div className="relative w-44">
+                          <span className="absolute left-3 top-2 text-muted font-bold text-xs">₹</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max={grandTotal}
+                            placeholder="0"
+                            value={partialPaidAmount}
+                            onChange={(e) => setPartialPaidAmount(e.target.value)}
+                            className="w-full pl-7 pr-3 py-1.5 text-sm font-bold font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage text-right"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted">
+                        <span>Remaining Balance on Credit:</span>
+                        <strong className="font-mono text-amber-900 text-sm">
+                          {formatCurrency(remainingBalanceOnCredit)}
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment Instrument (when Full Payment or Partial) */}
+                {settlementType !== 'unpaid' && (
+                  <div className="space-y-3.5 pt-3 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-text flex items-center gap-1.5">
+                        <CreditCard size={15} className="text-brand-sage" />
+                        <span>Payment Method</span>
                       </label>
-                      <span className="text-[11px] text-muted">
-                        Initial payment tendered at intake
+
+                      <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-surface-subtle border border-border text-muted">
+                        Channel: {billType === 'gst' ? 'Official Bank' : 'Secondary Cash'}
                       </span>
                     </div>
 
-                    <div className="relative w-44">
-                      <span className="absolute left-3 top-2 text-muted font-bold text-xs">₹</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="1"
-                        max={grandTotal}
-                        placeholder="0.00"
-                        value={partialPaidAmount}
-                        onChange={(e) => setPartialPaidAmount(e.target.value)}
-                        className="w-full pl-7 pr-3 py-1.5 text-sm font-bold font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage text-right"
-                      />
+                    {/* Clean 4-button selector */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { id: 'cheque', label: 'Cheque', icon: Building },
+                        { id: 'cash', label: 'Cash', icon: Banknote },
+                        { id: 'upi', label: 'UPI / QR', icon: QrCode },
+                        { id: 'bank_transfer', label: 'Bank Transfer', icon: Landmark },
+                      ].map((m) => {
+                        const Icon = m.icon;
+                        const isSelected = paymentMode === m.id;
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setPaymentMode(m.id)}
+                            className={cn(
+                              'p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2',
+                              isSelected
+                                ? 'border-brand-sage bg-brand-sage-subtle text-text ring-1 ring-brand-sage font-bold'
+                                : 'border-border bg-surface text-muted hover:bg-surface-subtle font-medium'
+                            )}
+                          >
+                            <Icon size={15} className={isSelected ? 'text-brand-sage' : 'text-muted'} />
+                            <span className="text-xs">{m.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
 
-                  <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted">
-                    <span>Remaining Balance on Credit:</span>
-                    <strong className="font-mono text-amber-900 text-sm">
-                      {formatCurrency(remainingBalanceOnCredit)}
-                    </strong>
-                  </div>
-                </Card>
-              )}
+                    {/* Cheque Fields */}
+                    {paymentMode === 'cheque' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2.5 border-t border-border/70">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-text mb-1">
+                            Cheque / Check No. <span className="text-brand-crimson">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. 049281"
+                            value={chequeNumber}
+                            onChange={(e) => setChequeNumber(e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                          />
+                        </div>
 
-              {/* Payment Instrument (when Full Payment or Partial) */}
-              {settlementType !== 'unpaid' && (
-                <Card className="p-4 sm:p-5 rounded-xl border border-border bg-surface space-y-3.5 shadow-2xs">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-text flex items-center gap-1.5">
-                      <CreditCard size={15} className="text-brand-sage" />
-                      <span>Payment Method</span>
-                    </label>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-text mb-1">
+                            Cheque Date <span className="text-brand-crimson">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            required
+                            value={chequeDate}
+                            onChange={(e) => setChequeDate(e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                          />
+                        </div>
 
-                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-surface-subtle border border-border text-muted">
-                      Channel: {billType === 'gst' ? 'Official Bank' : 'Secondary Cash'}
-                    </span>
-                  </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-text mb-1">
+                            Bank Name (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. HDFC / SBI"
+                            value={chequeBank}
+                            onChange={(e) => setChequeBank(e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
+                          />
+                        </div>
+                      </div>
+                    )}
 
-                  {/* Clean 4-button selector */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      { id: 'cheque', label: 'Cheque', icon: Building },
-                      { id: 'cash', label: 'Cash', icon: Banknote },
-                      { id: 'upi', label: 'UPI / QR', icon: QrCode },
-                      { id: 'bank_transfer', label: 'Bank Transfer', icon: Landmark },
-                    ].map((m) => {
-                      const Icon = m.icon;
-                      const isSelected = paymentMode === m.id;
-                      return (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={() => setPaymentMode(m.id)}
-                          className={cn(
-                            'p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2',
-                            isSelected
-                              ? 'border-brand-sage bg-brand-sage-subtle text-text ring-1 ring-brand-sage font-bold'
-                              : 'border-border bg-surface text-muted hover:bg-surface-subtle font-medium'
-                          )}
-                        >
-                          <Icon size={15} className={isSelected ? 'text-brand-sage' : 'text-muted'} />
-                          <span className="text-xs">{m.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Cheque Fields */}
-                  {paymentMode === 'cheque' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2.5 border-t border-border/70">
-                      <div>
+                    {/* UPI / Bank Transfer Reference */}
+                    {(paymentMode === 'upi' || paymentMode === 'bank_transfer') && (
+                      <div className="pt-2.5 border-t border-border/70">
                         <label className="block text-[11px] font-semibold text-text mb-1">
-                          Cheque / Check No. <span className="text-brand-crimson">*</span>
+                          {paymentMode === 'upi' ? 'UPI Reference / UTR Number' : 'Bank UTR / Transaction Ref'}
                         </label>
                         <input
                           type="text"
-                          required
-                          placeholder="e.g. 049281"
-                          value={chequeNumber}
-                          onChange={(e) => setChequeNumber(e.target.value)}
+                          placeholder={
+                            paymentMode === 'upi'
+                              ? 'e.g. UPI/629103810291'
+                              : 'e.g. UTR / NEFT Reference Number'
+                          }
+                          value={transactionRef}
+                          onChange={(e) => setTransactionRef(e.target.value)}
                           className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
                         />
                       </div>
+                    )}
+                  </div>
+                )}
 
-                      <div>
-                        <label className="block text-[11px] font-semibold text-text mb-1">
-                          Cheque Date <span className="text-brand-crimson">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          required
-                          value={chequeDate}
-                          onChange={(e) => setChequeDate(e.target.value)}
-                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-text mb-1">
-                          Bank Name (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. HDFC / SBI"
-                          value={chequeBank}
-                          onChange={(e) => setChequeBank(e.target.value)}
-                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* UPI / Bank Transfer Reference */}
-                  {(paymentMode === 'upi' || paymentMode === 'bank_transfer') && (
-                    <div className="pt-2.5 border-t border-border/70">
-                      <label className="block text-[11px] font-semibold text-text mb-1">
-                        {paymentMode === 'upi' ? 'UPI Reference / UTR Number' : 'Bank UTR / Transaction Ref'}
-                      </label>
-                      <input
-                        type="text"
-                        placeholder={
-                          paymentMode === 'upi'
-                            ? 'e.g. UPI/629103810291'
-                            : 'e.g. UTR / NEFT Reference Number'
-                        }
-                        value={transactionRef}
-                        onChange={(e) => setTransactionRef(e.target.value)}
-                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                      />
-                    </div>
-                  )}
-                </Card>
-              )}
+                {/* Step 3 Footer Navigation - Inside Card */}
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setCurrentStep(2)}
+                    className="rounded-lg gap-2 text-xs font-medium cursor-pointer"
+                  >
+                    <ArrowLeft size={14} />
+                    <span>Back to Supplier Details</span>
+                  </Button>
+                </div>
+              </Card>
             </div>
 
             {/* Right: Final Review & Khata Impact Card */}

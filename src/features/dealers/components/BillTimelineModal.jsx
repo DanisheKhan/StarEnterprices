@@ -18,8 +18,8 @@ import {
   Printer,
 } from 'lucide-react';
 
-export function BillTimelineModal({ isOpen, onClose, billId, onOpenRecordPayment }) {
-  const { data: bill, isLoading } = useDealerBillDetail(billId);
+export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpenRecordPayment }) {
+  const { data: bill, isLoading } = useDealerBillDetail(billId, initialBill);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
 
   // Compute timeline and velocity metrics
@@ -97,9 +97,25 @@ export function BillTimelineModal({ isOpen, onClose, billId, onOpenRecordPayment
       title="Payment History & Bill Timeline"
       className="max-w-2xl"
     >
-      {isLoading ? (
-        <div className="py-12 text-center text-muted text-xs">
-          Loading bill timeline & payments...
+      {!bill && isLoading ? (
+        <div className="space-y-4 py-2 animate-pulse">
+          <div className="p-4 rounded-xl border border-border bg-surface-subtle space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="h-5 w-40 bg-border/60 rounded"></div>
+              <div className="h-6 w-24 bg-border/60 rounded"></div>
+            </div>
+            <div className="h-3 w-56 bg-border/40 rounded"></div>
+            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/70">
+              <div className="h-8 bg-border/40 rounded"></div>
+              <div className="h-8 bg-border/40 rounded"></div>
+              <div className="h-8 bg-border/40 rounded"></div>
+              <div className="h-8 bg-border/40 rounded"></div>
+            </div>
+          </div>
+          <div className="pl-6 space-y-3">
+            <div className="h-12 bg-border/30 rounded-lg"></div>
+            <div className="h-12 bg-border/30 rounded-lg"></div>
+          </div>
         </div>
       ) : !bill ? (
         <div className="py-8 text-center text-muted text-xs">Bill not found.</div>

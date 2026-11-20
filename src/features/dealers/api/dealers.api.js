@@ -154,6 +154,35 @@ export async function updateDealer(id, payload) {
 }
 
 /**
+ * Enriches a bill with sortedTimeline combining payments and debit notes
+ */
+export function enrichBillTimeline(bill) {
+  if (!bill) return null;
+  if (bill.sortedTimeline && Array.isArray(bill.sortedTimeline)) return bill;
+
+  const payments = (bill.payments || []).map((p) => ({
+    ...p,
+    timelineType: 'payment',
+    timestamp: p.payment_date || p.created_at,
+  }));
+
+  const debits = (bill.debit_notes || []).map((d) => ({
+    ...d,
+    timelineType: 'debit_note',
+    timestamp: d.note_date || d.created_at,
+  }));
+
+  const timeline = [...payments, ...debits].sort(
+    (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+  );
+
+  return {
+    ...bill,
+    sortedTimeline: timeline,
+  };
+}
+
+/**
  * Lists dealer bills with optional filters (dealerId, billType: gst/kaccha, status, storeId)
  */
 export async function listDealerBills({
@@ -171,8 +200,8 @@ export async function listDealerBills({
       .select(`
         *,
         dealer:dealers(id, name, brand_name, phone, gstin, billing_mode),
-        payments:dealer_payments(id, payment_number, payment_date, amount, payment_mode, transaction_ref),
-        debit_notes:dealer_debit_notes(id, note_number, note_date, amount, reason)
+        payments:dealer_payments(id, payment_number, payment_date, amount, payment_mode, payment_channel, transaction_ref, notes, cheque_date),
+        debit_notes:dealer_debit_notes(id, note_number, note_date, amount, reason, description, notes)
       `)
       .order('bill_date', { ascending: false })
       .limit(limit);
@@ -209,12 +238,12 @@ export async function listDealerBills({
         }
       }
 
-      return {
+      return enrichBillTimeline({
         ...bill,
         daysOverdue,
         daysUntilDue,
         isOverdue: daysOverdue > 0,
-      };
+      });
     });
 
     // Cache un-filtered base list
@@ -233,40 +262,38 @@ export async function listDealerBills({
  * Gets comprehensive detail for a single bill including full payment and debit note timeline
  */
 export async function getDealerBillDetail(billId) {
-  const { data, error } = await supabase
-    .from('dealer_bills')
-    .select(`
-      *,
-      dealer:dealers(*),
-      payments:dealer_payments(*),
-      debit_notes:dealer_debit_notes(*)
-    `)
-    .eq('id', billId)
-    .single();
+  const cacheKey = `dealer_bill_detail_${billId}`;
 
-  if (error) throw error;
+  try {
+    const { data, error } = await supabase
+      .from('dealer_bills')
+      .select(`
+        *,
+        dealer:dealers(*),
+        payments:dealer_payments(*),
+        debit_notes:dealer_debit_notes(*)
+      `)
+      .eq('id', billId)
+      .single();
 
-  // Sort timeline chronologically
-  const payments = (data.payments || []).map((p) => ({
-    ...p,
-    timelineType: 'payment',
-    timestamp: p.payment_date,
-  }));
+    if (error) throw error;
 
-  const debits = (data.debit_notes || []).map((d) => ({
-    ...d,
-    timelineType: 'debit_note',
-    timestamp: d.note_date,
-  }));
+    const result = enrichBillTimeline(data);
+    setPersistentCache(cacheKey, result);
+    return result;
+  } catch (err) {
+    console.warn('[Dealers API] Network error fetching bill detail, checking cache:', err);
+    const cached = getPersistentCache(cacheKey);
+    if (cached) return cached;
 
-  const timeline = [...payments, ...debits].sort(
-    (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-  );
-
-  return {
-    ...data,
-    sortedTimeline: timeline,
-  };
+    // Fallback: search in all bills persistent cache
+    const allBills = getPersistentCache('dealers_bills_all');
+    if (Array.isArray(allBills)) {
+      const match = allBills.find((b) => b && b.id === billId);
+      if (match) return enrichBillTimeline(match);
+    }
+    throw err;
+  }
 }
 
 /**

@@ -35,7 +35,7 @@ export function DealersHubPage() {
   const [isAddDealerOpen, setIsAddDealerOpen] = useState(false);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isDebitNoteOpen, setIsDebitNoteOpen] = useState(false);
-  const [timelineBillId, setTimelineBillId] = useState(null);
+  const [timelineBill, setTimelineBill] = useState(null);
   const [printingBill, setPrintingBill] = useState(null);
 
   // Selected item contexts for modals
@@ -89,8 +89,15 @@ export function DealersHubPage() {
     setIsDebitNoteOpen(true);
   }
 
-  function handleOpenTimeline(billId) {
-    setTimelineBillId(billId);
+  function handleOpenTimeline(billId, bill = null) {
+    if (bill) {
+      setTimelineBill(bill);
+    } else if (typeof billId === 'object' && billId !== null) {
+      setTimelineBill(billId);
+    } else {
+      const found = bills.find((b) => b.id === billId);
+      setTimelineBill(found || { id: billId });
+    }
   }
 
   if (isInitialLoading) {
@@ -229,11 +236,12 @@ export function DealersHubPage() {
         storeId={storeId}
       />
 
-      {timelineBillId && (
+      {timelineBill && (
         <BillTimelineModal
-          isOpen={Boolean(timelineBillId)}
-          onClose={() => setTimelineBillId(null)}
-          billId={timelineBillId}
+          isOpen={Boolean(timelineBill)}
+          onClose={() => setTimelineBill(null)}
+          billId={timelineBill.id}
+          initialBill={timelineBill}
           onOpenRecordPayment={handleOpenRecordPayment}
         />
       )}
