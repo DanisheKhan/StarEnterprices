@@ -403,20 +403,43 @@ export const MAX_SERIALS_PER_BATCH = 500;
  * @param {string} storeId
  */
 export async function listStoreSerials(storeId) {
-  const resolvedStoreId = resolveStoreUuid(storeId);
-  const { data, error } = await supabase
-    .from('product_units')
-    .select(`
-      id, product_id, serial_number, status, condition_grade, warranty_months, created_at, updated_at,
-      products (id, name, sku),
-      order_items (id, invoices (id, invoice_number, customer_name, created_at))
-    `)
-    .eq('store_id', resolvedStoreId)
-    .in('status', ['in_stock', 'sold'])
-    .order('created_at', { ascending: false });
+  const resolvedStoreId = resolveStoreUuid(storeId) || storeId;
+  try {
+    const { data, error } = await supabase
+      .from('product_units')
+      .select(`
+        id, product_id, serial_number, status, condition_grade, warranty_months, created_at, updated_at,
+        products (
+          id, name, sku, image_url, selling_price, cost_price, category_id,
+          categories (id, name, slug),
+          brands (id, name, slug)
+        ),
+        order_items (id, invoices (id, invoice_number, customer_name, created_at))
+      `)
+      .eq('store_id', resolvedStoreId)
+      .in('status', ['in_stock', 'sold'])
+      .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return data || [];
+    if (error) throw error;
+    const enriched = (data || []).map((u) => ({
+      ...u,
+      products: u.products
+        ? {
+            ...u.products,
+            image_url: getProductImageUrl(u.products),
+          }
+        : null,
+    }));
+    if (enriched.length > 0 && resolvedStoreId) {
+      setPersistentCache(`store_serials_${resolvedStoreId}`, enriched);
+    }
+    return enriched;
+  } catch (err) {
+    console.warn('Network error listing store serials, using cache:', err);
+    const cached = resolvedStoreId ? getPersistentCache(`store_serials_${resolvedStoreId}`) : null;
+    if (cached) return cached;
+    return [];
+  }
 }
 
 /**
