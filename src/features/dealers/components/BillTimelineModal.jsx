@@ -319,9 +319,21 @@ export function BillTimelineModal({ isOpen, onClose, billId, onOpenRecordPayment
                       <div className="text-muted mt-1 space-y-0.5">
                         {isPayment ? (
                           <div>
-                            Mode: <span className="font-semibold text-text uppercase">{item.payment_mode}</span>
+                            Mode:{' '}
+                            <span className="font-semibold text-text uppercase">
+                              {item.payment_mode === 'cheque' ? 'Cheque' : item.payment_mode}
+                            </span>
                             {item.transaction_ref && (
-                              <span className="font-mono text-text"> (Ref: {item.transaction_ref})</span>
+                              <span className="font-mono text-text">
+                                {' '}
+                                ({item.payment_mode === 'cheque' ? 'Cheque No' : 'Ref'}: {item.transaction_ref})
+                              </span>
+                            )}
+                            {item.payment_mode === 'cheque' && item.cheque_date && (
+                              <span className="text-text">
+                                {' '}
+                                • Cheque Date: {formatDate(item.cheque_date, false)}
+                              </span>
                             )}
                             {' • '}Channel:{' '}
                             <span className="font-medium text-text">
