@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   MapPin,
   Layers,
-  MessageCircle,
 } from 'lucide-react';
 
 export function DealerDirectoryTable({
@@ -63,43 +62,6 @@ export function DealerDirectoryTable({
   const totalPayables = useMemo(() => {
     return filteredDealers.reduce((sum, d) => sum + (d.metrics?.totalBalance || 0), 0);
   }, [filteredDealers]);
-
-  // WhatsApp Khata Reminder Dispatcher
-  function handleSendDealerWhatsApp(dealer) {
-    const dealerName = dealer.name || dealer.brand_name || 'Valued Partner';
-    const total = dealer.metrics?.totalBalance || 0;
-    const gstBal = dealer.metrics?.gstBalance || 0;
-    const kacchaBal = dealer.metrics?.kacchaBalance || 0;
-    const overdue = dealer.metrics?.overdueAmount || 0;
-
-    const breakdownLines = [];
-    if (gstBal > 0) breakdownLines.push(`• Official GST Book: ${formatCurrency(gstBal)}`);
-    if (kacchaBal > 0) breakdownLines.push(`• Kaccha Khata Book: ${formatCurrency(kacchaBal)}`);
-
-    const text = `*KHATA STATEMENT & PAYMENT REMINDER - STAR ENTERPRISES*
-----------------------------------------
-*Dear ${dealerName},*
-This is a gentle reminder regarding your current ledger balance:
-
-💼 *Supplier Khata:* ${dealerName}
-${overdue > 0 ? `⚠️ *OVERDUE AMOUNT:* ${formatCurrency(overdue)}\n` : ''}🔴 *TOTAL OUTSTANDING BALANCE:* ${formatCurrency(total)}
-${breakdownLines.length > 0 ? `\n📊 *Ledger Breakdown:*\n${breakdownLines.join('\n')}\n` : ''}----------------------------------------
-Kindly verify your records and process the pending payment clearance.
-
-*From:* Star Enterprises
-📞 *Contact:* +91 93700 11653
-
-Thank you!`;
-
-    const rawPhone = (dealer.phone || '').replace(/\D/g, '');
-    const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
-    const encoded = encodeURIComponent(text);
-    const url = cleanPhone
-      ? `https://wa.me/${cleanPhone}?text=${encoded}`
-      : `https://wa.me/?text=${encoded}`;
-
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
 
   return (
     <div className="space-y-4">
@@ -451,19 +413,6 @@ Thank you!`;
                       <Plus size={13} className="stroke-[2.5]" />
                       <span>New Bill</span>
                     </Link>
-
-                    {/* WhatsApp Reminder (Only if balance is not fully settled) */}
-                    {totalBalance > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => handleSendDealerWhatsApp(d)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white shadow-2xs transition-all cursor-pointer font-medium"
-                        title={`Send WhatsApp ledger balance reminder to ${d.name || d.brand_name} for ${formatCurrency(totalBalance)}`}
-                      >
-                        <MessageCircle size={13} className="stroke-[2.5]" />
-                        <span>WhatsApp Reminder</span>
-                      </button>
-                    )}
 
                     {/* Pay Khata Button (if balance > 0) */}
                     {totalBalance > 0 && onOpenRecordPayment && (

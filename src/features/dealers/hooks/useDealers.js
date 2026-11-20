@@ -37,9 +37,9 @@ export function useDealers({ storeId, includeInactive = false } = {}) {
     refetchOnWindowFocus: false,
     initialData: () => {
       const cached = getPersistentCache('dealers_directory');
-      if (!cached) return undefined;
+      if (!Array.isArray(cached)) return undefined;
       if (storeId) {
-        return cached.filter((d) => !d.store_id || d.store_id === storeId);
+        return cached.filter((d) => d && (!d.store_id || d.store_id === storeId));
       }
       return cached;
     },
@@ -64,7 +64,7 @@ export function useDealerBills(filters = {}) {
     initialData: () => {
       const cacheKey = `dealers_bills_${filters.storeId || 'all'}`;
       const cached = getPersistentCache(cacheKey);
-      return cached || undefined;
+      return Array.isArray(cached) ? cached : undefined;
     },
     placeholderData: (prev) => prev,
   });

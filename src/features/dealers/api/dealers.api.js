@@ -74,7 +74,8 @@ export async function listDealers({ storeId, includeInactive = false } = {}) {
     return enriched;
   } catch (err) {
     console.warn('[Dealers API] Network error loading dealers, using cache:', err);
-    return getPersistentCache('dealers_directory') || [];
+    const cached = getPersistentCache('dealers_directory');
+    return Array.isArray(cached) ? cached : [];
   }
 }
 
@@ -254,7 +255,8 @@ export async function listDealerBills({
     return enriched;
   } catch (err) {
     console.warn('[Dealers API] Network error loading bills, using cache:', err);
-    return getPersistentCache(cacheKey) || [];
+    const cached = getPersistentCache(cacheKey);
+    return Array.isArray(cached) ? cached : [];
   }
 }
 

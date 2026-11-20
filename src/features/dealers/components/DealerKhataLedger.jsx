@@ -9,7 +9,6 @@ import {
   TrendingDown,
   Building2,
   Phone,
-  Share2,
   Printer,
   Plus,
   Layers,
@@ -35,33 +34,6 @@ export function DealerKhataLedger({
 
   const dealer = statement?.dealer;
   const entries = statement?.entries || [];
-
-  // WhatsApp share message builder
-  function handleShareWhatsApp() {
-    if (!dealer) return;
-
-    const todayFormatted = formatDate(new Date(), false);
-    const text = `*STAR ENTERPRISES - DEALER KHATA STATEMENT*
-----------------------------------------
-*Dealer:* ${dealer.brand_name || dealer.name} (${dealer.name})
-*Date:* ${todayFormatted}
-*Ledger View:* ${billTypeFilter === 'all' ? 'Combined (GST + Kaccha)' : billTypeFilter.toUpperCase()}
-
-*Total Invoiced:* ${formatCurrency(statement.totalBillsAmount)}
-*Total Paid:* ${formatCurrency(statement.totalPaidAmount)}
-*Debit Notes:* ${formatCurrency(statement.totalDebitsAmount)}
-----------------------------------------
-*CURRENT OUTSTANDING BALANCE:* ${formatCurrency(statement.closingBalance)}
-----------------------------------------
-Thank you for your ongoing partnership!`;
-
-    const encoded = encodeURIComponent(text);
-    const url = dealer.phone
-      ? `https://wa.me/91${dealer.phone.replace(/\D/g, '')}?text=${encoded}`
-      : `https://wa.me/?text=${encoded}`;
-
-    window.open(url, '_blank');
-  }
 
   function handlePrint() {
     window.print();
@@ -109,15 +81,6 @@ Thank you for your ongoing partnership!`;
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={handleShareWhatsApp}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.99] shadow-xs transition-all cursor-pointer"
-            >
-              <Share2 size={14} className="stroke-[2.5]" />
-              <span>Share WhatsApp</span>
-            </button>
-
             <button
               type="button"
               onClick={handlePrint}

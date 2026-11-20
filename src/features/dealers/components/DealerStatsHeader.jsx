@@ -72,11 +72,11 @@ export function DealerStatsHeader({ analytics, isLoading }) {
     <div className="space-y-4">
       {/* 4 Executive Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* 1. Total Net Payables */}
+        {/* 1. Total Money to Give */}
         <Card className="p-4 bg-surface border border-border rounded-xl shadow-2xs hover:shadow-xs transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold tracking-wider uppercase text-muted">
-              Total Accounts Payable
+              Total Money to Give
             </span>
             <div className="w-8 h-8 rounded-lg bg-surface-subtle flex items-center justify-center text-text">
               <Receipt size={16} />
@@ -87,7 +87,7 @@ export function DealerStatsHeader({ analytics, isLoading }) {
               {isLoading ? '...' : formatCurrency(totalPayable)}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-muted">
-              <span>All active dealer balances</span>
+              <span>Total balance owed to suppliers</span>
             </div>
           </div>
         </Card>
@@ -116,7 +116,7 @@ export function DealerStatsHeader({ analytics, isLoading }) {
         <Card className="p-4 bg-surface border border-amber-200/70 rounded-xl shadow-2xs hover:shadow-xs transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold tracking-wider uppercase text-amber-900">
-              Kaccha (Non-GST / Estimates)
+              Kaccha (Parchi / Cash)
             </span>
             <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700">
               <Layers size={16} />
@@ -127,7 +127,7 @@ export function DealerStatsHeader({ analytics, isLoading }) {
               {isLoading ? '...' : formatCurrency(kacchaPayable)}
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-amber-800 font-medium">
-              <span>Insulated cash & estimate ledger</span>
+              <span>Cash slips & estimate khata</span>
             </div>
           </div>
         </Card>
@@ -144,7 +144,7 @@ export function DealerStatsHeader({ analytics, isLoading }) {
                 totalOverdue > 0 ? 'text-brand-crimson-text' : 'text-muted'
               }`}
             >
-              Overdue Aging
+              Overdue / Pay Now
             </span>
             <div
               className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -163,7 +163,7 @@ export function DealerStatsHeader({ analytics, isLoading }) {
               {isLoading ? '...' : formatCurrency(totalOverdue)}
             </div>
             <div className="flex items-center justify-between mt-1 text-xs text-muted">
-              <span>{overdueCount} bills past credit terms</span>
+              <span>{overdueCount} bills past payment due date</span>
               {avgTurnaround != null && (
                 <span className="font-semibold text-text flex items-center gap-1">
                   <Clock size={11} /> {avgTurnaround}d avg clear
@@ -180,14 +180,14 @@ export function DealerStatsHeader({ analytics, isLoading }) {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-text uppercase tracking-wide">
-                Payables Aging Breakdown (Timeline)
+                Payment Due Timeline & Maturity
               </span>
               <span className="text-[11px] text-muted">
-                How credit balances are distributed by maturity
+                When you have to give money to suppliers
               </span>
             </div>
             <div className="text-xs font-semibold text-text">
-              Total Outstanding: <span className="text-brand-sage">{formatCurrency(totalPayable)}</span>
+              Total to Give: <span className="text-brand-crimson font-bold">{formatCurrency(totalPayable)}</span>
             </div>
           </div>
 
