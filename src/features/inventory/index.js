@@ -1,4 +1,5 @@
 export { InventoryCardsPage } from './routes/InventoryCardsPage';
+export { SerialNumbersPage } from './routes/SerialNumbersPage';
 export { StockAdjustmentModal } from './components/StockAdjustmentModal';
 export { EditPricingModal } from './components/EditPricingModal';
 export { EditProductModal } from './components/EditProductModal';
@@ -11,6 +12,8 @@ export {
   useCreateProductUnit,
   useAdjustStock,
   useAddSerializedUnit,
+  useAddSerializedUnitsBulk,
+  useStoreSerials,
   useRemoveSerializedUnit,
   useUpdatePricing,
   useCreateProduct,
@@ -29,6 +32,9 @@ export {
   createProductUnit,
   adjustInventoryStock,
   addSerializedUnit,
+  addSerializedUnitsBulk,
+  listStoreSerials,
+  MAX_SERIALS_PER_BATCH,
   removeSerializedUnit,
   updateProductPricing,
   updateProduct,

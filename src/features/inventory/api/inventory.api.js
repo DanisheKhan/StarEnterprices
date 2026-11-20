@@ -206,11 +206,15 @@ export async function listProductsByStore({ storeId, categoryId, search } = {}) 
  * Lists serialized units for a product or store
  */
 export async function listProductUnits({ storeId, productId, status } = {}) {
+  const resolvedStoreId = resolveStoreUuid(storeId) || storeId;
   let query = supabase
     .from('product_units')
     .select('id, product_id, store_id, serial_number, condition_grade, battery_health, purchase_cost, status, warranty_months, notes, created_at')
-    .eq('store_id', storeId)
     .order('created_at', { ascending: false });
+
+  if (resolvedStoreId) {
+    query = query.eq('store_id', resolvedStoreId);
+  }
 
   if (productId) {
     query = query.eq('product_id', productId);
@@ -220,9 +224,24 @@ export async function listProductUnits({ storeId, productId, status } = {}) {
     query = query.eq('status', status);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await query;
+    if (error) throw error;
+    if (data && !productId && !status && resolvedStoreId) {
+      setPersistentCache(`store_product_units_${resolvedStoreId}`, data);
+    }
+    return data || [];
+  } catch (err) {
+    console.warn('Network error listing product units, using cached:', err);
+    const cached = resolvedStoreId ? getPersistentCache(`store_product_units_${resolvedStoreId}`) : null;
+    if (cached) {
+      if (productId) {
+        return cached.filter((u) => u.product_id === productId && (!status || u.status === status));
+      }
+      return cached;
+    }
+    return [];
+  }
 }
 
 /**
@@ -374,6 +393,119 @@ export async function addSerializedUnit({
     });
 
   return unit;
+}
+
+export const MAX_SERIALS_PER_BATCH = 500;
+
+/**
+ * Lists a store's unused (in stock) and used (sold) serial numbers with their product
+ * and the invoice lines they were billed on.
+ * @param {string} storeId
+ */
+export async function listStoreSerials(storeId) {
+  const resolvedStoreId = resolveStoreUuid(storeId);
+  const { data, error } = await supabase
+    .from('product_units')
+    .select(`
+      id, product_id, serial_number, status, condition_grade, warranty_months, created_at, updated_at,
+      products (id, name, sku),
+      order_items (id, invoices (id, invoice_number, customer_name, created_at))
+    `)
+    .eq('store_id', resolvedStoreId)
+    .in('status', ['in_stock', 'sold'])
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Registers several serial numbers for one product in a single insert, then re-syncs
+ * inventory.quantity_on_hand and logs one audit entry. Fails without inserting anything
+ * if any serial is already registered.
+ */
+export async function addSerializedUnitsBulk({
+  storeId,
+  productId,
+  serialNumbers,
+  conditionGrade = 'new',
+  purchaseCost = 0,
+  warrantyMonths = 12,
+  notes = '',
+}) {
+  const resolvedStoreId = resolveStoreUuid(storeId) || storeId;
+  if (!productId) throw new Error('Select a product for these serial numbers.');
+
+  const serials = [
+    ...new Set((serialNumbers || []).map((s) => String(s).trim().toUpperCase()).filter(Boolean)),
+  ];
+  if (serials.length === 0) throw new Error('Enter at least one serial number.');
+  if (serials.length > MAX_SERIALS_PER_BATCH) {
+    throw new Error(`You can create up to ${MAX_SERIALS_PER_BATCH} serial numbers at a time.`);
+  }
+
+  const { data: existing, error: lookupError } = await supabase
+    .from('product_units')
+    .select('serial_number')
+    .in('serial_number', serials);
+
+  if (lookupError) throw lookupError;
+  if (existing && existing.length > 0) {
+    const taken = existing.map((u) => u.serial_number);
+    const preview = taken.slice(0, 5).join(', ');
+    const more = taken.length > 5 ? ` and ${taken.length - 5} more` : '';
+    throw new Error(`Already registered: ${preview}${more}. Remove these and try again.`);
+  }
+
+  const { data: units, error: insertError } = await supabase
+    .from('product_units')
+    .insert(
+      serials.map((serial) => ({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        serial_number: serial,
+        condition_grade: conditionGrade,
+        purchase_cost: parseFloat(purchaseCost) || 0,
+        status: 'in_stock',
+        warranty_months: parseInt(warrantyMonths, 10) || 0,
+        notes: notes.trim() || 'Serial number created via serial number console',
+      }))
+    )
+    .select('id, serial_number, status');
+
+  if (insertError) throw insertError;
+
+  const { count } = await supabase
+    .from('product_units')
+    .select('id', { count: 'exact', head: true })
+    .eq('product_id', productId)
+    .eq('store_id', resolvedStoreId)
+    .eq('status', 'in_stock');
+
+  const newCount = count ?? serials.length;
+
+  await supabase
+    .from('inventory')
+    .upsert({
+      store_id: resolvedStoreId,
+      product_id: productId,
+      quantity_on_hand: newCount,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'store_id,product_id' });
+
+  await supabase
+    .from('stock_adjustments')
+    .insert({
+      store_id: resolvedStoreId,
+      product_id: productId,
+      previous_quantity: Math.max(0, newCount - serials.length),
+      new_quantity: newCount,
+      change_quantity: serials.length,
+      reason: 'restock',
+      notes: `Created ${serials.length} serial number(s): ${serials.slice(0, 10).join(', ')}${serials.length > 10 ? '...' : ''}`,
+    });
+
+  return units || [];
 }
 
 /**

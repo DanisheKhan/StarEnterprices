@@ -19,6 +19,8 @@ import {
   Smartphone,
   Armchair,
   Building2,
+  Barcode,
+  FileText,
 } from 'lucide-react';
 
 export function AdminConsoleLayout() {
@@ -90,6 +92,7 @@ export function AdminConsoleLayout() {
   const isBillingActive = path === `${basePath}/billing`;
   const isInvoicesActive = path.startsWith(`${basePath}/invoices`) || path === '/admin/invoices';
   const isInventoryActive = path.startsWith(`${basePath}/inventory`);
+  const isSerialsActive = path.startsWith(`${basePath}/serials`);
   const isDealersActive = path.startsWith(`${basePath}/dealers`) || path.startsWith('/admin/dealers');
 
   const activeStoreName =
@@ -236,7 +239,7 @@ export function AdminConsoleLayout() {
                 <span>Dashboard</span>
               </Link>
 
-              {/* 2. Billing */}
+              {/* 2. Sales Billing */}
               <Link
                 to={`${basePath}/billing`}
                 onMouseEnter={() => import('@/features/billing').catch(() => {})}
@@ -248,7 +251,7 @@ export function AdminConsoleLayout() {
                 )}
               >
                 <CreditCard size={15} className="shrink-0" />
-                <span>Billing</span>
+                <span>Sales Billing</span>
               </Link>
 
               {/* 3. Stock & Inventory */}
@@ -264,6 +267,21 @@ export function AdminConsoleLayout() {
               >
                 <Package size={15} className="shrink-0" />
                 <span>Stock & Inventory</span>
+              </Link>
+
+              {/* 4. Serial Numbers */}
+              <Link
+                to={`${basePath}/serials`}
+                onMouseEnter={() => import('@/features/inventory').catch(() => {})}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors',
+                  isSerialsActive
+                    ? 'bg-sidebar-active text-sidebar-active-fg font-semibold border border-border shadow-2xs'
+                    : 'text-sidebar-text hover:text-sidebar-text-hover hover:bg-sidebar-surface font-medium'
+                )}
+              >
+                <Barcode size={15} className="shrink-0" />
+                <span>Serial Number</span>
               </Link>
             </div>
           </nav>

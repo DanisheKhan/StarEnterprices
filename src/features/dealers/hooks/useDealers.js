@@ -7,6 +7,7 @@ import {
   updateDealer,
   listDealerBills,
   getDealerBillDetail,
+  enrichBillTimeline,
   createDealerBill,
   recordDealerPayment,
   createDealerDebitNote,
@@ -69,11 +70,46 @@ export function useDealerBills(filters = {}) {
   });
 }
 
-export function useDealerBillDetail(billId) {
+export function useDealerBillDetail(billId, initialBill = null) {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: dealerKeys.billDetail(billId),
     queryFn: () => getDealerBillDetail(billId),
     enabled: Boolean(billId),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    initialData: () => {
+      // 1. If explicit initial bill passed with matching ID
+      if (initialBill && initialBill.id === billId) {
+        return enrichBillTimeline(initialBill);
+      }
+
+      // 2. Query Client cache: inspect loaded dealer bill list queries
+      const billQueries = queryClient.getQueriesData({ queryKey: dealerKeys.all });
+      for (const [, list] of billQueries) {
+        if (Array.isArray(list)) {
+          const match = list.find((b) => b && b.id === billId);
+          if (match) return enrichBillTimeline(match);
+        }
+      }
+
+      // 3. Persistent cache: check single bill cache first
+      const singleCached = getPersistentCache(`dealer_bill_detail_${billId}`);
+      if (singleCached) {
+        return enrichBillTimeline(singleCached);
+      }
+
+      // 4. Persistent cache: check all bills list cache
+      const cachedList = getPersistentCache('dealers_bills_all');
+      if (Array.isArray(cachedList)) {
+        const match = cachedList.find((b) => b && b.id === billId);
+        if (match) return enrichBillTimeline(match);
+      }
+
+      return undefined;
+    },
+    placeholderData: (prev) => prev,
   });
 }
 

@@ -6,6 +6,8 @@ import {
   createProduct,
   adjustInventoryStock,
   addSerializedUnit,
+  addSerializedUnitsBulk,
+  listStoreSerials,
   removeSerializedUnit,
   updateProductPricing,
   getCachedStoreProducts,
@@ -22,6 +24,7 @@ export const inventoryKeys = {
   products: (storeId, filters) => [...inventoryKeys.all, 'products', storeId, filters],
   units: (storeId, productId, status) => [...inventoryKeys.all, 'units', storeId, productId, status],
   categories: (storeId) => [...inventoryKeys.all, 'categories', storeId],
+  serials: (storeId) => [...inventoryKeys.all, 'serials', storeId],
 };
 
 export function useProducts(storeId, filters = {}) {
@@ -41,6 +44,15 @@ export function useProductUnits(storeId, productId = null, status = null, option
   return useQuery({
     queryKey: inventoryKeys.units(storeId, productId, status),
     queryFn: () => listProductUnits({ storeId, productId, status }),
+    placeholderData: () => {
+      if (!storeId) return undefined;
+      const cached = getPersistentCache(`store_product_units_${storeId}`);
+      if (!cached) return undefined;
+      if (productId) {
+        return cached.filter((u) => u.product_id === productId && (!status || u.status === status));
+      }
+      return cached;
+    },
     enabled: isEnabled,
     staleTime: 1000 * 60 * 3,
     refetchOnWindowFocus: false,
@@ -74,6 +86,26 @@ export function useAddSerializedUnit() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: addSerializedUnit,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    },
+  });
+}
+
+export function useStoreSerials(storeId) {
+  return useQuery({
+    queryKey: inventoryKeys.serials(storeId),
+    queryFn: () => listStoreSerials(storeId),
+    enabled: Boolean(storeId),
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useAddSerializedUnitsBulk() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addSerializedUnitsBulk,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['reports'] });

@@ -17,7 +17,6 @@ import { cn } from '@/shared/lib/cn';
 import {
   Barcode,
   Plus,
-  Minus,
   Trash2,
   Check,
   AlertCircle,
@@ -42,6 +41,31 @@ const STEPS = [
   { id: 2, label: 'Customer Details', icon: User },
   { id: 3, label: 'Payment & Settlement', icon: Banknote },
 ];
+
+function ProductThumbnail({ imageUrl, sku, name }) {
+  const [error, setError] = useState(false);
+
+  if (imageUrl && !error) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        loading="lazy"
+        className="w-full h-full object-contain p-0.5 group-hover:opacity-90 transition-opacity duration-200"
+        onError={() => setError(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center text-muted">
+      <Package size={22} />
+      <span className="text-[9px] font-mono leading-none mt-1">
+        {sku?.slice(-4) || 'ITEM'}
+      </span>
+    </div>
+  );
+}
 
 export function POSPage() {
   const { store } = useOutletContext();
@@ -87,14 +111,28 @@ export function POSPage() {
 
   // Data Queries
   const { data: products = [] } = useProducts(store?.id);
-  const { data: availableUnits = [], isLoading: unitsLoading } = useProductUnits(
+
+  // Pre-load all store serialized units upfront with 0ms persistent cache
+  // This guarantees lightning-fast, instantaneous serial number modal display
+  const { data: allStoreUnits = [], isLoading: storeUnitsLoading } = useProductUnits(
     store?.id,
-    pendingProduct?.id,
-    'in_stock',
+    null,
+    null,
     {
-      enabled: Boolean(store?.id && pendingProduct?.id && isUnitSelectorOpen),
+      enabled: Boolean(store?.id),
     }
   );
+
+  // Instantly derive the selected product's units from the pre-loaded inventory
+  const productUnits = useMemo(() => {
+    if (!pendingProduct) return [];
+    return allStoreUnits.filter((u) => u.product_id === pendingProduct.id);
+  }, [allStoreUnits, pendingProduct]);
+
+  const unitsLoading = storeUnitsLoading && productUnits.length === 0;
+  const unusedUnits = useMemo(() => productUnits.filter((u) => u.status === 'in_stock'), [productUnits]);
+  const usedUnits = useMemo(() => productUnits.filter((u) => u.status === 'sold'), [productUnits]);
+  const hasUsedSerial = cart.some((item) => item.is_used_serial);
   const { data: invoiceDetail } = useInvoiceDetail(completedInvoiceId);
   const placeSaleMutation = usePlaceSale();
 
@@ -149,50 +187,74 @@ export function POSPage() {
     });
   }, [products, search, selectedCategory]);
 
-  // Add Product to Cart Handler
+  // Add Product to Cart Handler (a serial number is required for every billed item)
   function handleAddProduct(product) {
-    if (product.is_serialized) {
-      setPendingProduct(product);
-      setIsUnitSelectorOpen(true);
+    setPendingProduct(product);
+    setIsUnitSelectorOpen(true);
+  }
+
+  // Core helper to add a validated serialized unit to the active bill
+  function addUnitToBill(product, unit) {
+    if (!product || !unit) return;
+
+    if (cart.some((item) => item.unit_id === unit.id)) {
+      setErrorMessage('This serial number unit is already added to the bill.');
       return;
     }
 
-    setCart((prev) => {
-      const existing = prev.find((item) => item.product_id === product.id && !item.unit_id);
-      if (existing) {
-        return prev.map((item) =>
-          item.product_id === product.id && !item.unit_id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [
-        ...prev,
-        {
-          product_id: product.id,
-          unit_id: null,
-          name: product.name,
-          sku: product.sku,
-          hsn_code: product.hsn_code || '8517',
-          selling_price: parseFloat(product.selling_price) || 0,
-          gst_rate: !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18,
-          is_serialized: false,
-          serial_number: null,
-          quantity: 1,
-        },
-      ];
-    });
+    const isUsedSerial = unit.status === 'sold';
+    if (isUsedSerial) {
+      setSettlementType('full');
+      setPartialCollectedAmount('');
+      setPaymentMode('cash');
+      setPaymentReference('');
+    }
 
+    setCart((prev) => [
+      ...prev,
+      {
+        product_id: product.id,
+        unit_id: unit.id,
+        name: product.name,
+        sku: product.sku,
+        hsn_code: product.hsn_code || (store?.code === 'mobiles' ? '8517' : '9401'),
+        selling_price: parseFloat(product.selling_price) || 0,
+        gst_rate: !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18,
+        is_serialized: true,
+        serial_number: unit.serial_number,
+        is_used_serial: isUsedSerial,
+        condition_grade: unit.condition_grade,
+        quantity: 1,
+      },
+    ]);
+
+    setIsUnitSelectorOpen(false);
+    setPendingProduct(null);
+    setErrorMessage('');
     searchInputRef.current?.focus();
   }
 
-  // Handle barcode scanner Enter key
+  // Handle barcode scanner Enter key (supports scanning product SKU OR exact serial barcode directly)
   function handleSearchKeyDown(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
       const q = search.trim().toLowerCase();
       if (!q) return;
 
+      // 1. Direct serial number / IMEI barcode scan match (instant bypass)
+      const matchingSerialUnit = allStoreUnits.find(
+        (u) => u.serial_number?.toLowerCase() === q
+      );
+      if (matchingSerialUnit) {
+        const parentProduct = products.find((p) => p.id === matchingSerialUnit.product_id);
+        if (parentProduct) {
+          addUnitToBill(parentProduct, matchingSerialUnit);
+          setSearch('');
+          return;
+        }
+      }
+
+      // 2. Product SKU or Name match
       const exact = products.find(
         (p) => p.sku?.toLowerCase() === q || p.name?.toLowerCase() === q
       );
@@ -205,49 +267,10 @@ export function POSPage() {
     }
   }
 
-  // Select Unit for Serialized Item
+  // Select Unit for Serialized Item from Modal
   function handleSelectUnit(unit) {
     if (!pendingProduct) return;
-
-    if (cart.some((item) => item.unit_id === unit.id)) {
-      alert('This unit is already added to the bill.');
-      return;
-    }
-
-    setCart((prev) => [
-      ...prev,
-      {
-        product_id: pendingProduct.id,
-        unit_id: unit.id,
-        name: pendingProduct.name,
-        sku: pendingProduct.sku,
-        hsn_code: pendingProduct.hsn_code || (store?.code === 'mobiles' ? '8517' : '9401'),
-        selling_price: parseFloat(pendingProduct.selling_price) || 0,
-        gst_rate: !isNaN(parseFloat(pendingProduct.gst_rate)) ? parseFloat(pendingProduct.gst_rate) : 18,
-        is_serialized: true,
-        serial_number: unit.serial_number,
-        condition_grade: unit.condition_grade,
-        quantity: 1,
-      },
-    ]);
-
-    setIsUnitSelectorOpen(false);
-    setPendingProduct(null);
-    searchInputRef.current?.focus();
-  }
-
-  // Update Item Quantity
-  function handleUpdateQuantity(index, delta) {
-    setCart((prev) =>
-      prev
-        .map((item, i) => {
-          if (i !== index) return item;
-          if (item.is_serialized) return item;
-          const nextQty = item.quantity + delta;
-          return nextQty > 0 ? { ...item, quantity: nextQty } : null;
-        })
-        .filter(Boolean)
-    );
+    addUnitToBill(pendingProduct, unit);
   }
 
   // Remove single line item
@@ -359,6 +382,17 @@ export function POSPage() {
     if (customerGstin.trim() && !isValidGstin(customerGstin)) {
       setErrorMessage('Please enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).');
       setCurrentStep(2);
+      return;
+    }
+
+    if (cart.some((item) => !item.unit_id)) {
+      setErrorMessage('Serial number is required for every item. Remove items without a serial and add them again.');
+      setCurrentStep(1);
+      return;
+    }
+
+    if (hasUsedSerial && (settlementType !== 'full' || paymentMode !== 'cash')) {
+      setErrorMessage('This bill has a used serial number, so it must be a cash bill: full payment in Cash.');
       return;
     }
 
@@ -479,79 +513,109 @@ export function POSPage() {
         </div>
       </div>
 
-      {/* 2. Interactive Stepper Progress Bar */}
-      <div className="rounded-xl border border-border bg-surface p-2 shadow-2xs">
-        <div className="grid grid-cols-3 gap-2">
-          {STEPS.map((s) => {
-            const Icon = s.icon;
+      {/* 2. Interactive Timeline Stepper */}
+      <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          {STEPS.map((s, idx) => {
             const isCurrent = currentStep === s.id;
             const isCompleted = currentStep > s.id;
-            const isClickable = s.id < currentStep || (s.id === 2 && cart.length > 0) || (s.id === 3 && cart.length > 0);
+            const isClickable =
+              s.id < currentStep ||
+              (s.id === 2 && cart.length > 0) ||
+              (s.id === 3 && cart.length > 0);
 
             return (
-              <button
-                key={s.id}
-                type="button"
-                disabled={!isClickable && !isCurrent}
-                onClick={() => {
-                  if (s.id === 2 && cart.length === 0) return;
-                  if (s.id === 3) {
-                    if (cart.length === 0) return;
-                    if (!customerName.trim()) {
-                      setErrorMessage('Customer Name is mandatory before proceeding to payment.');
-                      setCurrentStep(2);
-                      return;
+              <div key={s.id} className="flex-1 flex items-center min-w-0 last:flex-initial">
+                {/* Timeline Step Node Button */}
+                <button
+                  type="button"
+                  disabled={!isClickable && !isCurrent}
+                  onClick={() => {
+                    if (s.id === 2 && cart.length === 0) return;
+                    if (s.id === 3) {
+                      if (cart.length === 0) return;
+                      if (!customerName.trim()) {
+                        setErrorMessage('Customer Name is mandatory before proceeding to payment.');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (!isValidIndianPhone(customerPhone)) {
+                        setErrorMessage('A valid 10-digit customer mobile number is mandatory (starts with 6-9).');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (customerType === 'registered' && !customerGstin.trim()) {
+                        setErrorMessage('Customer GSTIN is mandatory for B2B billing.');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (customerGstin.trim() && !isValidGstin(customerGstin)) {
+                        setErrorMessage('Please enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).');
+                        setCurrentStep(2);
+                        return;
+                      }
+                      if (!customerAddress.trim()) {
+                        setErrorMessage('Customer Address is mandatory before proceeding to payment.');
+                        setCurrentStep(2);
+                        return;
+                      }
                     }
-                    if (!isValidIndianPhone(customerPhone)) {
-                      setErrorMessage('A valid 10-digit customer mobile number is mandatory (starts with 6-9).');
-                      setCurrentStep(2);
-                      return;
-                    }
-                    if (customerType === 'registered' && !customerGstin.trim()) {
-                      setErrorMessage('Customer GSTIN is mandatory for B2B billing.');
-                      setCurrentStep(2);
-                      return;
-                    }
-                    if (customerGstin.trim() && !isValidGstin(customerGstin)) {
-                      setErrorMessage('Please enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).');
-                      setCurrentStep(2);
-                      return;
-                    }
-                    if (!customerAddress.trim()) {
-                      setErrorMessage('Customer Address is mandatory before proceeding to payment.');
-                      setCurrentStep(2);
-                      return;
-                    }
-                  }
-                  setCurrentStep(s.id);
-                  setErrorMessage('');
-                }}
-                className={cn(
-                  'flex items-center justify-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all text-left select-none',
-                  isCurrent && 'bg-accent text-accent-fg font-semibold shadow-2xs',
-                  isCompleted && 'bg-surface-subtle text-text hover:bg-surface-hover cursor-pointer border border-border',
-                  !isCurrent && !isCompleted && 'text-muted opacity-60 cursor-not-allowed'
-                )}
-              >
-                <div
+                    setCurrentStep(s.id);
+                    setErrorMessage('');
+                  }}
                   className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0',
-                    isCurrent && 'bg-white/20 text-white',
-                    isCompleted && 'bg-accent text-accent-fg',
-                    !isCurrent && !isCompleted && 'border border-border text-muted'
+                    'flex items-center gap-2.5 sm:gap-3 text-left focus:outline-none transition-all select-none shrink-0',
+                    isClickable || isCurrent ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
                   )}
                 >
-                  {isCompleted ? <Check size={12} /> : <Icon size={12} />}
-                </div>
-                <div className="hidden sm:block min-w-0">
-                  <div className="truncate font-semibold">{s.label}</div>
-                  <div className="text-[10px] opacity-75 truncate">
-                    {s.id === 1 && `${cart.length} ${cart.length === 1 ? 'item' : 'items'}`}
-                    {s.id === 2 && (customerType === 'walkin' ? 'Walk-in B2C' : 'Registered B2B')}
-                    {s.id === 3 && formatCurrency(grandTotal)}
+                  {/* Timeline Circle Marker */}
+                  <div
+                    className={cn(
+                      'w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all border-2',
+                      isCompleted && 'bg-brand-sage text-white border-brand-sage shadow-2xs',
+                      isCurrent && 'bg-accent text-accent-fg border-accent ring-4 ring-accent/15 shadow-2xs',
+                      !isCurrent && !isCompleted && 'bg-surface text-muted border-border'
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check size={14} className="stroke-[3]" />
+                    ) : (
+                      <span>{s.id}</span>
+                    )}
                   </div>
-                </div>
-              </button>
+
+                  {/* Step Label & Subtitle */}
+                  <div className="min-w-0">
+                    <div
+                      className={cn(
+                        'text-xs sm:text-sm leading-tight truncate',
+                        isCurrent
+                          ? 'font-bold text-text'
+                          : isCompleted
+                          ? 'font-semibold text-text'
+                          : 'font-medium text-muted'
+                      )}
+                    >
+                      {s.label}
+                    </div>
+                    <div className="text-[11px] text-muted truncate mt-0.5 hidden xs:block">
+                      {s.id === 1 && `${cart.length} ${cart.length === 1 ? 'item' : 'items'}`}
+                      {s.id === 2 && (customerType === 'walkin' ? 'Walk-in B2C' : 'Registered B2B')}
+                      {s.id === 3 && formatCurrency(grandTotal)}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Timeline Connecting Line */}
+                {idx < STEPS.length - 1 && (
+                  <div className="flex-1 mx-2 sm:mx-4 h-0.5 bg-border relative overflow-hidden">
+                    <div
+                      className="h-full bg-accent transition-all duration-300"
+                      style={{ width: currentStep > s.id ? '100%' : '0%' }}
+                    />
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -643,74 +707,68 @@ export function POSPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {displayItems.map((p) => {
                 const stockQty = p.inventory?.[0]?.quantity_on_hand ?? 0;
                 return (
                   <div
                     key={p.id}
                     onClick={() => handleAddProduct(p)}
-                    className="p-3 rounded-xl border border-border bg-surface hover:border-text/40 hover:bg-surface-subtle transition-all cursor-pointer flex flex-col justify-between shadow-2xs group"
+                    className="group relative p-3 rounded-xl border border-border bg-surface hover:border-brand-sage hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between shadow-2xs"
                   >
                     <div>
-                      {/* Product Image */}
-                      <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border/60 bg-surface-subtle flex items-center justify-center p-2 mb-2 group-hover:border-border transition-colors">
-                        {p.image_url ? (
-                          <img
-                            src={p.image_url}
-                            alt={p.name}
-                            loading="lazy"
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center gap-1 text-muted">
-                            <Package size={28} />
-                            <span className="text-[9px] font-mono">{p.sku}</span>
-                          </div>
-                        )}
+                      {/* Compact Product Image Container */}
+                      <div className="relative w-full h-24 rounded-lg bg-surface-subtle/70 border border-border/60 overflow-hidden flex items-center justify-center p-2 mb-2.5 group-hover:border-brand-sage/40 transition-colors">
+                        <ProductThumbnail
+                          imageUrl={p.image_url}
+                          sku={p.sku}
+                          name={p.name}
+                        />
+
+                        {/* Floating Stock Badge */}
+                        <span
+                          className={cn(
+                            'absolute top-1.5 right-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shadow-2xs',
+                            stockQty > 2
+                              ? 'bg-surface text-brand-sage border-brand-sage-border'
+                              : stockQty > 0
+                              ? 'bg-surface text-brand-gold-text border-brand-gold-border'
+                              : 'bg-surface text-brand-crimson border-brand-crimson-border'
+                          )}
+                        >
+                          Stock: {stockQty}
+                        </span>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-start justify-between gap-1.5">
-                          <span className="text-[10px] font-mono text-muted uppercase tracking-wider truncate">
-                            {p.sku}
-                          </span>
-                          {p.is_serialized ? (
-                            <Badge variant="sage" className="text-[9px] px-1 py-0 uppercase">
-                              Serial
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted font-mono font-medium">
-                              Stock: {stockQty}
-                            </span>
-                          )}
+                      {/* Product Identification */}
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-mono text-muted uppercase tracking-wider truncate">
+                          {p.sku}
                         </div>
-                        <div className="font-semibold text-sm text-text line-clamp-2 leading-snug group-hover:text-accent">
+                        <div
+                          className="text-xs font-semibold text-text line-clamp-1 leading-snug group-hover:text-brand-sage transition-colors"
+                          title={p.name}
+                        >
                           {p.name}
                         </div>
                       </div>
                     </div>
 
-                    <div className="pt-3 flex items-center justify-between border-t border-border/60 mt-2">
+                    {/* Pricing & Add Row */}
+                    <div className="pt-2 mt-2 border-t border-border/60 flex items-center justify-between">
                       <div>
-                        <div className="font-bold font-mono text-base text-text">
+                        <div className="font-bold font-mono text-xs sm:text-sm text-text">
                           {formatCurrency(p.selling_price)}
                         </div>
-                        <div className="text-xs text-muted">
+                        <div className="text-[10px] text-muted leading-tight">
                           +{p.gst_rate ?? 18}% GST
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                        className="h-7 px-2.5 text-xs rounded-md gap-1 font-semibold pointer-events-none"
-                      >
-                        <Plus size={12} /> Add
-                      </Button>
+
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-md border border-border bg-surface text-text group-hover:bg-accent group-hover:text-accent-fg group-hover:border-accent transition-colors">
+                        <Plus size={11} />
+                        <span>Add</span>
+                      </span>
                     </div>
                   </div>
                 );
@@ -768,8 +826,15 @@ export function POSPage() {
                                 {item.serial_number && (
                                   <>
                                     <span>•</span>
-                                    <span className="text-brand-sage font-semibold">S/N: {item.serial_number}</span>
+                                    <span className={cn('font-semibold', item.is_used_serial ? 'text-amber-700' : 'text-brand-sage')}>
+                                      S/N: {item.serial_number}
+                                    </span>
                                   </>
+                                )}
+                                {item.is_used_serial && (
+                                  <Badge variant="warning" className="text-[9px] px-1.5 py-0 uppercase">
+                                    Used • Cash bill only
+                                  </Badge>
                                 )}
                               </div>
                             </td>
@@ -779,31 +844,9 @@ export function POSPage() {
                             </td>
 
                             <td className="py-3 px-3 text-center whitespace-nowrap">
-                              {item.is_serialized ? (
-                                <span className="font-mono font-semibold px-2 py-0.5 bg-surface-subtle border border-border rounded text-xs">
-                                  1
-                                </span>
-                              ) : (
-                                <div className="inline-flex items-center border border-border rounded-lg bg-surface">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateQuantity(idx, -1)}
-                                    className="p-1 hover:bg-surface-subtle text-muted hover:text-text cursor-pointer"
-                                  >
-                                    <Minus size={12} />
-                                  </button>
-                                  <span className="px-2 font-mono font-bold text-xs text-text min-w-6 text-center">
-                                    {item.quantity}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateQuantity(idx, 1)}
-                                    className="p-1 hover:bg-surface-subtle text-muted hover:text-text cursor-pointer"
-                                  >
-                                    <Plus size={12} />
-                                  </button>
-                                </div>
-                              )}
+                              <span className="font-mono font-semibold px-2 py-0.5 bg-surface-subtle border border-border rounded text-xs">
+                                1
+                              </span>
                             </td>
 
                             <td className="py-3 px-3 text-center font-mono text-muted text-xs whitespace-nowrap">
@@ -1064,6 +1107,17 @@ export function POSPage() {
                 </p>
               </div>
 
+              {hasUsedSerial && (
+                <div className="p-3 rounded-lg border border-pastel-amber-border bg-pastel-amber text-pastel-amber-text text-xs flex items-start gap-2">
+                  <AlertCircle size={14} className="shrink-0 mt-px" />
+                  <span>
+                    This bill has a used serial number, so it can only be a <strong>cash bill</strong>: full payment in
+                    Cash. The used serial is removed once this bill is saved. Remove it from the cart to bill by UPI,
+                    card, EMI, partial or credit.
+                  </span>
+                </div>
+              )}
+
               {/* Settlement Terms Selector: Full vs Partial vs Pay Later */}
               <div className="p-3.5 rounded-xl border border-border bg-surface-subtle space-y-3">
                 <div className="flex items-center justify-between">
@@ -1099,6 +1153,7 @@ export function POSPage() {
 
                   <button
                     type="button"
+                    disabled={hasUsedSerial}
                     onClick={() => {
                       setSettlementType('partial');
                       if (!partialCollectedAmount) {
@@ -1106,7 +1161,7 @@ export function POSPage() {
                       }
                     }}
                     className={cn(
-                      'p-2 rounded-lg border text-xs font-semibold transition-all text-center cursor-pointer',
+                      'p-2 rounded-lg border text-xs font-semibold transition-all text-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
                       settlementType === 'partial'
                         ? 'bg-amber-600 text-white border-amber-600 font-bold shadow-2xs'
                         : 'border-border bg-surface text-muted hover:text-text'
@@ -1117,12 +1172,13 @@ export function POSPage() {
 
                   <button
                     type="button"
+                    disabled={hasUsedSerial}
                     onClick={() => {
                       setSettlementType('pending');
                       setPartialCollectedAmount('0');
                     }}
                     className={cn(
-                      'p-2 rounded-lg border text-xs font-semibold transition-all text-center cursor-pointer',
+                      'p-2 rounded-lg border text-xs font-semibold transition-all text-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed',
                       settlementType === 'pending'
                         ? 'bg-brand-crimson text-white border-brand-crimson font-bold shadow-2xs'
                         : 'border-border bg-surface text-muted hover:text-text'
@@ -1194,9 +1250,10 @@ export function POSPage() {
 
                     <button
                       type="button"
+                      disabled={hasUsedSerial}
                       onClick={() => setPaymentMode('upi')}
                       className={cn(
-                        'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-2 cursor-pointer transition-all',
+                        'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed',
                         paymentMode === 'upi'
                           ? 'border-accent bg-accent text-accent-fg shadow-2xs'
                           : 'border-border bg-surface text-muted hover:text-text hover:bg-surface-subtle'
@@ -1208,9 +1265,10 @@ export function POSPage() {
 
                     <button
                       type="button"
+                      disabled={hasUsedSerial}
                       onClick={() => setPaymentMode('card')}
                       className={cn(
-                        'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-2 cursor-pointer transition-all',
+                        'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed',
                         paymentMode === 'card'
                           ? 'border-accent bg-accent text-accent-fg shadow-2xs'
                           : 'border-border bg-surface text-muted hover:text-text hover:bg-surface-subtle'
@@ -1222,9 +1280,10 @@ export function POSPage() {
 
                     <button
                       type="button"
+                      disabled={hasUsedSerial}
                       onClick={() => setPaymentMode('emi')}
                       className={cn(
-                        'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-2 cursor-pointer transition-all',
+                        'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed',
                         paymentMode === 'emi'
                           ? 'border-accent bg-accent text-accent-fg shadow-2xs'
                           : 'border-border bg-surface text-muted hover:text-text hover:bg-surface-subtle'
@@ -1650,47 +1709,47 @@ export function POSPage() {
             <div className="py-12 text-center text-xs text-muted">
               Scanning serial inventory database...
             </div>
-          ) : availableUnits.length === 0 ? (
-            <div className="py-8 text-center space-y-2">
+          ) : unusedUnits.length === 0 && usedUnits.length === 0 ? (
+            <div className="py-8 text-center space-y-3">
               <AlertCircle size={24} className="text-danger mx-auto" />
-              <p className="text-xs font-semibold text-text">No in-stock units available</p>
-              <p className="text-[11px] text-muted">
-                All serialized units for this SKU have been sold or reserved.
+              <p className="text-xs font-semibold text-text">No serial numbers for this product</p>
+              <p className="text-[11px] text-muted max-w-sm mx-auto">
+                A serial number is required to bill an item. Create serial numbers for this product first.
               </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate(`/admin/${store?.code}/serials`)}
+                className="text-xs font-medium rounded-md gap-1"
+              >
+                <Barcode size={12} />
+                <span>Go to Serial Number</span>
+              </Button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-5">
               <p className="text-xs text-muted">
-                Choose the exact serial number scanned at the counter:
+                A serial number is required. Choose the exact serial number scanned at the counter:
               </p>
-              <div className="divide-y divide-border border border-border rounded-lg overflow-hidden">
-                {availableUnits.map((unit) => (
-                  <div
-                    key={unit.id}
-                    className="p-3 flex items-center justify-between hover:bg-surface-subtle transition-colors text-xs"
-                  >
-                    <div>
-                      <div className="font-mono font-semibold text-text">
-                        {unit.serial_number}
-                      </div>
-                      {unit.condition_grade && (
-                        <div className="text-[10px] text-muted uppercase">
-                          Grade: {unit.condition_grade}
-                        </div>
-                      )}
-                    </div>
 
-                    <Button
-                      size="sm"
-                      onClick={() => handleSelectUnit(unit)}
-                      className="text-xs font-medium rounded-md gap-1"
-                    >
-                      <Check size={12} />
-                      <span>Select Unit</span>
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <UnitPickerGroup
+                title="Unused Serial Numbers"
+                caption="Any bill. Moves to used after this sale."
+                units={unusedUnits}
+                emptyText="No unused serial numbers left for this product."
+                onSelect={handleSelectUnit}
+                cartUnitIds={cart.map((c) => c.unit_id)}
+              />
+
+              <UnitPickerGroup
+                title="Used Serial Numbers"
+                caption="Cash bill only. Removed after this use."
+                units={usedUnits}
+                emptyText="No used serial numbers for this product."
+                onSelect={handleSelectUnit}
+                cartUnitIds={cart.map((c) => c.unit_id)}
+                isUsed
+              />
             </div>
           )}
         </Modal>
@@ -1706,6 +1765,62 @@ export function POSPage() {
           }}
           invoiceDetail={invoiceDetail}
         />
+      )}
+    </div>
+  );
+}
+
+function UnitPickerGroup({ title, caption, units, emptyText, onSelect, cartUnitIds = [], isUsed = false }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-text flex items-center gap-1.5">
+          {title}
+          <Badge variant={isUsed ? 'warning' : 'success'} className="text-[10px] font-mono">
+            {units.length}
+          </Badge>
+        </span>
+        <span className="text-[11px] text-muted">{caption}</span>
+      </div>
+
+      {units.length === 0 ? (
+        <div className="p-3 rounded-lg border border-dashed border-border text-[11px] text-muted text-center">
+          {emptyText}
+        </div>
+      ) : (
+        <div className="divide-y divide-border border border-border rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+          {units.map((unit) => {
+            const isAlreadyAdded = cartUnitIds.includes(unit.id);
+            return (
+              <div
+                key={unit.id}
+                className="p-3 flex items-center justify-between hover:bg-surface-subtle transition-colors text-xs"
+              >
+                <div>
+                  <div className={cn('font-mono font-semibold', isUsed ? 'text-muted' : 'text-text')}>
+                    {unit.serial_number}
+                  </div>
+                  {unit.condition_grade && (
+                    <div className="text-[10px] text-muted uppercase">Grade: {unit.condition_grade}</div>
+                  )}
+                </div>
+
+                <Button
+                  size="sm"
+                  variant={isAlreadyAdded ? 'outline' : isUsed ? 'outline' : 'solid'}
+                  disabled={isAlreadyAdded}
+                  onClick={() => onSelect(unit)}
+                  className="text-xs font-medium rounded-md gap-1"
+                >
+                  <Check size={12} />
+                  <span>
+                    {isAlreadyAdded ? 'Already Added' : isUsed ? 'Use on Cash Bill' : 'Select Unit'}
+                  </span>
+                </Button>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
