@@ -201,7 +201,7 @@ export async function listDealerBills({
         *,
         dealer:dealers(id, name, brand_name, phone, gstin, billing_mode),
         payments:dealer_payments(id, payment_number, payment_date, amount, payment_mode, payment_channel, transaction_ref, notes, cheque_date),
-        debit_notes:dealer_debit_notes(id, note_number, note_date, amount, reason, description, notes)
+        debit_notes:dealer_debit_notes(id, note_number, note_date, amount, reason, description)
       `)
       .order('bill_date', { ascending: false })
       .limit(limit);
@@ -491,8 +491,8 @@ export async function listDealerPayments({ dealerId, billId, limit = 100 } = {})
 export async function getDealerStatement(dealerId, { billType = 'all' } = {}) {
   const [dealerRes, billsRes, paymentsRes, debitsRes] = await Promise.all([
     supabase.from('dealers').select('id, name, brand_name, phone, gstin, billing_mode, default_credit_days, opening_balance, is_active').eq('id', dealerId).single(),
-    supabase.from('dealer_bills').select('id, dealer_id, store_id, bill_number, bill_date, credit_days, due_date, total_amount, paid_amount, balance_amount, payment_status, bill_type, taxable_amount, cgst_amount, sgst_amount, igst_amount, items, notes, created_at').eq('dealer_id', dealerId).order('bill_date', { ascending: true }),
-    supabase.from('dealer_payments').select('id, dealer_id, bill_id, payment_date, amount, payment_mode, payment_channel, transaction_ref, cheque_date, cheque_bank, notes, created_at, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('payment_date', { ascending: true }),
+    supabase.from('dealer_bills').select('id, dealer_id, store_id, bill_number, bill_date, credit_days, due_date, total_amount, paid_amount, balance_amount, status, bill_type, taxable_amount, cgst_amount, sgst_amount, igst_amount, items, notes, created_at').eq('dealer_id', dealerId).order('bill_date', { ascending: true }),
+    supabase.from('dealer_payments').select('id, dealer_id, bill_id, payment_date, amount, payment_mode, payment_channel, transaction_ref, cheque_date, notes, created_at, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('payment_date', { ascending: true }),
     supabase.from('dealer_debit_notes').select('id, dealer_id, bill_id, note_number, note_date, amount, reason, created_at, bill:dealer_bills(bill_number, bill_type)').eq('dealer_id', dealerId).order('note_date', { ascending: true }),
   ]);
 
