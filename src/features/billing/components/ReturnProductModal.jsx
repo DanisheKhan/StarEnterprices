@@ -71,7 +71,7 @@ function ReturnProductForm({ invoice, onClose }) {
 
   const [returnReason, setReturnReason] = useState(RETURN_REASONS[0]);
   const [deductionAmount, setDeductionAmount] = useState('0');
-  const [deductionReason, setDeductionReason] = useState('Restocking / Processing Fee');
+  const [deductionReason, setDeductionReason] = useState(DEDUCTION_REASON_OPTIONS[0].value);
   const [refundMethod, setRefundMethod] = useState('cash');
   const [notes, setNotes] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -278,7 +278,7 @@ function ReturnProductForm({ invoice, onClose }) {
           <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-surface max-h-60 overflow-y-auto shadow-2xs">
             {orderItems.map((it) => {
               const state = selectedItems[it.id] || {};
-              const isSelected = state.selected;
+              const isSelected = Boolean(state.selected);
               const unitPrice = parseFloat(it.unit_price) || 0;
               const gstRate = parseFloat(it.gst_rate) || 18;
               const lineTotal = it.total_amount || Math.round(unitPrice * it.quantity * (1 + gstRate / 100));
@@ -287,20 +287,20 @@ function ReturnProductForm({ invoice, onClose }) {
                 <div
                   key={it.id}
                   className={cn(
-                    'p-3.5 transition-colors text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3',
-                    isSelected ? 'bg-surface-subtle/70' : 'hover:bg-surface-subtle/30'
+                    'p-3.5 transition-colors text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-14',
+                    isSelected ? 'bg-surface-subtle/80' : 'hover:bg-surface-subtle/30'
                   )}
                 >
-                  <div className="flex items-start gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <input
                       type="checkbox"
                       id={`item-${it.id}`}
-                      checked={Boolean(isSelected)}
+                      checked={isSelected}
                       onChange={() => handleToggleItem(it.id)}
-                      className="mt-1 h-4 w-4 rounded border-border text-brand-sage focus:ring-brand-sage cursor-pointer shrink-0"
+                      className="h-4 w-4 rounded border-border text-brand-sage focus:ring-brand-sage cursor-pointer shrink-0"
                     />
-                    <label htmlFor={`item-${it.id}`} className="cursor-pointer min-w-0 space-y-1">
-                      <div className="font-semibold text-text text-sm">{it.item_name}</div>
+                    <label htmlFor={`item-${it.id}`} className="cursor-pointer min-w-0 space-y-0.5">
+                      <div className="font-semibold text-text text-sm truncate">{it.item_name}</div>
                       <div className="text-[11px] text-muted flex flex-wrap items-center gap-2">
                         <span className="font-mono">Purchased: {it.quantity} {it.quantity === 1 ? 'unit' : 'units'}</span>
                         <span>•</span>
@@ -308,7 +308,7 @@ function ReturnProductForm({ invoice, onClose }) {
                         {it.serial_number && (
                           <>
                             <span>•</span>
-                            <span className="inline-flex items-center gap-1 font-mono text-[10px] bg-surface px-1.5 py-0.5 rounded border border-border text-text">
+                            <span className="inline-flex items-center gap-1 font-mono text-[10px] bg-surface px-1.5 py-0.2 rounded border border-border text-text">
                               <Barcode size={11} className="text-brand-sage shrink-0" />
                               <span>{it.serial_number}</span>
                             </span>
@@ -318,61 +318,68 @@ function ReturnProductForm({ invoice, onClose }) {
                     </label>
                   </div>
 
-                  {isSelected && (
-                    <div className="flex items-center gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40">
-                      {!it.unit_id && it.quantity > 1 && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-muted font-medium">Qty:</span>
-                          <input
-                            type="number"
-                            min="1"
-                            max={it.quantity}
-                            value={state.returnQty || 1}
-                            onChange={(e) => handleUpdateQty(it.id, e.target.value, it.quantity)}
-                            className="w-14 rounded-lg border border-border bg-surface px-2 py-1 text-xs font-mono font-semibold text-center"
-                          />
-                        </div>
-                      )}
+                  {/* Symmetrical Right Slot: Same height whether checked or unchecked */}
+                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
+                    {isSelected ? (
+                      <div className="flex items-center gap-2">
+                        {!it.unit_id && it.quantity > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] text-muted font-medium">Qty:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max={it.quantity}
+                              value={state.returnQty || 1}
+                              onChange={(e) => handleUpdateQty(it.id, e.target.value, it.quantity)}
+                              className="w-14 rounded-lg border border-border bg-surface px-2 py-1 text-xs font-mono font-semibold text-center"
+                            />
+                          </div>
+                        )}
 
-                      <div className="inline-flex rounded-lg border border-border bg-surface p-0.5 text-xs shadow-2xs">
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateRestock(it.id, true)}
-                          className={cn(
-                            'px-3 py-1 rounded-md cursor-pointer font-semibold transition-all inline-flex items-center gap-1',
-                            state.restock
-                              ? 'bg-accent text-accent-fg shadow-2xs'
-                              : 'text-muted hover:text-text'
-                          )}
-                          title="Return item to in-stock inventory"
-                        >
-                          <PackageCheck size={12} />
-                          <span>Restock</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateRestock(it.id, false)}
-                          className={cn(
-                            'px-3 py-1 rounded-md cursor-pointer font-semibold transition-all inline-flex items-center gap-1',
-                            !state.restock
-                              ? 'bg-danger text-white shadow-2xs'
-                              : 'text-muted hover:text-text'
-                          )}
-                          title="Mark item as defective or damaged"
-                        >
-                          <AlertCircle size={12} />
-                          <span>Defective</span>
-                        </button>
+                        <div className="inline-flex rounded-lg border border-border bg-surface p-0.5 text-xs shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateRestock(it.id, true)}
+                            className={cn(
+                              'px-2.5 py-1 rounded-md cursor-pointer font-semibold transition-all inline-flex items-center gap-1 text-xs',
+                              state.restock
+                                ? 'bg-accent text-accent-fg shadow-2xs'
+                                : 'text-muted hover:text-text'
+                            )}
+                            title="Return item to in-stock inventory"
+                          >
+                            <PackageCheck size={12} />
+                            <span>Restock</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateRestock(it.id, false)}
+                            className={cn(
+                              'px-2.5 py-1 rounded-md cursor-pointer font-semibold transition-all inline-flex items-center gap-1 text-xs',
+                              !state.restock
+                                ? 'bg-danger text-white shadow-2xs'
+                                : 'text-muted hover:text-text'
+                            )}
+                            title="Mark item as defective or damaged"
+                          >
+                            <AlertCircle size={12} />
+                            <span>Defective</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="text-[11px] text-muted bg-surface px-2.5 py-1 rounded-lg border border-border/70 select-none">
+                        Not Selected
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Return Details: Reason & Deduction */}
+        {/* Stable 2x2 Form Grid (Zero layout shift on check/uncheck) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             id="return-reason"
@@ -383,61 +390,64 @@ function ReturnProductForm({ invoice, onClose }) {
           />
 
           <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="return-deduction" className="text-xs font-semibold text-text">
+                Deduction Amount (₹)
+              </label>
+              <div className="flex items-center gap-1 text-[10px] text-muted">
+                <span>Presets:</span>
+                {['0', '5', '10', '20'].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    disabled={grossRefundAmount <= 0}
+                    onClick={() => {
+                      if (grossRefundAmount > 0) {
+                        const val = pct === '0' ? '0' : String(Math.round(grossRefundAmount * (parseInt(pct, 10) / 100)));
+                        setDeductionAmount(val);
+                      }
+                    }}
+                    className={cn(
+                      'px-1.5 py-0.5 rounded border border-border bg-surface font-mono text-text transition-colors shadow-2xs',
+                      grossRefundAmount > 0 ? 'hover:bg-surface-subtle cursor-pointer' : 'opacity-40 cursor-not-allowed'
+                    )}
+                    title={grossRefundAmount > 0 ? `Apply ${pct}% deduction` : 'Select an item first'}
+                  >
+                    {pct === '0' ? '₹0' : `${pct}%`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Input
               id="return-deduction"
               type="number"
               min="0"
-              max={grossRefundAmount}
-              label="Deduction Amount (₹)"
+              max={grossRefundAmount || undefined}
               value={deductionAmount}
               onChange={(e) => setDeductionAmount(e.target.value)}
               placeholder="0"
             />
-            {grossRefundAmount > 0 && (
-              <div className="flex items-center gap-2 pt-0.5 text-[11px] text-muted">
-                <span>Presets:</span>
-                <div className="flex items-center gap-1.5">
-                  {['0', '5', '10', '20'].map((pct) => {
-                    const val = pct === '0' ? '0' : String(Math.round(grossRefundAmount * (parseInt(pct, 10) / 100)));
-                    const isZero = pct === '0';
-                    return (
-                      <button
-                        key={pct}
-                        type="button"
-                        onClick={() => setDeductionAmount(val)}
-                        className="px-2 py-0.5 rounded border border-border bg-surface hover:bg-surface-subtle font-mono text-text cursor-pointer transition-colors shadow-2xs"
-                      >
-                        {isZero ? '₹0' : `${pct}%`}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* If deduction is active, show category */}
-        {numDeduction > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select
-              id="deduction-reason"
-              label="Deduction Category"
-              value={deductionReason}
-              onChange={(e) => setDeductionReason(e.target.value)}
-              options={DEDUCTION_REASON_OPTIONS}
-            />
-          </div>
-        )}
+          <Select
+            id="deduction-reason"
+            label="Deduction Category"
+            value={numDeduction > 0 ? deductionReason : ''}
+            disabled={numDeduction <= 0}
+            onChange={(e) => setDeductionReason(e.target.value)}
+            options={[
+              { value: '', label: 'No deduction applied (₹0)' },
+              ...DEDUCTION_REASON_OPTIONS,
+            ]}
+          />
 
-        {/* Inspector Remarks / Notes */}
-        <div className="space-y-1">
           <Input
             id="return-notes"
-            label="Inspector Remarks & Serial Inspection Notes"
+            label="Inspector Remarks & Serial Inspection"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g. Unit tested, flawless condition, original packaging intact"
+            placeholder="e.g. Unit tested, flawless condition, original packaging"
           />
         </div>
 
@@ -471,7 +481,7 @@ function ReturnProductForm({ invoice, onClose }) {
         </div>
 
         {/* Total Refund Banner with Real-Time Math Breakdown */}
-        <div className="p-4 rounded-xl border border-border bg-surface shadow-2xs space-y-3">
+        <div className="p-4 rounded-xl border border-border bg-surface shadow-2xs space-y-2.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-[11px] uppercase font-bold text-muted tracking-wider block">
@@ -502,20 +512,6 @@ function ReturnProductForm({ invoice, onClose }) {
               )}
             </div>
           </div>
-
-          {/* Math subtraction formula row */}
-          {numDeduction > 0 && (
-            <div className="pt-2.5 border-t border-border/60 flex items-center justify-between text-xs font-mono">
-              <div className="flex items-center gap-2 text-muted">
-                <span>Actual Price: <strong className="text-text">{formatCurrency(grossRefundAmount)}</strong></span>
-                <span>-</span>
-                <span>Deduction: <strong className="text-amber-700">-{formatCurrency(numDeduction)}</strong></span>
-              </div>
-              <div className="font-bold text-text text-sm">
-                = Net Refund: {formatCurrency(totalRefundAmount)}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Actions */}
