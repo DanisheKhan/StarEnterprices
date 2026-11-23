@@ -4,20 +4,15 @@ import { useRecordDealerPayment, useDealerBills } from '../hooks/useDealers';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import {
+  CreditCard,
   Building2,
   FileText,
+  CheckCircle2,
   AlertCircle,
-<<<<<<< HEAD
-  Banknote,
-  QrCode,
-  Landmark,
-  ScrollText,
-=======
   Coins,
   Banknote,
   QrCode,
   Landmark,
->>>>>>> 54e20f67e8d154e6409dbc09eabef533f4e654d9
 } from 'lucide-react';
 
 export function RecordPaymentModal({
@@ -183,14 +178,9 @@ export function RecordPaymentModal({
 
   function handleCloseModal() {
     setPaymentAmount('');
-    setPaymentMode('bank_transfer');
     setTransactionRef('');
-<<<<<<< HEAD
-    setChequeDate('');
-=======
     setChequeNumber('');
     setChequeBank('');
->>>>>>> 54e20f67e8d154e6409dbc09eabef533f4e654d9
     setNotes('');
     setErrorMsg('');
     onClose();
@@ -212,27 +202,16 @@ export function RecordPaymentModal({
     }
 
     if (paymentMode === 'cheque') {
-<<<<<<< HEAD
-      if (!transactionRef.trim()) {
-        setErrorMsg('Cheque number is required when paying by cheque.');
-        return;
-      }
-      if (!chequeDate) {
-        setErrorMsg('Cheque date is required when paying by cheque.');
-=======
       if (!chequeNumber.trim()) {
         setErrorMsg('Cheque / Check Number is mandatory for cheque payment.');
         return;
       }
       if (!chequeDate) {
         setErrorMsg('Cheque Date is mandatory.');
->>>>>>> 54e20f67e8d154e6409dbc09eabef533f4e654d9
         return;
       }
     }
 
-<<<<<<< HEAD
-=======
     const effectiveRef =
       paymentMode === 'cheque'
         ? chequeNumber.trim()
@@ -245,7 +224,6 @@ export function RecordPaymentModal({
         : `Bank: ${chequeBank.trim()}`;
     }
 
->>>>>>> 54e20f67e8d154e6409dbc09eabef533f4e654d9
     try {
       await recordPaymentMutation.mutateAsync({
         dealer_id: dealerId,
@@ -255,15 +233,9 @@ export function RecordPaymentModal({
         payment_date: paymentDate,
         payment_mode: paymentMode,
         payment_channel: paymentChannel,
-<<<<<<< HEAD
-        transaction_ref: transactionRef.trim() || null,
-        cheque_date: paymentMode === 'cheque' ? chequeDate || null : null,
-        notes: notes.trim() || null,
-=======
         transaction_ref: effectiveRef,
         cheque_date: paymentMode === 'cheque' ? chequeDate : null,
         notes: combinedNotes,
->>>>>>> 54e20f67e8d154e6409dbc09eabef533f4e654d9
       });
 
       handleCloseModal();
@@ -857,196 +829,6 @@ export function RecordPaymentModal({
             </div>
           </div>
 
-<<<<<<< HEAD
-        {/* Payment Amount Input */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-semibold text-text">
-              Amount to Pay (₹) <span className="text-brand-crimson">*</span>
-            </label>
-            {selectedBill && Number(selectedBill.balance_amount) > 0 && (
-              <button
-                type="button"
-                onClick={() => setPaymentAmount(String(selectedBill.balance_amount))}
-                className="text-[11px] font-semibold text-brand-sage hover:underline cursor-pointer"
-              >
-                Pay Full Balance ({formatCurrency(selectedBill.balance_amount)})
-              </button>
-            )}
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">
-              ₹
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              min="1"
-              required
-              placeholder="0.00"
-              value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-              className="w-full pl-8 pr-3 py-2.5 text-base font-bold font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-2 focus:ring-brand-sage"
-            />
-          </div>
-        </div>
-
-        {/* Live Dynamic Auto-Balance Calculation */}
-        {balancePreview && (
-          <div className="p-3 rounded-xl border border-border bg-surface-subtle/70 space-y-2 shadow-2xs">
-            <div className="flex items-center justify-between text-xs font-semibold text-text">
-              <span className="text-muted">Settlement Status:</span>
-              <span
-                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                  balancePreview.newStatus === 'paid'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}
-              >
-                {balancePreview.newStatus === 'paid'
-                  ? 'Will Be Fully Settled'
-                  : 'Will Be Partially Paid'}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs pt-1 border-t border-border/60">
-              <span className="text-muted">New Remaining Balance:</span>
-              <span
-                className={`font-mono font-bold text-sm ${
-                  balancePreview.newBalance === 0 ? 'text-emerald-600' : 'text-brand-crimson'
-                }`}
-              >
-                {balancePreview.newBalance === 0
-                  ? '₹0 (Cleared)'
-                  : formatCurrency(balancePreview.newBalance)}
-              </span>
-            </div>
-
-            {balancePreview.isOverpaying && (
-              <div className="text-[11px] text-rose-600 font-medium flex items-center gap-1 mt-1">
-                <AlertCircle size={12} /> Payment exceeds pending bill balance by{' '}
-                {formatCurrency(balancePreview.payment - balancePreview.currentOutstanding)}.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Payment Mode */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-text">
-            Payment Mode <span className="text-brand-crimson">*</span>
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {[
-              { value: 'bank_transfer', label: 'Bank Transfer', icon: Landmark },
-              { value: 'upi', label: 'UPI', icon: QrCode },
-              { value: 'cheque', label: 'Cheque', icon: ScrollText },
-              { value: 'cash', label: 'Cash', icon: Banknote },
-            ].map((mode) => {
-              const Icon = mode.icon;
-              const isActive = paymentMode === mode.value;
-              return (
-                <button
-                  key={mode.value}
-                  type="button"
-                  onClick={() => setPaymentMode(mode.value)}
-                  className={cn(
-                    'p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all',
-                    isActive
-                      ? 'border-accent bg-accent text-accent-fg shadow-2xs'
-                      : 'border-border bg-surface text-muted hover:text-text hover:bg-surface-subtle'
-                  )}
-                >
-                  <Icon size={16} />
-                  <span>{mode.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Payout Channel */}
-        <div>
-          <label className="block text-xs font-semibold text-text mb-1">
-            Payout Channel (Isolation)
-          </label>
-          <select
-            value={paymentChannel}
-            onChange={(e) => setPaymentChannel(e.target.value)}
-            className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text font-medium focus:outline-none focus:ring-1 focus:ring-brand-sage"
-          >
-            <option value="official_bank">Official Bank Account (GST Compliant)</option>
-            <option value="secondary_cash">Cash / Secondary Account (Kaccha Khata)</option>
-          </select>
-        </div>
-
-        {/* Cheque details (shown only for cheque payments) */}
-        {paymentMode === 'cheque' && (
-          <div className="p-3.5 rounded-xl border border-border bg-surface-subtle space-y-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-text">
-              <ScrollText size={14} className="text-brand-sage" />
-              <span>Cheque Details</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Cheque Number <span className="text-brand-crimson">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. CHQ-991204"
-                  value={transactionRef}
-                  onChange={(e) => setTransactionRef(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Cheque Date <span className="text-brand-crimson">*</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={chequeDate}
-                  onChange={(e) => setChequeDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-muted">
-              Use the cheque date written on the instrument. Post-dated cheques are supported.
-            </p>
-          </div>
-        )}
-
-        {/* Transaction Reference & Payment Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {paymentMode !== 'cheque' && (
-            <div>
-              <label className="block text-xs font-semibold text-text mb-1">
-                {paymentMode === 'cash' ? 'Voucher / Cash Memo No' : 'UTR / Transaction Reference'}
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. UTR-HDFC99881122"
-                value={transactionRef}
-                onChange={(e) => setTransactionRef(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
-              />
-            </div>
-          )}
-
-          <div className={paymentMode === 'cheque' ? 'sm:col-span-2' : ''}>
-            <label className="block text-xs font-semibold text-text mb-1">
-              Payment Date <span className="text-brand-crimson">*</span>
-            </label>
-            <input
-              type="date"
-              required
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-=======
           {/* 5. Payment Notes */}
           <div>
             <label className="block text-xs font-semibold text-text mb-1">
@@ -1057,7 +839,6 @@ export function RecordPaymentModal({
               placeholder="e.g. Tranche settlement, cleared by Danish"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
->>>>>>> 54e20f67e8d154e6409dbc09eabef533f4e654d9
               className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand-sage"
             />
           </div>
