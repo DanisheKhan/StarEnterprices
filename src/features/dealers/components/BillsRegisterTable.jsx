@@ -19,7 +19,6 @@ import {
   Clock,
   AlertCircle,
   Printer,
-  MessageCircle,
 } from 'lucide-react';
 
 export function BillsRegisterTable({
@@ -80,51 +79,6 @@ export function BillsRegisterTable({
   const totalBalanceDue = useMemo(() => {
     return filteredBills.reduce((acc, b) => acc + (Number(b.balance_amount) || 0), 0);
   }, [filteredBills]);
-
-  // WhatsApp Payment Reminder Builder & Dispatcher
-  function handleSendWhatsAppReminder(bill) {
-    const dealer = bill.dealer || {};
-    const dealerName = dealer.name || dealer.brand_name || 'Valued Partner';
-    const total = Number(bill.total_amount || 0);
-    const paid = Number(bill.paid_amount || 0);
-    const balance = Number(bill.balance_amount || 0);
-    const billTypeLabel = bill.bill_type === 'gst' ? 'Tax Invoice' : 'Purchase Parchi / Slip';
-    const storeName = currentStore?.name || 'Star Enterprises';
-    const billDateStr = bill.bill_date ? formatDate(bill.bill_date, false) : '-';
-
-    const itemsSummary = Array.isArray(bill.items) && bill.items.length > 0
-      ? bill.items.map((it) => `• ${it.name || it.description} (Qty: ${it.quantity || 1})`).slice(0, 3).join('\n')
-      : bill.notes || 'Consignment stock entry';
-
-    const text = `*PAYMENT REMINDER - ${storeName.toUpperCase()}*
-----------------------------------------
-*Dear ${dealerName},*
-This is a friendly reminder regarding the outstanding balance for the following purchase bill:
-
-📄 *Bill / Slip No:* #${bill.bill_number} (${billTypeLabel})
-📅 *Bill Date:* ${billDateStr}
-${bill.credit_days ? `⏳ *Credit Term:* ${bill.credit_days} Days\n` : ''}📦 *Purchased Goods:*
-${itemsSummary}
-
-💰 *Total Bill Amount:* ${formatCurrency(total)}
-✅ *Paid to Date:* ${formatCurrency(paid)}
-----------------------------------------
-🔴 *REMAINING BALANCE DUE:* ${formatCurrency(balance)}
-----------------------------------------
-Kindly verify your khata records and arrange the settlement.
-
-*From:* ${storeName}
-📞 *Contact:* ${currentStore?.phone || '+91 93700 11653'}`;
-
-    const rawPhone = (dealer.phone || '').replace(/\D/g, '');
-    const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
-    const encoded = encodeURIComponent(text);
-    const url = cleanPhone
-      ? `https://wa.me/${cleanPhone}?text=${encoded}`
-      : `https://wa.me/?text=${encoded}`;
-
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
 
   return (
     <div className="space-y-4">
@@ -189,11 +143,11 @@ Kindly verify your khata records and arrange the settlement.
         <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted">
           <span>
             Showing <strong className="text-text font-semibold">{filteredBills.length}</strong>{' '}
-            {filteredBills.length === 1 ? 'purchase bill' : 'purchase bills'}
+            {filteredBills.length === 1 ? 'purchase / due' : 'purchases / dues'}
           </span>
           {totalBalanceDue > 0 && (
             <span>
-              Total Outstanding Balance:{' '}
+              Total Money to Give:{' '}
               <strong className="text-brand-crimson font-mono font-bold">
                 {formatCurrency(totalBalanceDue)}
               </strong>
@@ -207,8 +161,8 @@ Kindly verify your khata records and arrange the settlement.
         <div className="bg-surface border border-border rounded-xl shadow-2xs">
           <LoadingState
             size="md"
-            title="Refreshing Purchase Bills"
-            message="Updating bills, tax vouchers, and payment statuses..."
+            title="Refreshing Dues & Reminders"
+            message="Updating balances, due dates, and payment history..."
           />
         </div>
       )}
@@ -217,11 +171,11 @@ Kindly verify your khata records and arrange the settlement.
       {!isLoading && filteredBills.length === 0 && (
         <div className="py-16 text-center bg-surface border border-dashed border-border rounded-xl shadow-2xs space-y-2">
           <Receipt size={34} className="mx-auto text-muted/50 mb-1" />
-          <p className="font-semibold text-text text-sm">No purchase bills found</p>
+          <p className="font-semibold text-text text-sm">No dealer dues found</p>
           <p className="text-xs text-muted max-w-sm mx-auto">
             {search || dealerFilter !== 'all' || billTypeFilter !== 'all' || statusFilter !== 'all'
-              ? 'No bills match your active search or filter criteria. Try clearing filters.'
-              : 'No dealer bills recorded yet. Click "+ Add Bill" to record your first purchase bill.'}
+              ? 'No records match your active search or filter criteria. Try clearing filters.'
+              : 'No dealer dues recorded yet. Click "+ Add Purchase / Due Reminder" above to record what you bought.'}
           </p>
         </div>
       )}
@@ -304,11 +258,21 @@ Kindly verify your khata records and arrange the settlement.
                     ) : b.isOverdue ? (
                       <span className="text-[11px] text-brand-crimson font-bold bg-brand-crimson-subtle border border-brand-crimson-border rounded px-2 py-0.5 flex items-center gap-1">
                         <AlertCircle size={11} className="shrink-0" />
-                        <span>{b.daysOverdue}d overdue</span>
+                        <span>{b.daysOverdue}d overdue! Pay dealer</span>
+                      </span>
+                    ) : b.daysUntilDue === 0 ? (
+                      <span className="text-[11px] text-amber-900 font-bold bg-amber-500/15 border border-amber-500/30 rounded px-2 py-0.5 flex items-center gap-1">
+                        <Clock size={11} className="shrink-0" />
+                        <span>Payment due today</span>
+                      </span>
+                    ) : b.daysUntilDue <= 7 ? (
+                      <span className="text-[11px] text-amber-800 font-semibold bg-amber-50 border border-amber-200 rounded px-2 py-0.5 flex items-center gap-1">
+                        <Clock size={11} className="shrink-0" />
+                        <span>Due in {b.daysUntilDue}d</span>
                       </span>
                     ) : (
                       <span className="text-[11px] text-muted bg-surface border border-border rounded px-2 py-0.5">
-                        {b.daysUntilDue}d credit left
+                        Due in {b.daysUntilDue}d ({b.credit_days}d credit)
                       </span>
                     )}
                   </div>
@@ -337,11 +301,11 @@ Kindly verify your khata records and arrange the settlement.
                     </div>
                   </div>
 
-                  {/* Column B: Items & Consignment Description */}
+                  {/* Column B: Items & What Was Bought */}
                   <div className="space-y-1.5 md:col-span-5 md:border-r md:border-border/60 md:pr-4">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
                       <Package size={12} className="text-brand-sage" />
-                      <span>Items Purchased</span>
+                      <span>Stock Bought / Description</span>
                       {itemsCount > 0 && (
                         <span className="text-[10px] font-normal text-muted lowercase">
                           ({itemsCount} {itemsCount === 1 ? 'item' : 'items'})
@@ -356,7 +320,7 @@ Kindly verify your khata records and arrange the settlement.
                             key={idx}
                             className="flex items-center justify-between text-xs gap-2 p-1.5 rounded-lg bg-surface-subtle/50 border border-border/50"
                           >
-                            <span className="text-text font-medium truncate">
+                            <span className="text-text font-bold truncate">
                               {it.name || it.description}
                             </span>
                             <span className="font-mono text-muted text-[11px] shrink-0 font-semibold">
@@ -372,7 +336,7 @@ Kindly verify your khata records and arrange the settlement.
                         )}
                       </div>
                     ) : b.notes ? (
-                      <p className="text-xs text-text italic leading-relaxed bg-surface-subtle/40 p-2 rounded-lg border border-border/50">
+                      <p className="text-xs text-text font-medium italic leading-relaxed bg-surface-subtle/40 p-2 rounded-lg border border-border/50">
                         "{b.notes}"
                       </p>
                     ) : (
@@ -382,11 +346,11 @@ Kindly verify your khata records and arrange the settlement.
                     )}
                   </div>
 
-                  {/* Column C: Financial Breakdown & Balance Due */}
+                  {/* Column C: Financial Breakdown & Money to Give */}
                   <div className="space-y-2 md:col-span-3 text-left md:text-right">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
-                        Total Bill Amount
+                        Total Purchase Cost
                       </span>
                       <span className="font-mono text-xl font-bold text-text block">
                         {formatCurrency(total)}
@@ -399,7 +363,7 @@ Kindly verify your khata records and arrange the settlement.
                     </div>
 
                     <div className="pt-2 border-t border-border/60 flex items-center justify-between md:justify-end gap-3 text-xs">
-                      <span className="text-muted text-[11px]">Outstanding Due:</span>
+                      <span className="text-muted text-[11px] font-semibold">Money to Give:</span>
                       <span
                         className={cn(
                           'font-mono font-bold text-base',
@@ -463,29 +427,16 @@ Kindly verify your khata records and arrange the settlement.
                       </button>
                     )}
 
-                    {/* WhatsApp Reminder (Shown when payment is not fully paid) */}
-                    {balance > 0.01 && (
-                      <button
-                        type="button"
-                        onClick={() => handleSendWhatsAppReminder(b)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white shadow-2xs transition-all cursor-pointer font-medium"
-                        title={`Send WhatsApp payment reminder to ${b.dealer?.name || 'supplier'} for ${formatCurrency(balance)}`}
-                      >
-                        <MessageCircle size={13} className="stroke-[2.5]" />
-                        <span>WhatsApp Reminder</span>
-                      </button>
-                    )}
-
-                    {/* Pay Bill (if balance > 0) */}
+                    {/* Give Money (if balance > 0) */}
                     {balance > 0.01 && onOpenRecordPayment && (
                       <button
                         type="button"
                         onClick={() => onOpenRecordPayment(b.dealer, b)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white shadow-2xs transition-all cursor-pointer font-medium"
-                        title={`Pay outstanding balance of ${formatCurrency(balance)}`}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer"
+                        title={`Give money to ${b.dealer?.name || 'dealer'}: ${formatCurrency(balance)}`}
                       >
                         <Coins size={13} className="stroke-[2.5]" />
-                        <span>Pay Bill ({formatCurrency(balance)})</span>
+                        <span>Give Money ({formatCurrency(balance)})</span>
                       </button>
                     )}
                   </div>

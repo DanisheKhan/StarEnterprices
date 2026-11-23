@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   useDealers,
@@ -6,7 +6,8 @@ import {
   useDealerAnalytics,
 } from '../hooks/useDealers';
 import { useStores } from '@/features/stores';
-import { LoadingState, KpiGridSkeleton } from '@/shared/ui';
+import { LoadingState, KpiGridSkeleton, Badge } from '@/shared/ui';
+import { formatCurrency } from '@/shared/lib/format';
 import { DealerStatsHeader } from '../components/DealerStatsHeader';
 import { DealerDirectoryTable } from '../components/DealerDirectoryTable';
 import { BillsRegisterTable } from '../components/BillsRegisterTable';
@@ -19,6 +20,7 @@ import {
   Building2,
   FileText,
   Plus,
+  AlertTriangle,
 } from 'lucide-react';
 
 export function DealersHubPage() {
@@ -43,13 +45,47 @@ export function DealersHubPage() {
   const [selectedBill, setSelectedBill] = useState(null);
 
   // Data queries
-  const { data: dealers = [], isLoading: isLoadingDealers } = useDealers({
+  const { data: rawDealers, isLoading: isLoadingDealers } = useDealers({
     storeId,
   });
-  const { data: bills = [], isLoading: isLoadingBills } = useDealerBills({
+  const { data: rawBills, isLoading: isLoadingBills } = useDealerBills({
     storeId,
   });
   const { data: analytics, isLoading: isLoadingAnalytics } = useDealerAnalytics(storeId);
+
+  const dealers = useMemo(() => {
+    return Array.isArray(rawDealers) ? rawDealers.filter(Boolean) : [];
+  }, [rawDealers]);
+
+  const bills = useMemo(() => {
+    return Array.isArray(rawBills) ? rawBills.filter(Boolean) : [];
+  }, [rawBills]);
+
+  // Urgent payment reminders calculation
+  const urgentOverdue = useMemo(() => {
+    return bills.filter(
+      (b) => b && b.status !== 'paid' && b.isOverdue && Number(b.balance_amount) > 0
+    );
+  }, [bills]);
+
+  const dueSoon = useMemo(() => {
+    return bills.filter(
+      (b) =>
+        b &&
+        b.status !== 'paid' &&
+        !b.isOverdue &&
+        (b.daysUntilDue ?? 999) <= 7 &&
+        Number(b.balance_amount) > 0
+    );
+  }, [bills]);
+
+  const totalOverdueAmount = useMemo(() => {
+    return urgentOverdue.reduce((sum, b) => sum + Number(b?.balance_amount || 0), 0);
+  }, [urgentOverdue]);
+
+  const totalDueSoonAmount = useMemo(() => {
+    return dueSoon.reduce((sum, b) => sum + Number(b?.balance_amount || 0), 0);
+  }, [dueSoon]);
 
   // Auto-open print preview if redirected from PurchaseBillingPage via ?print=id
   const printParamId = searchParams.get('print');
@@ -106,13 +142,13 @@ export function DealersHubPage() {
         {/* 1. Page Header */}
         <div className="pb-4 border-b border-border min-w-0">
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-1">
-            ACCOUNTS PAYABLE & PROCUREMENT
+            SUPPLIER DUES & REMINDERS • KHATA
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text">
-            Dealer & Supplier Khata
+            Dealer Dues & Payment Reminders
           </h1>
           <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed max-w-3xl">
-            Multi-dealer central ledgers (Godrej, Samsung, Onida), partial payments, aging timeline, and strict GST vs. Kaccha separation.
+            Track goods bought from dealers on credit, pending amounts to give, and upcoming payment due dates.
           </p>
         </div>
 
@@ -123,8 +159,8 @@ export function DealersHubPage() {
         <div className="bg-surface border border-border rounded-xl shadow-2xs">
           <LoadingState
             fullScreen
-            title="Loading Dealer & Khata Register"
-            message="Retrieving verified supplier balances, bills, and accounts payable..."
+            title="Loading Dealer Dues & Reminders"
+            message="Retrieving supplier balances, upcoming due dates, and payment history..."
           />
         </div>
       </div>
@@ -137,26 +173,79 @@ export function DealersHubPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border min-w-0">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted block mb-1">
-            ACCOUNTS PAYABLE & PROCUREMENT
+            SUPPLIER DUES & REMINDERS • KHATA
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text">
-            Dealer & Supplier Khata
+            Dealer Dues & Payment Reminders
           </h1>
           <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed max-w-3xl">
-            Multi-dealer central ledgers (Godrej, Samsung, Onida), partial payments, aging timeline, and strict GST vs. Kaccha separation.
+            Track goods bought from dealers on credit, pending amounts to give, and upcoming payment due dates.
           </p>
         </div>
 
         <div>
           <Link
             to={`${basePath}/billing`}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer shrink-0"
           >
             <Plus size={15} />
-            <span>Record Purchase Bill</span>
+            <span>Record Purchase & Payment Terms</span>
           </Link>
         </div>
       </div>
+
+      {/* Active Payment Reminders Alert Strip */}
+      {(urgentOverdue.length > 0 || dueSoon.length > 0) && (
+        <div className="p-4 rounded-xl border bg-surface border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                urgentOverdue.length > 0
+                  ? 'bg-brand-crimson-subtle text-brand-crimson border border-brand-crimson-border'
+                  : 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+              }`}
+            >
+              <AlertTriangle size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-text flex items-center gap-2 flex-wrap">
+                <span>Payment Reminders for Goods Bought</span>
+                {urgentOverdue.length > 0 && (
+                  <Badge variant="danger" className="text-[10px] uppercase font-bold px-1.5 py-0.5">
+                    {urgentOverdue.length} Overdue
+                  </Badge>
+                )}
+                {dueSoon.length > 0 && (
+                  <Badge variant="amber" className="text-[10px] uppercase font-bold px-1.5 py-0.5">
+                    {dueSoon.length} Due This Week
+                  </Badge>
+                )}
+              </div>
+              <div className="text-xs text-muted mt-1 flex items-center gap-2 flex-wrap">
+                {urgentOverdue.length > 0 && (
+                  <span className="font-semibold text-brand-crimson">
+                    {formatCurrency(totalOverdueAmount)} overdue past agreed terms!
+                  </span>
+                )}
+                {urgentOverdue.length > 0 && dueSoon.length > 0 && <span>•</span>}
+                {dueSoon.length > 0 && (
+                  <span>
+                    {formatCurrency(totalDueSoonAmount)} due to be paid within the next 7 days.
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('bills')}
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle transition-all cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            View Dues
+          </button>
+        </div>
+      )}
 
       {/* 2. Executive Analytics & Aging Header */}
       <DealerStatsHeader analytics={analytics} isLoading={isLoadingAnalytics} />
@@ -173,7 +262,7 @@ export function DealersHubPage() {
             }`}
           >
             <FileText size={14} />
-            <span>All Bills & Aging ({bills.length})</span>
+            <span>All Bills & Dues ({bills.length})</span>
           </button>
 
           <button

@@ -29,26 +29,38 @@ function generateSerials({ prefix, start, quantity }) {
   return Array.from({ length: quantity }, (_, i) => `${cleanPrefix}${String(start + i).padStart(digits, '0')}`);
 }
 
-export function CreateSerialsModal({ isOpen, onClose, storeId, products = [], onCreated }) {
+export function CreateSerialsModal({ isOpen, onClose, storeId, products = [], initialProductId = '', onCreated }) {
   if (!isOpen) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create Serial Numbers" size="lg">
-      <CreateSerialsForm storeId={storeId} products={products} onClose={onClose} onCreated={onCreated} />
+      <CreateSerialsForm
+        key={`${isOpen ? 'open' : 'closed'}-${initialProductId}`}
+        storeId={storeId}
+        products={products}
+        initialProductId={initialProductId}
+        onClose={onClose}
+        onCreated={onCreated}
+      />
     </Modal>
   );
 }
 
-function CreateSerialsForm({ storeId, products, onClose, onCreated }) {
-  const [productId, setProductId] = useState('');
+function CreateSerialsForm({ storeId, products, initialProductId = '', onClose, onCreated }) {
+  const initialProduct = useMemo(
+    () => products.find((p) => p.id === initialProductId),
+    [products, initialProductId]
+  );
+
+  const [productId, setProductId] = useState(() => initialProductId || '');
   const [mode, setMode] = useState('manual');
   const [manualText, setManualText] = useState('');
-  const [prefix, setPrefix] = useState('');
+  const [prefix, setPrefix] = useState(() => (initialProduct?.sku ? `${initialProduct.sku.toUpperCase()}-` : ''));
   const [startNumber, setStartNumber] = useState('1');
   const [quantity, setQuantity] = useState('10');
   const [conditionGrade, setConditionGrade] = useState('new');
   const [warrantyMonths, setWarrantyMonths] = useState('12');
-  const [purchaseCost, setPurchaseCost] = useState('0');
+  const [purchaseCost, setPurchaseCost] = useState(() => String(initialProduct?.cost_price || 0));
   const [error, setError] = useState('');
 
   const createMutation = useAddSerializedUnitsBulk();

@@ -17,6 +17,7 @@ import { InvoicePrintModal } from '../components/InvoicePrintModal';
 import { EditInvoiceModal } from '../components/EditInvoiceModal';
 import { CollectPaymentModal } from '../components/CollectPaymentModal';
 import { ReturnProductModal } from '../components/ReturnProductModal';
+import { InvoiceCard } from '../components/InvoiceCard';
 import { downloadBillingHistoryExcel } from '../lib/exportBillingHistory';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -31,6 +32,8 @@ import {
   RotateCcw,
   Coins,
   FileSpreadsheet,
+  LayoutGrid,
+  Table as TableIcon,
 } from 'lucide-react';
 
 function WhatsAppIcon({ size = 14, className }) {
@@ -75,6 +78,7 @@ export function InvoicesListPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('cards');
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Modals state
@@ -118,7 +122,6 @@ export function InvoicesListPage() {
     let partialCount = 0;
     let pendingCount = 0;
     let returnedCount = 0;
-    let voidCount = 0;
     let totalBalanceDue = 0;
 
     validInvoices.forEach((inv) => {
@@ -144,7 +147,7 @@ export function InvoicesListPage() {
       else if (effStatus === 'returned' || effStatus === 'partially_returned') returnedCount++;
     });
 
-    voidCount = invoices.filter((i) => i.status === 'void').length;
+    const voidCount = invoices.filter((i) => i.status === 'void').length;
 
     return {
       count: invoices.length,
@@ -183,9 +186,8 @@ export function InvoicesListPage() {
             .join('\n')
         : '• Purchased Store Goods';
 
-    let message = '';
-    if (isDue) {
-      message = `*PAYMENT REMINDER - ${storeName.toUpperCase()}*
+    const message = isDue
+      ? `*PAYMENT REMINDER - ${storeName.toUpperCase()}*
 ----------------------------------------
 *Dear ${customerName},*
 This is a gentle reminder regarding the outstanding balance for your purchase invoice:
@@ -205,9 +207,8 @@ Kindly arrange the payment clearance of the remaining amount to ${storeName} at 
 *Pay To:* ${storeName}
 📞 *Store Contact:* ${storePhone}
 
-Thank you for your business!`;
-    } else {
-      message = `*TAX INVOICE RECEIPT - ${storeName.toUpperCase()}*
+Thank you for your business!`
+      : `*TAX INVOICE RECEIPT - ${storeName.toUpperCase()}*
 ----------------------------------------
 *Dear ${customerName},*
 Thank you for your purchase with ${storeName}!
@@ -225,7 +226,6 @@ ${itemsList}
 *Store Contact:* ${storePhone}
 
 We appreciate your business and look forward to serving you again!`;
-    }
 
     const cleanPhone = (inv.customer_phone || '').replace(/\D/g, '');
     const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
@@ -407,9 +407,66 @@ We appreciate your business and look forward to serving you again!`;
             </select>
           </div>
         </div>
+
+        {/* Results Counter & View Mode Switcher */}
+        <div className="pt-2.5 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-muted">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span>
+              Showing <strong className="text-text font-semibold">{invoices.length}</strong>{' '}
+              {invoices.length === 1 ? 'bill' : 'bills'}
+            </span>
+            {metrics.totalBalanceDue > 0 && (
+              <>
+                <span>•</span>
+                <span>
+                  Total Udhaar (Dues):{' '}
+                  <strong className="text-brand-crimson font-mono font-bold">
+                    {formatCurrency(metrics.totalBalanceDue)}
+                  </strong>
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 self-end sm:self-auto">
+            <span className="text-[11px] text-muted font-medium mr-1">View:</span>
+            <div className="bg-surface-subtle p-0.5 rounded-lg border border-border flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={cn(
+                  'px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5',
+                  viewMode === 'cards'
+                    ? 'bg-surface text-text shadow-2xs border border-border'
+                    : 'text-muted hover:text-text'
+                )}
+                title="Dealer Card View"
+                aria-label="Cards View"
+              >
+                <LayoutGrid size={13} />
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5',
+                  viewMode === 'table'
+                    ? 'bg-surface text-text shadow-2xs border border-border'
+                    : 'text-muted hover:text-text'
+                )}
+                title="Table View"
+                aria-label="Table View"
+              >
+                <TableIcon size={13} />
+                <span>Table</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* 4. Bills Table */}
+      {/* 4. Bills Content Area */}
       {isLoading ? (
         <div className="py-20 text-center space-y-3">
           <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin mx-auto" />
@@ -425,6 +482,25 @@ We appreciate your business and look forward to serving you again!`;
               : 'No invoices generated yet. Use the POS terminal to create sales invoices.'}
           </p>
         </Card>
+      ) : viewMode === 'cards' ? (
+        /* DEALER-STYLE BILL CARDS */
+        <div className="space-y-3.5">
+          {invoices.map((inv) => {
+            const matchedStore = stores.find((s) => s.id === inv.store_id);
+            return (
+              <InvoiceCard
+                key={inv.id}
+                invoice={inv}
+                storeName={matchedStore?.name || ''}
+                onViewPrint={(id) => setViewingInvoiceId(id)}
+                onEdit={(id) => setEditingInvoiceId(id)}
+                onWhatsApp={(invoiceToShare) => handleSendWhatsApp(invoiceToShare)}
+                onCollect={(invoiceToCollect) => setCollectingInvoice(invoiceToCollect)}
+                onReturn={(invoiceToReturn) => setReturningInvoice(invoiceToReturn)}
+              />
+            );
+          })}
+        </div>
       ) : (
         <Table className="w-full min-w-190 table-fixed">
           <TableHead>

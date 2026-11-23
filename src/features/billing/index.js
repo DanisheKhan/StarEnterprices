@@ -4,6 +4,7 @@ export { InvoicePrintModal } from './components/InvoicePrintModal';
 export { EditInvoiceModal } from './components/EditInvoiceModal';
 export { CollectPaymentModal } from './components/CollectPaymentModal';
 export { ReturnProductModal } from './components/ReturnProductModal';
+export { InvoiceCard } from './components/InvoiceCard';
 export {
   useInvoices,
   useAllInvoices,

@@ -6,6 +6,9 @@ export { EditProductModal } from './components/EditProductModal';
 export { DeleteProductModal } from './components/DeleteProductModal';
 export { AddProductModal } from './components/AddProductModal';
 export { AddCategoryModal } from './components/AddCategoryModal';
+export { CreateSerialsModal } from './components/CreateSerialsModal';
+export { DeleteSerialModal } from './components/DeleteSerialModal';
+export { ProductSerialCard } from './components/ProductSerialCard';
 export {
   useProducts,
   useProductUnits,
