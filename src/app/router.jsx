@@ -17,6 +17,7 @@ const SerialNumbersPage = lazyWithRetry(() => import('@/features/inventory').the
 const SecondHandIntakePage = lazyWithRetry(() => import('@/features/second-hand').then((m) => ({ default: m.SecondHandIntakePage })));
 const DealersHubPage = lazyWithRetry(() => import('@/features/dealers').then((m) => ({ default: m.DealersHubPage })));
 const DealerKhataPage = lazyWithRetry(() => import('@/features/dealers').then((m) => ({ default: m.DealerKhataPage })));
+const PurchaseBillingPage = lazyWithRetry(() => import('@/features/dealers').then((m) => ({ default: m.PurchaseBillingPage })));
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
       {
         path: 'dealers',
         element: <DealersHubPage />,
+      },
+      {
+        path: 'dealers/billing',
+        element: <PurchaseBillingPage />,
       },
       {
         path: 'dealers/:dealerId',
@@ -86,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: ':storeCode/dealers',
         element: <DealersHubPage />,
+      },
+      {
+        path: ':storeCode/dealers/billing',
+        element: <PurchaseBillingPage />,
       },
       {
         path: ':storeCode/dealers/:dealerId',

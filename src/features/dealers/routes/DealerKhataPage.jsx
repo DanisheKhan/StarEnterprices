@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDealer, useDealers } from '../hooks/useDealers';
 import { DealerKhataLedger } from '../components/DealerKhataLedger';
-import { AddBillModal } from '../components/AddBillModal';
 import { RecordPaymentModal } from '../components/RecordPaymentModal';
 import { DebitNoteModal } from '../components/DebitNoteModal';
 import { BillTimelineModal } from '../components/BillTimelineModal';
@@ -14,10 +13,9 @@ export function DealerKhataPage() {
   const { data: dealer, isLoading } = useDealer(dealerId);
   const { data: allDealers = [] } = useDealers();
 
-  const [isAddBillOpen, setIsAddBillOpen] = useState(false);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isDebitNoteOpen, setIsDebitNoteOpen] = useState(false);
-  const [timelineBillId, setTimelineBillId] = useState(null);
+  const [timelineBill, setTimelineBill] = useState(null);
 
   const backLink = storeCode ? `/admin/${storeCode}/dealers` : '/admin/dealers';
 
@@ -41,22 +39,14 @@ export function DealerKhataPage() {
       {/* Passbook Ledger */}
       <DealerKhataLedger
         dealerId={dealerId}
-        onOpenAddBill={() => setIsAddBillOpen(true)}
         onOpenRecordPayment={() => setIsRecordPaymentOpen(true)}
         onOpenDebitNote={() => setIsDebitNoteOpen(true)}
-        onOpenTimeline={(id) => setTimelineBillId(id)}
+        onOpenTimeline={(id, bill) => setTimelineBill(bill || { id })}
       />
 
       {/* Modals with preselected dealer */}
       {dealer && (
         <>
-          <AddBillModal
-            isOpen={isAddBillOpen}
-            onClose={() => setIsAddBillOpen(false)}
-            dealers={allDealers}
-            preselectedDealer={dealer}
-          />
-
           <RecordPaymentModal
             isOpen={isRecordPaymentOpen}
             onClose={() => setIsRecordPaymentOpen(false)}
@@ -73,11 +63,12 @@ export function DealerKhataPage() {
         </>
       )}
 
-      {timelineBillId && (
+      {timelineBill && (
         <BillTimelineModal
-          isOpen={Boolean(timelineBillId)}
-          onClose={() => setTimelineBillId(null)}
-          billId={timelineBillId}
+          isOpen={Boolean(timelineBill)}
+          onClose={() => setTimelineBill(null)}
+          billId={timelineBill.id}
+          initialBill={timelineBill}
           onOpenRecordPayment={() => setIsRecordPaymentOpen(true)}
         />
       )}

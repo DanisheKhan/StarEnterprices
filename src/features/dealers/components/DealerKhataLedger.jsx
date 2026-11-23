@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, Button, Badge, LoadingState } from '@/shared/ui';
 import { useDealerStatement } from '../hooks/useDealers';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
@@ -22,7 +23,6 @@ import {
 
 export function DealerKhataLedger({
   dealerId,
-  onOpenAddBill,
   onOpenRecordPayment,
   onOpenDebitNote,
   onOpenTimeline,
@@ -127,14 +127,13 @@ Thank you for your ongoing partnership!`;
               <span>Print Ledger</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => onOpenAddBill(dealer)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-[#1B382B] text-white hover:bg-[#142d22] active:scale-[0.99] shadow-xs transition-all cursor-pointer"
+            <Link
+              to="/admin/dealers/billing"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-xs transition-all cursor-pointer"
             >
               <Plus size={14} className="stroke-[2.5]" />
-              <span>Add Bill</span>
-            </button>
+              <span>Record Purchase Bill</span>
+            </Link>
 
             <button
               type="button"
@@ -337,7 +336,7 @@ Thank you for your ongoing partnership!`;
                       <td className="py-2.5 px-3 text-center whitespace-nowrap min-w-0">
                         {isBill && onOpenTimeline && (
                           <button
-                            onClick={() => onOpenTimeline(row.id)}
+                            onClick={() => onOpenTimeline(row.id, row.metadata)}
                             title="Inspect Payment Speed & Timeline"
                             className="p-1 rounded text-muted hover:text-accent hover:bg-surface-subtle transition-colors cursor-pointer"
                           >

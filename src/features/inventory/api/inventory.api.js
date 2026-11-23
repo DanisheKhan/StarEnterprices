@@ -206,11 +206,15 @@ export async function listProductsByStore({ storeId, categoryId, search } = {}) 
  * Lists serialized units for a product or store
  */
 export async function listProductUnits({ storeId, productId, status } = {}) {
+  const resolvedStoreId = resolveStoreUuid(storeId) || storeId;
   let query = supabase
     .from('product_units')
     .select('id, product_id, store_id, serial_number, condition_grade, battery_health, purchase_cost, status, warranty_months, notes, created_at')
-    .eq('store_id', storeId)
     .order('created_at', { ascending: false });
+
+  if (resolvedStoreId) {
+    query = query.eq('store_id', resolvedStoreId);
+  }
 
   if (productId) {
     query = query.eq('product_id', productId);
@@ -220,9 +224,24 @@ export async function listProductUnits({ storeId, productId, status } = {}) {
     query = query.eq('status', status);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await query;
+    if (error) throw error;
+    if (data && !productId && !status && resolvedStoreId) {
+      setPersistentCache(`store_product_units_${resolvedStoreId}`, data);
+    }
+    return data || [];
+  } catch (err) {
+    console.warn('Network error listing product units, using cached:', err);
+    const cached = resolvedStoreId ? getPersistentCache(`store_product_units_${resolvedStoreId}`) : null;
+    if (cached) {
+      if (productId) {
+        return cached.filter((u) => u.product_id === productId && (!status || u.status === status));
+      }
+      return cached;
+    }
+    return [];
+  }
 }
 
 /**

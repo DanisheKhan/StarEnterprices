@@ -24,7 +24,6 @@ export function DealerDirectoryTable({
   dealers = [],
   isLoading,
   onOpenAddDealer,
-  onOpenAddBill,
   onOpenRecordPayment,
   basePath = '/admin/dealers',
 }) {
@@ -154,7 +153,7 @@ Thank you!`;
               <button
                 type="button"
                 onClick={onOpenAddDealer}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#1B382B] text-white hover:bg-[#142d22] active:scale-[0.99] shadow-2xs transition-all cursor-pointer shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer shrink-0"
               >
                 <Plus size={13} className="stroke-[2.5]" />
                 <span>Add Dealer</span>
@@ -443,18 +442,15 @@ Thank you!`;
 
                   {/* Right: Actions */}
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    {/* Add Bill Button */}
-                    {onOpenAddBill && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenAddBill(d)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle shadow-2xs transition-all cursor-pointer"
-                        title={`Add purchase bill for ${d.name || d.brand_name}`}
-                      >
-                        <Plus size={13} className="stroke-[2.5]" />
-                        <span>Add Bill</span>
-                      </button>
-                    )}
+                    {/* Add Bill Link */}
+                    <Link
+                      to={`${basePath}/billing`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle shadow-2xs transition-all cursor-pointer font-medium"
+                      title={`Record purchase bill for ${d.name || d.brand_name}`}
+                    >
+                      <Plus size={13} className="stroke-[2.5]" />
+                      <span>New Bill</span>
+                    </Link>
 
                     {/* WhatsApp Reminder (Only if balance is not fully settled) */}
                     {totalBalance > 0 && (
@@ -485,7 +481,7 @@ Thank you!`;
                     {/* View Passbook / Complete Ledger */}
                     <Link
                       to={`${basePath}/${d.id}`}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#1B382B] hover:bg-[#142d22] active:scale-[0.99] text-white shadow-2xs transition-all cursor-pointer font-medium"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-accent hover:bg-accent/90 active:scale-[0.99] text-accent-fg shadow-2xs transition-all cursor-pointer font-medium"
                       title="Open complete multi-book khata ledger and statement passbook"
                     >
                       <span>Passbook & Ledger</span>

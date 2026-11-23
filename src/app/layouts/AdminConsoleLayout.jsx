@@ -20,6 +20,7 @@ import {
   Armchair,
   Building2,
   Barcode,
+  FileText,
 } from 'lucide-react';
 
 export function AdminConsoleLayout() {
@@ -238,7 +239,7 @@ export function AdminConsoleLayout() {
                 <span>Dashboard</span>
               </Link>
 
-              {/* 2. Billing */}
+              {/* 2. Sales Billing */}
               <Link
                 to={`${basePath}/billing`}
                 onMouseEnter={() => import('@/features/billing').catch(() => {})}
@@ -250,7 +251,7 @@ export function AdminConsoleLayout() {
                 )}
               >
                 <CreditCard size={15} className="shrink-0" />
-                <span>Billing</span>
+                <span>Sales Billing</span>
               </Link>
 
               {/* 3. Stock & Inventory */}

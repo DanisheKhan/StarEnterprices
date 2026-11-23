@@ -183,7 +183,7 @@ export function DebitNoteModal({
           <button
             type="submit"
             disabled={createDebitNoteMutation.isPending}
-            className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#1B382B] text-white hover:bg-[#142d22] active:scale-[0.99] shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer disabled:opacity-50"
           >
             {createDebitNoteMutation.isPending ? 'Saving...' : 'Issue Debit Note'}
           </button>
