@@ -284,7 +284,7 @@ export function SerialNumbersPage() {
             Serial Numbers & Units
           </h1>
           <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
-            Manage unit-level inventory tracking, check available stock, and monitor sales invoices per product.
+            Unused serials stay with their product. Used serials can be billed again on any product with a full cash payment, then are removed.
           </p>
         </div>
 
@@ -315,22 +315,22 @@ export function SerialNumbersPage() {
 
       {/* Operational KPI Metric Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs space-y-1">
-          <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Available In Stock</span>
+        <div className="rounded-xl border border-brand-sage-border bg-brand-sage-subtle/50 p-3.5 sm:p-4 shadow-2xs space-y-1">
+          <div className="flex items-center justify-between text-brand-sage-text">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Unused</span>
             <PackageCheck size={16} className="text-brand-sage" />
           </div>
-          <div className="text-2xl font-bold text-text font-mono">{metrics.inStock}</div>
-          <p className="text-[11px] text-muted">Ready for billing & scan</p>
+          <div className="text-2xl font-bold text-brand-sage-text font-mono">{metrics.inStock}</div>
+          <p className="text-[11px] text-brand-sage-text/80">Ready for billing & scan</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs space-y-1">
-          <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Units Sold</span>
-            <ReceiptText size={16} className="text-muted" />
+        <div className="rounded-xl border border-brand-crimson-border bg-brand-crimson-subtle/50 p-3.5 sm:p-4 shadow-2xs space-y-1">
+          <div className="flex items-center justify-between text-brand-crimson-text">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Used</span>
+            <ReceiptText size={16} className="text-brand-crimson" />
           </div>
-          <div className="text-2xl font-bold text-text font-mono">{metrics.sold}</div>
-          <p className="text-[11px] text-muted">Billed to customer invoices</p>
+          <div className="text-2xl font-bold text-brand-crimson-text font-mono">{metrics.sold}</div>
+          <p className="text-[11px] text-brand-crimson-text/80">Billed to customer invoices</p>
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs space-y-1">
@@ -431,11 +431,11 @@ export function SerialNumbersPage() {
               className={cn(
                 'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
                 statusFilter === 'in_stock'
-                  ? 'bg-surface text-text shadow-2xs border border-border'
-                  : 'text-muted hover:text-text'
+                  ? 'bg-brand-sage-subtle text-brand-sage-text shadow-2xs border border-brand-sage-border'
+                  : 'text-muted hover:text-brand-sage-text'
               )}
             >
-              In Stock
+              Unused
             </button>
             <button
               type="button"
@@ -443,11 +443,11 @@ export function SerialNumbersPage() {
               className={cn(
                 'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
                 statusFilter === 'sold'
-                  ? 'bg-surface text-text shadow-2xs border border-border'
-                  : 'text-muted hover:text-text'
+                  ? 'bg-brand-crimson-subtle text-brand-crimson-text shadow-2xs border border-brand-crimson-border'
+                  : 'text-muted hover:text-brand-crimson-text'
               )}
             >
-              Sold
+              Used
             </button>
           </div>
 
@@ -545,14 +545,14 @@ export function SerialNumbersPage() {
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <PackageCheck size={16} className="text-brand-sage" />
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-text">
-                    Available Serial Numbers
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-brand-sage-text">
+                    Unused
                   </h2>
-                  <Badge variant="default" className="text-[11px] font-mono">
+                  <Badge variant="success" className="text-[11px] font-mono">
                     {tableUnused.length}
                   </Badge>
                 </div>
-                <span className="text-[11px] text-muted">Ready for billing</span>
+                <span className="text-[11px] text-brand-sage-text/80">Ready for billing</span>
               </div>
 
               {tableUnused.length === 0 ? (
@@ -648,20 +648,20 @@ export function SerialNumbersPage() {
             <section className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <ReceiptText size={16} className="text-muted" />
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-text">
-                    Sold Serial Numbers
+                  <ReceiptText size={16} className="text-brand-crimson" />
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-brand-crimson-text">
+                    Used
                   </h2>
-                  <Badge variant="default" className="text-[11px] font-mono">
+                  <Badge variant="danger" className="text-[11px] font-mono">
                     {tableUsed.length}
                   </Badge>
                 </div>
-                <span className="text-[11px] text-muted">Billed to invoices</span>
+                <span className="text-[11px] text-brand-crimson-text/80">Billed to invoices</span>
               </div>
 
               {tableUsed.length === 0 ? (
-                <div className="p-6 text-center rounded-xl border border-dashed border-border bg-surface text-xs text-muted">
-                  No sold serial numbers match your filters.
+                <div className="p-6 text-center rounded-xl border border-dashed border-brand-crimson-border bg-brand-crimson-subtle/40 text-xs text-muted">
+                  No used serial numbers match your filters.
                 </div>
               ) : (
                 <Table className="table-auto min-w-160" containerClassName="overflow-auto max-h-120">
@@ -671,7 +671,7 @@ export function SerialNumbersPage() {
                       <TableHeaderCell>Product</TableHeaderCell>
                       <TableHeaderCell>Invoice</TableHeaderCell>
                       <TableHeaderCell>Customer</TableHeaderCell>
-                      <TableHeaderCell>Sold Date</TableHeaderCell>
+                      <TableHeaderCell>Used Date</TableHeaderCell>
                       <TableHeaderCell className="text-right">Action</TableHeaderCell>
                     </TableRow>
                   </TableHead>
@@ -681,8 +681,8 @@ export function SerialNumbersPage() {
                       return (
                         <TableRow key={u.id}>
                           <TableCell>
-                            <span className="inline-flex items-center gap-2 font-mono font-semibold text-xs sm:text-sm text-muted">
-                              <Barcode size={14} className="shrink-0" />
+                            <span className="inline-flex items-center gap-2 font-mono font-semibold text-xs sm:text-sm text-brand-crimson-text">
+                              <Barcode size={14} className="text-brand-crimson shrink-0" />
                               {u.serial_number}
                             </span>
                           </TableCell>

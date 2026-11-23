@@ -123,15 +123,25 @@ export function POSPage() {
     }
   );
 
-  // Instantly derive the selected product's units from the pre-loaded inventory
-  const productUnits = useMemo(() => {
+  // Unused serials stay bound to the selected product. Used serials are a store-wide
+  // cash-bill pool and can be attached to any product on the bill.
+  const unusedUnits = useMemo(() => {
     if (!pendingProduct) return [];
-    return allStoreUnits.filter((u) => u.product_id === pendingProduct.id);
+    return allStoreUnits.filter(
+      (u) => u.product_id === pendingProduct.id && u.status === 'in_stock'
+    );
   }, [allStoreUnits, pendingProduct]);
 
-  const unitsLoading = storeUnitsLoading && productUnits.length === 0;
-  const unusedUnits = useMemo(() => productUnits.filter((u) => u.status === 'in_stock'), [productUnits]);
-  const usedUnits = useMemo(() => productUnits.filter((u) => u.status === 'sold'), [productUnits]);
+  const usedUnits = useMemo(() => {
+    return allStoreUnits
+      .filter((u) => u.status === 'sold')
+      .map((u) => ({
+        ...u,
+        origin_product_name: products.find((p) => p.id === u.product_id)?.name || null,
+      }));
+  }, [allStoreUnits, products]);
+
+  const unitsLoading = storeUnitsLoading && unusedUnits.length === 0 && usedUnits.length === 0;
   const hasUsedSerial = cart.some((item) => item.is_used_serial);
   const { data: invoiceDetail } = useInvoiceDetail(completedInvoiceId);
   const placeSaleMutation = usePlaceSale();
@@ -1712,9 +1722,9 @@ export function POSPage() {
           ) : unusedUnits.length === 0 && usedUnits.length === 0 ? (
             <div className="py-8 text-center space-y-3">
               <AlertCircle size={24} className="text-danger mx-auto" />
-              <p className="text-xs font-semibold text-text">No serial numbers for this product</p>
+              <p className="text-xs font-semibold text-text">No serial numbers available</p>
               <p className="text-[11px] text-muted max-w-sm mx-auto">
-                A serial number is required to bill an item. Create serial numbers for this product first.
+                Create unused serials for this product, or reuse a used serial from any product on a cash bill.
               </p>
               <Button
                 size="sm"
@@ -1729,12 +1739,12 @@ export function POSPage() {
           ) : (
             <div className="space-y-5">
               <p className="text-xs text-muted">
-                A serial number is required. Choose the exact serial number scanned at the counter:
+                Unused serials must match this product. Used serials from any product work on a full cash bill even if this product has no stock.
               </p>
 
               <UnitPickerGroup
                 title="Unused Serial Numbers"
-                caption="Any bill. Moves to used after this sale."
+                caption="This product. Any bill. Moves to used after sale."
                 units={unusedUnits}
                 emptyText="No unused serial numbers left for this product."
                 onSelect={handleSelectUnit}
@@ -1743,9 +1753,9 @@ export function POSPage() {
 
               <UnitPickerGroup
                 title="Used Serial Numbers"
-                caption="Cash bill only. Removed after this use."
+                caption="Any product, even with zero stock. Cash only. Removed after use."
                 units={usedUnits}
-                emptyText="No used serial numbers for this product."
+                emptyText="No used serial numbers in this store."
                 onSelect={handleSelectUnit}
                 cartUnitIds={cart.map((c) => c.unit_id)}
                 isUsed
@@ -1800,6 +1810,9 @@ function UnitPickerGroup({ title, caption, units, emptyText, onSelect, cartUnitI
                   <div className={cn('font-mono font-semibold', isUsed ? 'text-muted' : 'text-text')}>
                     {unit.serial_number}
                   </div>
+                  {isUsed && unit.origin_product_name && (
+                    <div className="text-[10px] text-muted">From: {unit.origin_product_name}</div>
+                  )}
                   {unit.condition_grade && (
                     <div className="text-[10px] text-muted uppercase">Grade: {unit.condition_grade}</div>
                   )}
