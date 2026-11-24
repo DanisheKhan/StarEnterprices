@@ -535,7 +535,11 @@ export async function getDealerStatement(dealerId, { billType = 'all' } = {}) {
       entryType: 'PAYMENT',
       billType: p.bill?.bill_type || 'unlinked',
       refNumber: p.payment_number,
-      description: `Payment (${p.payment_mode?.toUpperCase()}${p.transaction_ref ? ` - ${p.transaction_ref}` : ''})`,
+      description: `Payment (${
+        p.payment_mode === 'cheque' ? 'CHEQUE' : p.payment_mode?.toUpperCase()
+      }${p.transaction_ref ? ` - ${p.transaction_ref}` : ''}${
+        p.payment_mode === 'cheque' && p.cheque_date ? ` dated ${p.cheque_date}` : ''
+      })`,
       debit: 0,
       credit: Number(p.amount), // Reduces payable
       metadata: p,

@@ -146,7 +146,7 @@ export function ProductSerialCard({
       {/* Expandable Tray */}
       {isExpanded && (
         <div className="p-4 sm:p-5 space-y-4 bg-surface-subtle/40">
-          {/* Sub-tabs: Available Units vs Sold History */}
+          {/* Sub-tabs: Unused vs Used */}
           <div className="flex items-center justify-between border-b border-border pb-2.5 gap-2 flex-wrap">
             <div className="flex items-center gap-1.5">
               <button
@@ -155,15 +155,15 @@ export function ProductSerialCard({
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5',
                   activeTab === 'unused'
-                    ? 'bg-surface text-text border border-border shadow-2xs'
-                    : 'text-muted hover:text-text hover:bg-surface/50 border border-transparent'
+                    ? 'bg-brand-sage-subtle text-brand-sage-text border border-brand-sage-border shadow-2xs'
+                    : 'text-muted hover:text-brand-sage-text hover:bg-brand-sage-subtle/50 border border-transparent'
                 )}
               >
                 <PackageCheck size={13} className={activeTab === 'unused' ? 'text-brand-sage' : 'text-muted'} />
-                <span>Available Units</span>
+                <span>Unused</span>
                 <span className={cn(
                   'text-[10px] font-mono px-1.5 py-0.2 rounded-full',
-                  activeTab === 'unused' ? 'bg-brand-sage-subtle text-brand-sage-text' : 'bg-surface text-muted'
+                  activeTab === 'unused' ? 'bg-brand-sage text-white' : 'bg-surface text-muted'
                 )}>
                   {unusedCount}
                 </span>
@@ -175,13 +175,16 @@ export function ProductSerialCard({
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5',
                   activeTab === 'used'
-                    ? 'bg-surface text-text border border-border shadow-2xs'
-                    : 'text-muted hover:text-text hover:bg-surface/50 border border-transparent'
+                    ? 'bg-brand-crimson-subtle text-brand-crimson-text border border-brand-crimson-border shadow-2xs'
+                    : 'text-muted hover:text-brand-crimson-text hover:bg-brand-crimson-subtle/50 border border-transparent'
                 )}
               >
-                <ReceiptText size={13} className={activeTab === 'used' ? 'text-text' : 'text-muted'} />
-                <span>Sold History</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-surface text-muted">
+                <ReceiptText size={13} className={activeTab === 'used' ? 'text-brand-crimson' : 'text-muted'} />
+                <span>Used</span>
+                <span className={cn(
+                  'text-[10px] font-mono px-1.5 py-0.2 rounded-full',
+                  activeTab === 'used' ? 'bg-brand-crimson text-white' : 'bg-surface text-muted'
+                )}>
                   {usedCount}
                 </span>
               </button>
@@ -194,13 +197,13 @@ export function ProductSerialCard({
             </span>
           </div>
 
-          {/* Available Units Panel */}
+          {/* Unused Panel */}
           {activeTab === 'unused' && (
             <div>
               {unusedUnits.length === 0 ? (
-                <div className="p-6 text-center rounded-xl border border-dashed border-border bg-surface text-xs text-muted space-y-2">
-                  <Package size={24} className="mx-auto text-muted/60" />
-                  <p className="font-medium text-text">No available serial numbers</p>
+                <div className="p-6 text-center rounded-xl border border-dashed border-brand-sage-border bg-brand-sage-subtle/40 text-xs text-muted space-y-2">
+                  <Package size={24} className="mx-auto text-brand-sage/60" />
+                  <p className="font-medium text-text">No unused serial numbers</p>
                   <p className="text-[11px] text-muted max-w-xs mx-auto">
                     Add new serial numbers to enable barcode scanning and billing for this product.
                   </p>
@@ -220,10 +223,10 @@ export function ProductSerialCard({
                     return (
                       <div
                         key={u.id}
-                        className="rounded-lg border border-border bg-surface p-3 flex items-center justify-between gap-2 shadow-2xs hover:border-border-strong transition-colors"
+                        className="rounded-lg border border-brand-sage-border/60 bg-brand-sage-subtle/30 p-3 flex items-center justify-between gap-2 shadow-2xs hover:border-brand-sage-border transition-colors"
                       >
                         <div className="min-w-0 space-y-1">
-                          <div className="flex items-center gap-1.5 font-mono font-semibold text-xs text-text truncate">
+                          <div className="flex items-center gap-1.5 font-mono font-semibold text-xs text-brand-sage-text truncate">
                             <Barcode size={14} className="text-brand-sage shrink-0" />
                             <span className="truncate">{u.serial_number}</span>
                           </div>
@@ -270,13 +273,13 @@ export function ProductSerialCard({
             </div>
           )}
 
-          {/* Sold History Panel */}
+          {/* Used Panel */}
           {activeTab === 'used' && (
             <div>
               {usedUnits.length === 0 ? (
-                <div className="p-6 text-center rounded-xl border border-dashed border-border bg-surface text-xs text-muted space-y-1">
-                  <ReceiptText size={24} className="mx-auto text-muted/60" />
-                  <p className="font-medium text-text">No sold units recorded yet</p>
+                <div className="p-6 text-center rounded-xl border border-dashed border-brand-crimson-border bg-brand-crimson-subtle/40 text-xs text-muted space-y-1">
+                  <ReceiptText size={24} className="mx-auto text-brand-crimson/60" />
+                  <p className="font-medium text-text">No used serial numbers yet</p>
                   <p className="text-[11px] text-muted">Units billed at POS will appear here with customer invoice details.</p>
                 </div>
               ) : (
@@ -290,11 +293,11 @@ export function ProductSerialCard({
                     return (
                       <div
                         key={u.id}
-                        className="rounded-lg border border-border bg-surface p-3 flex flex-col justify-between gap-2.5 shadow-2xs"
+                        className="rounded-lg border border-brand-crimson-border/60 bg-brand-crimson-subtle/30 p-3 flex flex-col justify-between gap-2.5 shadow-2xs"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 font-mono font-semibold text-xs text-text truncate">
-                            <Barcode size={14} className="text-muted shrink-0" />
+                          <div className="flex items-center gap-1.5 font-mono font-semibold text-xs text-brand-crimson-text truncate">
+                            <Barcode size={14} className="text-brand-crimson shrink-0" />
                             <span className="truncate">{u.serial_number}</span>
                           </div>
 
@@ -334,8 +337,8 @@ export function ProductSerialCard({
                         </div>
 
                         {soldDate && (
-                          <div className="text-[10px] text-muted text-right">
-                            Sold: {formatDate(soldDate)}
+                          <div className="text-[10px] text-brand-crimson-text/80 text-right">
+                            Used: {formatDate(soldDate)}
                           </div>
                         )}
                       </div>
