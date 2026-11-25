@@ -49,6 +49,10 @@ export const router = createBrowserRouter([
         element: <StaffManagementPage />,
       },
       {
+        path: 'reports',
+        element: <ReportsConsolePage />,
+      },
+      {
         path: 'dealers',
         element: <DealersHubPage />,
       },
@@ -106,7 +110,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ':storeCode/reports',
-        element: <Navigate to=".." relative="path" replace />,
+        element: <ReportsConsolePage />,
       },
     ],
   },

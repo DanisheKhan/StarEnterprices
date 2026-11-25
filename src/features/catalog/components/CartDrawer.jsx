@@ -13,7 +13,6 @@ export function CartDrawer() {
     updateQuantity,
     clearCart,
     totalCount,
-    subtotal,
   } = useCart();
 
   if (!isCartOpen) return null;
@@ -21,25 +20,60 @@ export function CartDrawer() {
   function handleWhatsAppCheckout() {
     if (items.length === 0) return;
 
+    let baseSubtotal = 0;
+    let totalGst = 0;
+    let totalWithGst = 0;
+    const storeNames = new Set();
+
     let message = `*Order Inquiry - Star Enterprises*\n\n`;
     message += `Hello Star Enterprises, I would like to order the following items:\n\n`;
 
     items.forEach((item, index) => {
       const p = item.product;
+      const base = Number(p.selling_price || 0);
+      const gstRate = !isNaN(parseFloat(p.gst_rate)) ? parseFloat(p.gst_rate) : 18;
+      const lineBase = base * item.quantity;
+      const lineGst = Math.round(lineBase * (gstRate / 100));
+      const lineTotal = lineBase + lineGst;
+
+      baseSubtotal += lineBase;
+      totalGst += lineGst;
+      totalWithGst += lineTotal;
+      if (p.stores?.name) storeNames.add(p.stores.name);
+
       message += `${index + 1}. *${p.name}* (${p.stores?.name || 'Star'})\n`;
-      message += `   Qty: ${item.quantity} × ${formatCurrency(p.selling_price)} = ${formatCurrency(p.selling_price * item.quantity)}\n`;
+      message += `   Qty: ${item.quantity} × ${formatCurrency(base)} + ${gstRate}% GST = ${formatCurrency(lineTotal)}\n`;
       if (p.specs?.color) message += `   Color: ${p.specs.color}\n`;
       if (p.specs?.storage) message += `   Storage: ${p.specs.storage}\n`;
       message += `\n`;
     });
 
-    message += `*Total Order Value:* ${formatCurrency(subtotal)} (Incl. GST)\n\n`;
-    message += `Please confirm stock availability and store pickup / delivery options.`;
+    message += `*Taxable Subtotal:* ${formatCurrency(baseSubtotal)}\n`;
+    message += `*Estimated GST:* ${formatCurrency(totalGst)}\n`;
+    message += `*Total Payable (Incl. GST):* ${formatCurrency(totalWithGst)}\n\n`;
+    if (storeNames.size > 1) {
+      message += `_Note: Items span multiple departments (${Array.from(storeNames).join(' & ')}). Separate department GST bills may be issued at Khadka Road showroom._\n\n`;
+    }
+    message += `Please confirm stock availability and showroom pickup / delivery options.`;
 
     const encoded = encodeURIComponent(message);
     const url = `https://wa.me/${SITE.whatsappPhone}?text=${encoded}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   }
+
+  const cartTotals = items.reduce(
+    (acc, { product, quantity }) => {
+      const base = Number(product.selling_price || 0);
+      const gstRate = !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18;
+      const lineBase = base * quantity;
+      const lineGst = Math.round(lineBase * (gstRate / 100));
+      acc.base += lineBase;
+      acc.gst += lineGst;
+      acc.grand += lineBase + lineGst;
+      return acc;
+    },
+    { base: 0, gst: 0, grand: 0 }
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -88,7 +122,17 @@ export function CartDrawer() {
               </Button>
             </div>
           ) : (
-            items.map(({ product, quantity }) => (
+            items.map(({ product, quantity }) => {
+              const basePrice = Number(product.selling_price || 0);
+              const gstRate = !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18;
+              const lineBase = basePrice * quantity;
+              const lineGst = Math.round(lineBase * (gstRate / 100));
+              const lineFinal = lineBase + lineGst;
+              const rawStock = product.inventory?.[0]?.quantity_on_hand;
+              const maxStock = typeof rawStock === 'number' ? rawStock : null;
+              const atMaxStock = maxStock !== null && quantity >= maxStock;
+
+              return (
               <div
                 key={product.id}
                 className="p-3.5 border border-border rounded-2xl bg-bg flex gap-3 items-start min-w-0"
@@ -116,14 +160,14 @@ export function CartDrawer() {
                   </div>
                   <h3 className="text-xs font-semibold text-text truncate">{product.name}</h3>
                   <div className="text-xs font-semibold text-text">
-                    {formatCurrency(product.selling_price)}
+                    {formatCurrency(basePrice + Math.round(basePrice * (gstRate / 100)))}
                     <span className="text-[10px] font-normal text-muted ml-1.5">
-                      Incl. {product.gst_rate}% GST
+                      ({formatCurrency(basePrice)} + {gstRate}% GST)
                     </span>
                   </div>
 
                   {/* Quantity Controls */}
-                  <div className="pt-2 flex items-center gap-2">
+                  <div className="pt-2 flex items-center gap-2 flex-wrap">
                     <div className="flex items-center border border-border rounded-full bg-surface">
                       <button
                         type="button"
@@ -138,13 +182,20 @@ export function CartDrawer() {
                       </span>
                       <button
                         type="button"
+                        disabled={atMaxStock}
                         onClick={() => updateQuantity(product.id, quantity + 1)}
-                        className="p-1 px-2 text-muted hover:text-text cursor-pointer transition-colors"
+                        className="p-1 px-2 text-muted hover:text-text disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                         aria-label="Increase quantity"
                       >
                         <Plus size={12} />
                       </button>
                     </div>
+
+                    {atMaxStock && (
+                      <span className="text-[10px] text-brand-gold-text font-medium">
+                        Max stock ({maxStock})
+                      </span>
+                    )}
 
                     <button
                       type="button"
@@ -158,10 +209,11 @@ export function CartDrawer() {
                 </div>
 
                 <div className="text-right text-xs font-semibold text-text whitespace-nowrap">
-                  {formatCurrency(product.selling_price * quantity)}
+                  {formatCurrency(lineFinal)}
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -170,16 +222,16 @@ export function CartDrawer() {
           <div className="p-4 sm:p-5 border-t border-border bg-surface space-y-3">
             <div className="space-y-1 text-xs">
               <div className="flex justify-between text-muted">
-                <span>Subtotal ({totalCount} items):</span>
-                <span>{formatCurrency(subtotal)}</span>
+                <span>Taxable Subtotal ({totalCount} items):</span>
+                <span className="font-mono">{formatCurrency(cartTotals.base)}</span>
               </div>
               <div className="flex justify-between text-muted">
-                <span>GST Tax (Included):</span>
-                <span>Calculated</span>
+                <span>Estimated GST (CGST + SGST):</span>
+                <span className="font-mono">+{formatCurrency(cartTotals.gst)}</span>
               </div>
               <div className="flex justify-between text-sm font-semibold text-text pt-2 border-t border-border">
-                <span>Total Amount:</span>
-                <span>{formatCurrency(subtotal)}</span>
+                <span>Total Payable (Incl. GST):</span>
+                <span className="font-mono">{formatCurrency(cartTotals.grand)}</span>
               </div>
             </div>
 

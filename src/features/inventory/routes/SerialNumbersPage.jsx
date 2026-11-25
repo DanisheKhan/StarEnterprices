@@ -840,7 +840,7 @@ export function SerialNumbersPage() {
                           <TableCell className="whitespace-nowrap">
                             {u.invoice ? (
                               <Link
-                                to={`/admin/${storeCode}/invoices`}
+                                to={u.invoice.id ? `/admin/${storeCode}/invoices?print=${u.invoice.id}` : `/admin/${storeCode}/invoices`}
                                 className="font-mono text-xs font-semibold text-text underline-offset-2 hover:underline inline-flex items-center gap-1"
                               >
                                 <span>{u.invoice.invoice_number}</span>

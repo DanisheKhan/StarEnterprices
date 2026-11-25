@@ -15,6 +15,7 @@ export {
   useRecordPayment,
   useProcessReturn,
   useInvoiceReturns,
+  useCustomerLookup,
   billingKeys,
 } from './hooks/useBilling';
 export {
@@ -27,4 +28,5 @@ export {
   recordPayment,
   processReturn,
   listReturns,
+  searchCustomersByPhone,
 } from './api/billing.api';

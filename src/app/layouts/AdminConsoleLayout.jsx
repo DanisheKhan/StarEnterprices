@@ -20,6 +20,7 @@ import {
   Armchair,
   Building2,
   Barcode,
+  BarChart3,
 } from 'lucide-react';
 
 export function AdminConsoleLayout() {
@@ -96,6 +97,7 @@ export function AdminConsoleLayout() {
   const isInventoryActive = path.startsWith(`${basePath}/inventory`);
   const isSerialsActive = path.startsWith(`${basePath}/serials`);
   const isDealersActive = path.startsWith(`${basePath}/dealers`) || path.startsWith('/admin/dealers');
+  const isReportsActive = path === '/admin/reports' || path.startsWith(`${basePath}/reports`);
 
   const activeStoreName =
     currentStore?.name ||
@@ -233,6 +235,20 @@ export function AdminConsoleLayout() {
                 <Receipt size={15} className="shrink-0" />
                 <span>All Bills</span>
               </Link>
+
+              <Link
+                to="/admin/reports"
+                onMouseEnter={() => import('@/features/reports').catch(() => {})}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors',
+                  path === '/admin/reports'
+                    ? 'bg-sidebar-active text-sidebar-active-fg font-semibold border border-border shadow-2xs'
+                    : 'text-sidebar-text hover:text-sidebar-text-hover hover:bg-sidebar-surface font-medium'
+                )}
+              >
+                <BarChart3 size={15} className="shrink-0" />
+                <span>Reports &amp; P&amp;L</span>
+              </Link>
             </div>
 
             {/* Store-Specific Workspace Navigation - Always visible for 100% consistent sidebar */}
@@ -299,6 +315,21 @@ export function AdminConsoleLayout() {
               >
                 <Barcode size={15} className="shrink-0" />
                 <span>Serial Number</span>
+              </Link>
+
+              {/* 5. Reports & P&L */}
+              <Link
+                to={`${basePath}/reports`}
+                onMouseEnter={() => import('@/features/reports').catch(() => {})}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors',
+                  isReportsActive
+                    ? 'bg-sidebar-active text-sidebar-active-fg font-semibold border border-border shadow-2xs'
+                    : 'text-sidebar-text hover:text-sidebar-text-hover hover:bg-sidebar-surface font-medium'
+                )}
+              >
+                <BarChart3 size={15} className="shrink-0" />
+                <span>Reports &amp; P&amp;L</span>
               </Link>
             </div>
           </nav>

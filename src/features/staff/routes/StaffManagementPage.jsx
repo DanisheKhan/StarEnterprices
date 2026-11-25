@@ -69,7 +69,8 @@ export function StaffManagementPage() {
   const { data: stores = [] } = useStores();
   const { data: staffList = [], isLoading: staffLoading } = useStaffProfiles();
   const { data: leaves = [], isLoading: leavesLoading } = useStaffLeaves();
-  const { data: salaries = [], isLoading: salariesLoading } = useStaffSalaries('2026-10');
+  const [payrollMonth, setPayrollMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const { data: salaries = [], isLoading: salariesLoading } = useStaffSalaries(payrollMonth);
 
   const updateStatusMutation = useUpdateStaffStatus();
   const markPaidMutation = useMarkSalaryPaid();
@@ -614,10 +615,27 @@ export function StaffManagementPage() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-text">October 2026 Monthly Payroll</h3>
+              <h3 className="text-sm font-semibold text-text">
+                {new Date(`${payrollMonth}-01T00:00:00`).toLocaleDateString('en-IN', {
+                  month: 'long',
+                  year: 'numeric',
+                })}{' '}
+                Monthly Payroll
+              </h3>
               <p className="text-xs text-muted">Official salary disbursement register and printable GST payslips.</p>
             </div>
-            <Badge variant="accent">Payroll Cycle: 2026-10</Badge>
+            <div className="flex items-center gap-2">
+              <input
+                type="month"
+                value={payrollMonth}
+                onChange={(e) => {
+                  if (e.target.value) setPayrollMonth(e.target.value);
+                }}
+                aria-label="Select payroll month"
+                className="h-8 rounded-lg border border-border bg-surface px-2.5 text-xs font-medium text-text focus:outline-none focus:ring-2 focus:ring-accent/20"
+              />
+              <Badge variant="accent">Cycle: {payrollMonth}</Badge>
+            </div>
           </div>
 
           {salariesLoading ? (

@@ -8,7 +8,7 @@ import {
   Modal,
 } from '@/shared/ui';
 import { useProducts, useProductUnits, findStoreUnitBySerial } from '@/features/inventory';
-import { usePlaceSale, useInvoiceDetail } from '../hooks/useBilling';
+import { usePlaceSale, useInvoiceDetail, useCustomerLookup } from '../hooks/useBilling';
 import { InvoicePrintModal } from '../components/InvoicePrintModal';
 import { formatCurrency } from '@/shared/lib/format';
 import { isValidIndianPhone, isValidGstin, cleanPhone } from '@/shared/lib/validation';
@@ -109,6 +109,10 @@ export function POSPage() {
   // Serial Unit Selector Modal State
   const [isUnitSelectorOpen, setIsUnitSelectorOpen] = useState(false);
   const [pendingProduct, setPendingProduct] = useState(null);
+  const [unitModalSearch, setUnitModalSearch] = useState('');
+
+  // Repeat Customer Lookup by Phone
+  const { data: customerMatches = [] } = useCustomerLookup(customerPhone);
 
   // Data Queries
   const { data: products = [] } = useProducts(store?.id);
@@ -198,10 +202,68 @@ export function POSPage() {
     });
   }, [products, deferredSearch, selectedCategory]);
 
-  // Add Product to Cart Handler (a serial number is required for every billed item)
+  // Add Product to Cart Handler (serial selector for serialized SKUs, direct qty for accessories/non-serialized)
   function handleAddProduct(product) {
+    if (product.is_serialized === false) {
+      const stockQty = product.inventory?.[0]?.quantity_on_hand ?? 0;
+      if (stockQty <= 0) {
+        setErrorMessage(`${product.name} is out of stock. Add inventory before billing.`);
+        return;
+      }
+
+      const existingIdx = cart.findIndex(
+        (item) => item.product_id === product.id && !item.is_serialized
+      );
+      if (existingIdx !== -1) {
+        if (cart[existingIdx].quantity >= stockQty) {
+          setErrorMessage(`Maximum available stock (${stockQty}) reached for ${product.name}.`);
+          return;
+        }
+        setCart((prev) =>
+          prev.map((item, i) =>
+            i === existingIdx ? { ...item, quantity: item.quantity + 1, max_stock: stockQty } : item
+          )
+        );
+      } else {
+        setCart((prev) => [
+          ...prev,
+          {
+            product_id: product.id,
+            unit_id: null,
+            name: product.name,
+            sku: product.sku,
+            hsn_code: product.hsn_code || (store?.code === 'mobiles' ? '8517' : '9401'),
+            selling_price: parseFloat(product.selling_price) || 0,
+            gst_rate: !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18,
+            is_serialized: false,
+            serial_number: null,
+            is_used_serial: false,
+            condition_grade: null,
+            max_stock: stockQty,
+            quantity: 1,
+          },
+        ]);
+      }
+
+      setErrorMessage('');
+      searchInputRef.current?.focus();
+      return;
+    }
+
+    setUnitModalSearch('');
     setPendingProduct(product);
     setIsUnitSelectorOpen(true);
+  }
+
+  function handleUpdateNonSerializedQty(index, nextQty) {
+    setCart((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== index || item.is_serialized) return item;
+        const maxAllowed = item.max_stock || 999;
+        const clamped = Math.max(1, Math.min(maxAllowed, nextQty));
+        return { ...item, quantity: clamped };
+      })
+    );
   }
 
   // Core helper to add a validated serialized unit to the active bill
@@ -409,8 +471,8 @@ export function POSPage() {
       return;
     }
 
-    if (cart.some((item) => !item.unit_id)) {
-      setErrorMessage('Serial number is required for every item. Remove items without a serial and add them again.');
+    if (cart.some((item) => item.is_serialized && !item.unit_id)) {
+      setErrorMessage('Serial number is required for serialized items. Remove items without a serial and add them again.');
       setCurrentStep(1);
       return;
     }
@@ -762,6 +824,11 @@ export function POSPage() {
                         >
                           Stock: {stockQty}
                         </span>
+                        {p.is_serialized === false && (
+                          <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded border bg-surface border-border text-muted">
+                            Direct Qty
+                          </span>
+                        )}
                       </div>
 
                       {/* Product Identification */}
@@ -868,9 +935,35 @@ export function POSPage() {
                             </td>
 
                             <td className="py-3 px-3 text-center whitespace-nowrap">
-                              <span className="font-mono font-semibold px-2 py-0.5 bg-surface-subtle border border-border rounded text-xs">
-                                1
-                              </span>
+                              {item.is_serialized ? (
+                                <span className="font-mono font-semibold px-2 py-0.5 bg-surface-subtle border border-border rounded text-xs">
+                                  1
+                                </span>
+                              ) : (
+                                <div className="inline-flex items-center border border-border rounded bg-surface">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateNonSerializedQty(idx, item.quantity - 1)}
+                                    disabled={item.quantity <= 1}
+                                    className="px-1.5 py-0.5 text-xs font-bold text-muted hover:text-text disabled:opacity-40 cursor-pointer"
+                                    aria-label="Decrease item quantity"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="font-mono font-semibold px-2 py-0.5 text-xs">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateNonSerializedQty(idx, item.quantity + 1)}
+                                    disabled={item.max_stock && item.quantity >= item.max_stock}
+                                    className="px-1.5 py-0.5 text-xs font-bold text-muted hover:text-text disabled:opacity-40 cursor-pointer"
+                                    aria-label="Increase item quantity"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              )}
                             </td>
 
                             <td className="py-3 px-3 text-center font-mono text-muted text-xs whitespace-nowrap">
@@ -1032,8 +1125,46 @@ export function POSPage() {
               />
             </div>
 
+            {/* Repeat Customer Auto-Fill Suggestions */}
+            {customerMatches.length > 0 && (
+              <div className="p-2.5 rounded-lg border border-border bg-surface-subtle flex items-center gap-2 flex-wrap text-xs">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wider shrink-0">
+                  Recent Customers:
+                </span>
+                {customerMatches.map((match) => (
+                  <button
+                    key={match.phone}
+                    type="button"
+                    onClick={() => {
+                      setCustomerName(match.name);
+                      setCustomerPhone(match.phone);
+                      setCustomerGstin(match.gstin || '');
+                      setCustomerType(match.gstin ? 'registered' : 'walkin');
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    className="px-2.5 py-1 rounded-md border border-border bg-surface hover:border-brand-sage text-text cursor-pointer transition-colors font-medium"
+                  >
+                    {match.name} • <span className="font-mono text-muted">{match.phone}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Customer Address */}
-            <div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-muted">Customer Delivery / Billing Address</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerAddress('Showroom Counter Pickup, Khadka Road, Bhusawal');
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  className="text-[11px] font-semibold text-brand-sage-text hover:underline cursor-pointer"
+                >
+                  Use Bhusawal Counter Pickup
+                </button>
+              </div>
               <Input
                 id="pos-customer-address"
                 label="Address"
@@ -1042,7 +1173,7 @@ export function POSPage() {
                   setCustomerAddress(e.target.value);
                   if (errorMessage) setErrorMessage('');
                 }}
-                placeholder="e.g. Flat 402, Royal Palms, MG Road, Mumbai"
+                placeholder="e.g. Khadka Road, Near Station, Bhusawal"
                 required
               />
             </div>
@@ -1373,12 +1504,28 @@ export function POSPage() {
                             {targetCashAmount < 5000 && (
                               <button
                                 type="button"
-                                onClick={() => setCashTendered(String(Math.ceil(targetCashAmount / 500) * 500))}
+                                onClick={() => setCashTendered('5000')}
                                 className="px-2 py-0.5 rounded bg-surface border border-border text-[11px] font-mono hover:bg-surface-hover cursor-pointer"
                               >
-                                Round Up
+                                ₹5,000
                               </button>
                             )}
+                            {targetCashAmount < 10000 && (
+                              <button
+                                type="button"
+                                onClick={() => setCashTendered('10000')}
+                                className="px-2 py-0.5 rounded bg-surface border border-border text-[11px] font-mono hover:bg-surface-hover cursor-pointer"
+                              >
+                                ₹10,000
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setCashTendered(String(Math.ceil(targetCashAmount / 500) * 500))}
+                              className="px-2 py-0.5 rounded bg-surface border border-border text-[11px] font-mono hover:bg-surface-hover cursor-pointer"
+                            >
+                              Round Up
+                            </button>
                           </div>
                         </div>
 
@@ -1716,6 +1863,7 @@ export function POSPage() {
           onClose={() => {
             setIsUnitSelectorOpen(false);
             setPendingProduct(null);
+            setUnitModalSearch('');
           }}
           title={
             pendingProduct ? (
@@ -1751,16 +1899,26 @@ export function POSPage() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-4">
               <p className="text-xs text-muted">
                 Unused serials must match this product. Used serials from any product work on a full cash bill even if this product has no stock.
               </p>
 
+              <Input
+                value={unitModalSearch}
+                onChange={(e) => setUnitModalSearch(e.target.value)}
+                placeholder="Type or scan last 4 digits of serial / IMEI..."
+                className="font-mono text-xs"
+              />
+
               <UnitPickerGroup
                 title="Unused Serial Numbers"
                 caption="This product. Any bill. Moves to used after sale."
-                units={unusedUnits}
-                emptyText="No unused serial numbers left for this product."
+                units={unusedUnits.filter((u) =>
+                  !unitModalSearch.trim() ||
+                  u.serial_number?.toLowerCase().includes(unitModalSearch.trim().toLowerCase())
+                )}
+                emptyText="No unused serial numbers match your search."
                 onSelect={handleSelectUnit}
                 cartUnitIds={cart.map((c) => c.unit_id)}
               />
@@ -1768,8 +1926,11 @@ export function POSPage() {
               <UnitPickerGroup
                 title="Used Serial Numbers"
                 caption="Any product, even with zero stock. Cash only. Removed after use."
-                units={usedUnits}
-                emptyText="No used serial numbers in this store."
+                units={usedUnits.filter((u) =>
+                  !unitModalSearch.trim() ||
+                  u.serial_number?.toLowerCase().includes(unitModalSearch.trim().toLowerCase())
+                )}
+                emptyText="No used serial numbers match your search."
                 onSelect={handleSelectUnit}
                 cartUnitIds={cart.map((c) => c.unit_id)}
                 isUsed

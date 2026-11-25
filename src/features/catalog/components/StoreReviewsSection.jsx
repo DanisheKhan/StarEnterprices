@@ -10,7 +10,7 @@ const REVIEWS = [
     rating: 5,
     date: '2 weeks ago',
     comment:
-      'Furnished our new flat completely from Star Enterprises. Saved almost ₹14,000 compared to other stores in Thane, and their team delivered and assembled everything the very same evening. Top notch fabric quality!',
+      'Furnished our new flat completely from Star Enterprises. Saved almost ₹14,000 compared to other stores in Jalgaon, and their team delivered and assembled everything the very same evening. Top notch fabric quality!',
   },
   {
     id: 2,

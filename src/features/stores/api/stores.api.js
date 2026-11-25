@@ -18,7 +18,7 @@ export const DEFAULT_STORES = [
     name: 'Star Mobiles',
     display_name: 'Star Mobile',
     manager_name: 'Mazhar Sheikh',
-    gstin: '27AAAAA0000A1Z5',
+    gstin: '27AATPQ6775F1ZV',
     state_code: '27',
     legal_name: 'Star Enterprises',
     trade_name: 'Star Mobiles',
@@ -36,7 +36,7 @@ export const DEFAULT_STORES = [
     name: 'Star Furniture & Electronics',
     display_name: 'Star Furniture',
     manager_name: 'Mazhar Sheikh',
-    gstin: '27AAAAA0000A1Z5',
+    gstin: '27AATPQ6775F1ZV',
     state_code: '27',
     legal_name: 'Star Enterprises',
     trade_name: 'Star Furniture & Electronics',
@@ -50,7 +50,7 @@ export const DEFAULT_STORES = [
   },
 ];
 
-const STORES_CACHE_KEY = 'star_stores_cache_v2';
+const STORES_CACHE_KEY = 'star_stores_cache_v3';
 const EXTRA_STORES_KEY = 'star_extra_stores';
 
 export function enrichStore(store) {

@@ -396,7 +396,7 @@ export const ProductSerialCard = memo(function ProductSerialCard({
                           <div className="pt-2 border-t border-border/70 flex items-center justify-between text-[11px] text-muted gap-2">
                             {invoiceNum ? (
                               <Link
-                                to={`/admin/${storeCode}/invoices`}
+                                to={u.invoice?.id ? `/admin/${storeCode}/invoices?print=${u.invoice.id}` : `/admin/${storeCode}/invoices`}
                                 className="font-mono font-semibold text-text underline-offset-2 hover:underline inline-flex items-center gap-1"
                                 title="View in Invoices console"
                               >

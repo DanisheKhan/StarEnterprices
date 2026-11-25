@@ -29,7 +29,7 @@ export function GrantLeaveModal({ isOpen, onClose, staffList = [], defaultStaff 
   const [totalDays, setTotalDays] = useState('15');
   const [deductSalary, setDeductSalary] = useState(true);
   const [reason, setReason] = useState('');
-  const [payrollMonth] = useState('2026-10');
+  const [payrollMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -94,7 +94,7 @@ export function GrantLeaveModal({ isOpen, onClose, staffList = [], defaultStaff 
         reason: reason.trim() || `Owner granted ${numDays} days ${leaveType} leave`,
         deductSalary,
         monthYear: payrollMonth,
-        reviewerName: 'Store Owner',
+        reviewerName: 'Mazhar Sheikh',
       });
 
       setSuccessMsg(`Successfully granted ${numDays} days leave. Payroll deduction of ${formatCurrency(calculatedDeduction)} applied.`);

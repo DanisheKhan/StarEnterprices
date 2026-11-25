@@ -15,8 +15,12 @@ import { SITE } from '@/shared/lib/site';
 const PURCHASE_PRESETS = [15000, 30000, 50000, 75000, 100000];
 const TENURES = [3, 6, 9, 12];
 
-export function StoreEmiCalculatorSection() {
-  const [amount, setAmount] = useState(35000);
+export function StoreEmiCalculatorSection({ initialAmount = null }) {
+  const defaultAmount =
+    initialAmount && Number(initialAmount) > 0
+      ? Math.min(150000, Math.max(5000, Math.round(Number(initialAmount) / 500) * 500))
+      : 35000;
+  const [amount, setAmount] = useState(defaultAmount);
   const [tenure, setTenure] = useState(6);
 
   const monthlyInstallment = Math.round(amount / tenure);

@@ -98,7 +98,7 @@ export async function submitLeaveRequest(payload) {
 /**
  * Reviews a leave request (Owner action: approve or reject)
  */
-export async function reviewLeaveRequest({ leaveId, status, reviewNotes, reviewerName = 'Store Owner' }) {
+export async function reviewLeaveRequest({ leaveId, status, reviewNotes, reviewerName = 'Mazhar Sheikh' }) {
   const { data, error } = await supabase
     .from('staff_leaves')
     .update({
@@ -185,8 +185,8 @@ export async function grantStaffLeave({
   totalDays,
   reason,
   deductSalary = true,
-  monthYear = '2026-10',
-  reviewerName = 'Store Owner',
+  monthYear = new Date().toISOString().slice(0, 7),
+  reviewerName = 'Mazhar Sheikh',
 }) {
   // 1. Insert approved leave into staff_leaves
   const { data: leaveRecord, error: leaveError } = await supabase

@@ -56,7 +56,7 @@ export function StoreDepartmentsSection({ onSelectDepartment }) {
       subtitle: 'Apple certified iPhones, OnePlus 5G, Samsung Galaxy, AirPods & chargers.',
       icon: Smartphone,
       storeCode: 'mobiles',
-      categorySlug: '',
+      categorySlug: 'smartphones',
       tag: 'Instant 0% Paperless EMI',
       accentColor: 'text-brand-gold',
       iconBg: 'bg-brand-gold-subtle border-brand-gold-border',

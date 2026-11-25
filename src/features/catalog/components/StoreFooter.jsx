@@ -73,10 +73,10 @@ export function StoreFooter({ onSelectCategory }) {
               <li>
                 <button
                   type="button"
-                  onClick={() => onSelectCategory?.('air-coolers-acs', 'furniture-electronics')}
+                  onClick={() => onSelectCategory?.('', 'furniture-electronics')}
                   className="hover:text-white transition-colors text-left cursor-pointer"
                 >
-                  All Brands AC &amp; Coolers
+                  Home Electronics &amp; Appliances
                 </button>
               </li>
               <li>

@@ -9,6 +9,7 @@ import {
   recordPayment,
   processReturn,
   listReturns,
+  searchCustomersByPhone,
 } from '../api/billing.api';
 import { inventoryKeys, resolveStoreUuid } from '@/features/inventory';
 import { getPersistentCache, setPersistentCache } from '@/shared/lib/cachePersistence';
@@ -18,7 +19,18 @@ export const billingKeys = {
   invoices: (storeId) => [...billingKeys.all, 'invoices', storeId],
   allInvoices: (filters) => [...billingKeys.all, 'all-invoices', filters],
   detail: (invoiceId) => [...billingKeys.all, 'detail', invoiceId],
+  customerLookup: (digits) => [...billingKeys.all, 'customer-lookup', digits],
 };
+
+export function useCustomerLookup(phoneInput) {
+  const digits = String(phoneInput || '').replace(/\D/g, '');
+  return useQuery({
+    queryKey: billingKeys.customerLookup(digits),
+    queryFn: () => searchCustomersByPhone(digits),
+    enabled: digits.length >= 4 && digits.length <= 10,
+    staleTime: 60_000,
+  });
+}
 
 export function useInvoices(storeId) {
   return useQuery({

@@ -395,3 +395,37 @@ export async function listReturns({ invoiceId, storeId } = {}) {
   if (error) throw error;
   return data || [];
 }
+
+/**
+ * Searches past customers by mobile number prefix for rapid repeat POS billing
+ */
+export async function searchCustomersByPhone(phonePrefix) {
+  const digits = String(phonePrefix || '').replace(/\D/g, '');
+  if (digits.length < 4) return [];
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('id, customer_name, customer_phone, customer_gstin, created_at')
+    .ilike('customer_phone', `%${digits}%`)
+    .neq('status', 'void')
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+
+  const seenPhones = new Set();
+  const matches = [];
+  for (const row of data || []) {
+    const clean = String(row.customer_phone || '').replace(/\D/g, '');
+    if (!clean || seenPhones.has(clean)) continue;
+    seenPhones.add(clean);
+    matches.push({
+      name: row.customer_name || 'Walk-in Customer',
+      phone: row.customer_phone,
+      gstin: row.customer_gstin || '',
+    });
+    if (matches.length >= 5) break;
+  }
+
+  return matches;
+}

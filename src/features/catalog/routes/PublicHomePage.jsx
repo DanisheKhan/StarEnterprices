@@ -13,6 +13,7 @@ import { StoreSpotlightSection } from '../components/StoreSpotlightSection';
 import { StoreFaqSection } from '../components/StoreFaqSection';
 import { StoreFooter } from '../components/StoreFooter';
 import { formatCurrency } from '@/shared/lib/format';
+import { SITE } from '@/shared/lib/site';
 import {
   Smartphone,
   Tv,
@@ -22,6 +23,8 @@ import {
   Check,
   Layers,
   SlidersHorizontal,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 
 export function PublicHomePage() {
@@ -34,6 +37,7 @@ export function PublicHomePage() {
   const [activeModalProduct, setActiveModalProduct] = useState(null);
   const [recentlyAddedId, setRecentlyAddedId] = useState(null);
   const [showAllProducts, setShowAllProducts] = useState(false);
+  const [emiPresetAmount, setEmiPresetAmount] = useState(null);
 
   const { addToCart } = useCart();
   const { data: allProducts = [], isLoading } = usePublicProducts();
@@ -100,9 +104,19 @@ export function PublicHomePage() {
 
   function handleAddToCart(e, product) {
     e.stopPropagation();
+    const stockQty = product.inventory?.[0]?.quantity_on_hand ?? 0;
+    if (stockQty <= 0) return;
     addToCart(product, 1);
     setRecentlyAddedId(product.id);
     setTimeout(() => setRecentlyAddedId(null), 1800);
+  }
+
+  function handleAskAvailability(e, product, finalPrice) {
+    e.stopPropagation();
+    const text = encodeURIComponent(
+      `Hello Star Enterprises, I checked *${product.name}* (SKU: ${product.sku}, Final Showroom Price: ${formatCurrency(finalPrice)} Incl. GST) on your website. When will stock be available?`
+    );
+    window.open(`https://wa.me/${SITE.whatsappPhone}?text=${text}`, '_blank', 'noopener,noreferrer');
   }
 
   function handleSelectCategory(categorySlug, storeCode) {
@@ -122,7 +136,7 @@ export function PublicHomePage() {
   }
 
   return (
-    <div className="min-w-0 flex flex-col bg-bg text-text">
+    <div className="min-w-0 flex flex-col bg-bg text-text pb-16 sm:pb-0">
       <Seo
         title="Star Enterprises — Hall Furniture, Electronics & Mobiles | Bhusawal Flagship"
         description="Bhusawal’s flagship showroom near Reliance Smart Bazar on Khadka Road. Hallmark living furniture, inverter ACs, double-door refrigerators, washing machines, and certified smartphones with 0% EMI financing and GST billing."
@@ -324,6 +338,11 @@ export function PublicHomePage() {
                 {visibleProducts.map((product) => {
                   const isMobiles = product.stores?.code === 'mobiles';
                   const isRecentlyAdded = recentlyAddedId === product.id;
+                  const stockQty = product.inventory?.[0]?.quantity_on_hand ?? 0;
+                  const isInStock = stockQty > 0;
+                  const basePrice = Number(product.selling_price || 0);
+                  const gstRate = !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18;
+                  const finalPrice = basePrice + Math.round(basePrice * (gstRate / 100));
 
                 return (
                   <motion.div
@@ -357,6 +376,18 @@ export function PublicHomePage() {
                               <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">{product.sku}</span>
                             </div>
                           )}
+
+                          <span
+                            className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                              !isInStock
+                                ? 'bg-surface border-brand-crimson-border text-brand-crimson-text'
+                                : stockQty <= 2
+                                ? 'bg-surface border-brand-gold-border text-brand-gold-text'
+                                : 'bg-surface border-brand-sage-border text-brand-sage-text'
+                            }`}
+                          >
+                            {!isInStock ? 'Out of Stock' : stockQty <= 2 ? `Only ${stockQty} left` : 'In Stock'}
+                          </span>
                         </div>
 
                         {/* Product Brand & Name */}
@@ -411,13 +442,18 @@ export function PublicHomePage() {
                         )}
                       </div>
 
-                      {/* Clean Price & Action Footer (No GST, No EMI) */}
+                      {/* Transparent GST-Inclusive Price & Action Footer */}
                       <div className="pt-2.5 border-t border-border space-y-2">
-                        <div className="flex items-baseline justify-between">
-                          <div className="text-lg font-bold font-mono text-text tracking-tight">
-                            {formatCurrency(product.selling_price)}
+                        <div className="flex items-baseline justify-between gap-2">
+                          <div>
+                            <div className="text-lg font-bold font-mono text-text tracking-tight">
+                              {formatCurrency(finalPrice)}
+                            </div>
+                            <div className="text-[10px] text-muted font-mono">
+                              Base {formatCurrency(basePrice)} + {gstRate}% GST
+                            </div>
                           </div>
-                          {product.mrp && product.mrp > product.selling_price && (
+                          {product.mrp && product.mrp > finalPrice && (
                             <div className="text-xs text-muted line-through font-mono">
                               MRP {formatCurrency(product.mrp)}
                             </div>
@@ -433,22 +469,33 @@ export function PublicHomePage() {
                           >
                             <Eye size={13} /> View
                           </Button>
-                          <Button
-                            variant="solid"
-                            size="sm"
-                            onClick={(e) => handleAddToCart(e, product)}
-                            className="text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
-                          >
-                            {isRecentlyAdded ? (
-                              <>
-                                <Check size={13} /> Added
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag size={13} /> Add to Cart
-                              </>
-                            )}
-                          </Button>
+                          {isInStock ? (
+                            <Button
+                              variant="solid"
+                              size="sm"
+                              onClick={(e) => handleAddToCart(e, product)}
+                              className="text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
+                            >
+                              {isRecentlyAdded ? (
+                                <>
+                                  <Check size={13} /> Added
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingBag size={13} /> Add to Cart
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleAskAvailability(e, product, finalPrice)}
+                              className="text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
+                            >
+                              <MessageCircle size={13} /> Ask Store
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </Card>
@@ -480,7 +527,7 @@ export function PublicHomePage() {
       </section>
 
       {/* 5. Interactive 0% Paperless EMI Calculator */}
-      <StoreEmiCalculatorSection />
+      <StoreEmiCalculatorSection key={emiPresetAmount ?? 'default'} initialAmount={emiPresetAmount} />
 
       {/* 6. Showroom Visit & In-Person Experience */}
       <StoreSpotlightSection />
@@ -500,8 +547,40 @@ export function PublicHomePage() {
           product={activeModalProduct}
           isOpen={Boolean(activeModalProduct)}
           onClose={() => setActiveModalProduct(null)}
+          onCalculateEmi={(amount) => {
+            setEmiPresetAmount(amount);
+            setActiveModalProduct(null);
+            scrollToCalculator();
+          }}
         />
       )}
+
+      {/* Mobile Sticky Quick Action Bar */}
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-surface px-3 py-2 flex items-center justify-around gap-2 shadow-xs">
+        <button
+          type="button"
+          onClick={scrollToCatalog}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-text bg-bg border border-border cursor-pointer"
+        >
+          <Layers size={14} /> Catalog
+        </button>
+        <a
+          href={`tel:${SITE.supportPhone.replace(/\s+/g, '')}`}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-text bg-bg border border-border"
+        >
+          <Phone size={14} /> Call
+        </a>
+        <a
+          href={`https://wa.me/${SITE.whatsappPhone}?text=${encodeURIComponent(
+            'Hello Star Enterprises Bhusawal! I would like to enquire about products and showroom offers.'
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-accent text-accent-fg"
+        >
+          <MessageCircle size={14} /> WhatsApp
+        </a>
+      </div>
     </div>
   );
 }

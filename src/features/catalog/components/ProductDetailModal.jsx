@@ -2,10 +2,10 @@ import { Modal, Button, Badge } from '@/shared/ui';
 import { formatCurrency } from '@/shared/lib/format';
 import { useCart } from '../hooks/useCatalog';
 import { SITE } from '@/shared/lib/site';
-import { ShoppingBag, MessageSquare, ShieldCheck, Check, Smartphone, Tv } from 'lucide-react';
+import { ShoppingBag, MessageSquare, ShieldCheck, Check, Smartphone, Tv, Calculator, MapPin } from 'lucide-react';
 import { useState } from 'react';
 
-export function ProductDetailModal({ product, isOpen, onClose }) {
+export function ProductDetailModal({ product, isOpen, onClose, onCalculateEmi }) {
   const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -14,16 +14,31 @@ export function ProductDetailModal({ product, isOpen, onClose }) {
   const inStockQty = product.inventory?.[0]?.quantity_on_hand ?? 0;
   const isAvailable = inStockQty > 0;
   const isMobileStore = product.stores?.code === 'mobiles';
+  const basePrice = Number(product.selling_price || 0);
+  const gstRate = !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18;
+  const gstAmount = Math.round(basePrice * (gstRate / 100));
+  const finalShowroomPrice = basePrice + gstAmount;
 
   function handleAdd() {
+    if (!isAvailable) return;
     addToCart(product, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
 
   function handleInquire() {
+    const statusLabel = isAvailable
+      ? `Final Showroom Price: ${formatCurrency(finalShowroomPrice)} Incl. GST`
+      : `Currently Out of Stock (Expected Price: ${formatCurrency(finalShowroomPrice)} Incl. GST)`;
     const text = encodeURIComponent(
-      `Hello Star Enterprises, I have an enquiry about *${product.name}* (SKU: ${product.sku}, Price: ${formatCurrency(product.selling_price)}). Is it currently available for immediate store pickup/delivery?`
+      `Hello Star Enterprises, I have an enquiry about *${product.name}* (SKU: ${product.sku}, ${statusLabel}). Please share availability / delivery details.`
+    );
+    window.open(`https://wa.me/${SITE.whatsappPhone}?text=${text}`, '_blank', 'noopener,noreferrer');
+  }
+
+  function handleReserveVisit() {
+    const text = encodeURIComponent(
+      `Hello Star Enterprises, I want to hold *${product.name}* (SKU: ${product.sku}, Final Price: ${formatCurrency(finalShowroomPrice)} Incl. GST) and visit the Khadka Road, Bhusawal showroom today.`
     );
     window.open(`https://wa.me/${SITE.whatsappPhone}?text=${text}`, '_blank', 'noopener,noreferrer');
   }
@@ -74,23 +89,41 @@ export function ProductDetailModal({ product, isOpen, onClose }) {
         )}
 
         {/* Pricing Banner */}
-        <div className="p-4 rounded-xl border border-border bg-bg flex items-baseline justify-between flex-wrap gap-2">
-          <div>
-            <div className="text-xs text-muted">Special Store Price:</div>
-            <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-text">
-              {formatCurrency(product.selling_price)}
-            </div>
-          </div>
-          <div className="text-right">
-            {product.mrp && product.mrp > product.selling_price && (
-              <div className="text-sm font-mono text-muted line-through">
-                MRP {formatCurrency(product.mrp)}
+        <div className="p-4 rounded-xl border border-border bg-bg space-y-2.5">
+          <div className="flex items-baseline justify-between flex-wrap gap-2">
+            <div>
+              <div className="text-xs text-muted">Final Showroom Price (Incl. {gstRate}% GST):</div>
+              <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-text">
+                {formatCurrency(finalShowroomPrice)}
               </div>
-            )}
-            <div className="text-xs text-muted">
-              Includes {product.gst_rate}% GST • Official Tax Invoice
+              <div className="text-[11px] text-muted font-mono mt-0.5">
+                Store Base {formatCurrency(basePrice)} + {gstRate}% GST ({formatCurrency(gstAmount)})
+              </div>
+            </div>
+            <div className="text-right">
+              {product.mrp && product.mrp > finalShowroomPrice && (
+                <div className="text-sm font-mono text-muted line-through">
+                  MRP {formatCurrency(product.mrp)}
+                </div>
+              )}
+              <div className="text-xs text-muted">Official GST Tax Invoice</div>
             </div>
           </div>
+
+          {finalShowroomPrice >= 5000 && onCalculateEmi && (
+            <div className="pt-2 border-t border-border flex items-center justify-between gap-2 text-xs">
+              <span className="text-muted">
+                0% Paperless EMI from <strong className="text-text font-mono">{formatCurrency(Math.round(finalShowroomPrice / 12))}/mo</strong> (12M)
+              </span>
+              <button
+                type="button"
+                onClick={() => onCalculateEmi(finalShowroomPrice)}
+                className="inline-flex items-center gap-1 font-semibold text-brand-sage-text hover:underline cursor-pointer shrink-0"
+              >
+                <Calculator size={13} /> Estimate EMI
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Description */}
@@ -130,22 +163,41 @@ export function ProductDetailModal({ product, isOpen, onClose }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-2 flex flex-col sm:flex-row gap-3">
-          <Button
-            variant="solid"
-            className="flex-1 justify-center gap-2 text-xs py-2.5 cursor-pointer"
-            onClick={handleAdd}
-          >
-            {added ? (
-              <>
-                <Check size={16} /> Added to Cart!
-              </>
-            ) : (
-              <>
-                <ShoppingBag size={16} /> Add to Cart
-              </>
-            )}
-          </Button>
+        <div className="pt-2 flex flex-col sm:flex-row gap-2.5 flex-wrap">
+          {isAvailable ? (
+            <>
+              <Button
+                variant="solid"
+                className="flex-1 justify-center gap-2 text-xs py-2.5 cursor-pointer"
+                onClick={handleAdd}
+              >
+                {added ? (
+                  <>
+                    <Check size={16} /> Added to Cart!
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag size={16} /> Add to Cart
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 justify-center gap-2 text-xs py-2.5 cursor-pointer"
+                onClick={handleReserveVisit}
+              >
+                <MapPin size={16} /> Hold at Showroom
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="solid"
+              className="flex-1 justify-center gap-2 text-xs py-2.5 cursor-pointer"
+              onClick={handleInquire}
+            >
+              <MessageSquare size={16} /> Notify / Request Restock
+            </Button>
+          )}
 
           <Button
             variant="outline"
