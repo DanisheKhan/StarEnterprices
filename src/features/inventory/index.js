@@ -31,6 +31,8 @@ export {
   listProductsByStore,
   listProductUnits,
   checkSerialAvailability,
+  findStoreUnitBySerial,
+  resolveStoreUuid,
   createProduct,
   createProductUnit,
   adjustInventoryStock,

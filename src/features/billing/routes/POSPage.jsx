@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useDeferredValue } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -7,7 +7,7 @@ import {
   Card,
   Modal,
 } from '@/shared/ui';
-import { useProducts, useProductUnits } from '@/features/inventory';
+import { useProducts, useProductUnits, findStoreUnitBySerial } from '@/features/inventory';
 import { usePlaceSale, useInvoiceDetail } from '../hooks/useBilling';
 import { InvoicePrintModal } from '../components/InvoicePrintModal';
 import { formatCurrency } from '@/shared/lib/format';
@@ -99,6 +99,7 @@ export function POSPage() {
 
   // Barcode / Catalog Search & Filter State
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Receipt Modal State
@@ -185,8 +186,8 @@ export function POSPage() {
           p.categories?.id === selectedCategory || p.categories?.name === selectedCategory;
         if (!matchCat) return false;
       }
-      if (!search.trim()) return true;
-      const q = search.trim().toLowerCase();
+      if (!deferredSearch.trim()) return true;
+      const q = deferredSearch.trim().toLowerCase();
       return (
         p.name?.toLowerCase().includes(q) ||
         p.sku?.toLowerCase().includes(q) ||
@@ -195,7 +196,7 @@ export function POSPage() {
         p.categories?.name?.toLowerCase().includes(q)
       );
     });
-  }, [products, search, selectedCategory]);
+  }, [products, deferredSearch, selectedCategory]);
 
   // Add Product to Cart Handler (a serial number is required for every billed item)
   function handleAddProduct(product) {
@@ -245,16 +246,29 @@ export function POSPage() {
   }
 
   // Handle barcode scanner Enter key (supports scanning product SKU OR exact serial barcode directly)
-  function handleSearchKeyDown(e) {
+  async function handleSearchKeyDown(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const q = search.trim().toLowerCase();
+      const raw = search.trim();
+      const q = raw.toLowerCase();
       if (!q) return;
 
-      // 1. Direct serial number / IMEI barcode scan match (instant bypass)
-      const matchingSerialUnit = allStoreUnits.find(
-        (u) => u.serial_number?.toLowerCase() === q
+      // 1. Direct serial number / IMEI barcode scan match (instant bypass for active/reusable units)
+      let matchingSerialUnit = allStoreUnits.find(
+        (u) =>
+          (u.status === 'in_stock' || u.status === 'sold') &&
+          u.serial_number?.toLowerCase() === q
       );
+
+      // Fast 1-row DB fallback if the serial was just created milliseconds ago
+      if (!matchingSerialUnit && store?.id) {
+        try {
+          matchingSerialUnit = await findStoreUnitBySerial({ storeId: store.id, serialNumber: raw });
+        } catch {
+          // Ignore network error and fall through to product match
+        }
+      }
+
       if (matchingSerialUnit) {
         const parentProduct = products.find((p) => p.id === matchingSerialUnit.product_id);
         if (parentProduct) {

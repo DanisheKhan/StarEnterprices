@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import {
   Badge,
@@ -52,11 +52,15 @@ export function SerialNumbersPage() {
   const currentStore = outletCtx?.store;
   const storeCode = outletCtx?.storeCode || currentStore?.code || '';
   const storeId = currentStore?.id || resolveStoreUuid(storeCode) || '';
+  const searchInputRef = useRef(null);
 
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'in_stock' | 'sold'
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
+  const [highlightedSerial, setHighlightedSerial] = useState('');
+  const [scanFeedback, setScanFeedback] = useState(null);
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -70,8 +74,24 @@ export function SerialNumbersPage() {
 
   const activeProducts = useMemo(() => products.filter((p) => p.is_active !== false), [products]);
 
+  // Keyboard shortcut: Press F2 or / to focus scanner/search bar
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (isCreateOpen || unitToDelete) return;
+      if ((e.key === 'F2' || e.key === '/') && document.activeElement !== searchInputRef.current) {
+        const tag = document.activeElement?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCreateOpen, unitToDelete]);
+
   // Handle serial copy
-  async function handleCopy(serial) {
+  const handleCopy = useCallback(async (serial) => {
     try {
       await navigator.clipboard.writeText(serial);
       setCopiedSerial(serial);
@@ -79,57 +99,77 @@ export function SerialNumbersPage() {
     } catch {
       // Fallback
     }
-  }
+  }, []);
 
-  // Pre-process and enrich serials with invoice details
+  // Pre-process and enrich serials with invoice details and pre-computed lowercase search blob
   const enrichedSerials = useMemo(() => {
-    return serials.map((u) => ({
-      ...u,
-      invoice: latestInvoice(u),
-    }));
+    return serials.map((u) => {
+      const invoice = latestInvoice(u);
+      const searchText = [
+        u.serial_number,
+        u.products?.name,
+        u.products?.sku,
+        invoice?.invoice_number,
+        invoice?.customer_name,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return {
+        ...u,
+        invoice,
+        _searchText: searchText,
+      };
+    });
   }, [serials]);
 
-  // Dynamic category pills
-  const categories = useMemo(() => {
-    const categoryCounts = new Map();
-    // Count from products and serials
-    enrichedSerials.forEach((u) => {
-      const catName = u.products?.categories?.name || 'General';
-      categoryCounts.set(catName, (categoryCounts.get(catName) || 0) + 1);
-    });
-
-    return Array.from(categoryCounts.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  // Fast O(1) exact-serial lookup map for instant barcode scanner resolution
+  const serialLookupMap = useMemo(() => {
+    const lookup = new Map();
+    for (const u of enrichedSerials) {
+      if (u.serial_number) {
+        lookup.set(u.serial_number.toLowerCase(), u);
+      }
+    }
+    return lookup;
   }, [enrichedSerials]);
 
-  // Overall KPI Metrics
-  const metrics = useMemo(() => {
+  // Dynamic category pills & overall KPI Metrics in a single pass
+  const { categories, metrics } = useMemo(() => {
+    const categoryCounts = new Map();
     let inStock = 0;
     let sold = 0;
     const distinctProdIds = new Set();
 
-    enrichedSerials.forEach((u) => {
+    for (const u of enrichedSerials) {
+      const catName = u.products?.categories?.name || 'General';
+      categoryCounts.set(catName, (categoryCounts.get(catName) || 0) + 1);
       if (u.status === 'in_stock') inStock += 1;
-      if (u.status === 'sold') sold += 1;
+      else if (u.status === 'sold') sold += 1;
       if (u.product_id) distinctProdIds.add(u.product_id);
-    });
+    }
 
     return {
-      total: enrichedSerials.length,
-      inStock,
-      sold,
-      productsCount: distinctProdIds.size,
+      categories: Array.from(categoryCounts.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      metrics: {
+        total: enrichedSerials.length,
+        inStock,
+        sold,
+        productsCount: distinctProdIds.size,
+      },
     };
   }, [enrichedSerials]);
 
   // Grouped products data structure for Card View
   const groupedProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     const map = new Map();
 
     // 1. Seed with active serialized products from store catalog
-    activeProducts.forEach((p) => {
+    for (const p of activeProducts) {
       if (p.is_serialized) {
         map.set(p.id, {
           product: p,
@@ -137,12 +177,12 @@ export function SerialNumbersPage() {
           used: [],
         });
       }
-    });
+    }
 
     // 2. Distribute serial units to corresponding products
-    enrichedSerials.forEach((u) => {
+    for (const u of enrichedSerials) {
       const pId = u.product_id || u.products?.id;
-      if (!pId) return;
+      if (!pId) continue;
 
       if (!map.has(pId)) {
         map.set(pId, {
@@ -153,7 +193,6 @@ export function SerialNumbersPage() {
       }
 
       const entry = map.get(pId);
-      // Ensure product details are hydrated
       if (!entry.product.categories && u.products?.categories) {
         entry.product = { ...entry.product, ...u.products };
       }
@@ -163,7 +202,7 @@ export function SerialNumbersPage() {
       } else if (u.status === 'sold') {
         entry.used.push(u);
       }
-    });
+    }
 
     // 3. Filter entries by category, search query, and stock status
     const result = [];
@@ -171,27 +210,17 @@ export function SerialNumbersPage() {
       const prod = entry.product;
       const catName = prod.categories?.name || 'General';
 
-      // Category filter check
       if (selectedCategory && catName !== selectedCategory) {
         continue;
       }
 
-      // Filter individual unit lists by search query
-      const matchesSearch = (u) => {
-        if (!q) return true;
-        return (
-          u.serial_number?.toLowerCase().includes(q) ||
-          prod.name?.toLowerCase().includes(q) ||
-          prod.sku?.toLowerCase().includes(q) ||
-          u.invoice?.invoice_number?.toLowerCase().includes(q) ||
-          u.invoice?.customer_name?.toLowerCase().includes(q)
-        );
-      };
+      const filteredUnused = q
+        ? entry.unused.filter((u) => u._searchText.includes(q))
+        : entry.unused;
+      const filteredUsed = q
+        ? entry.used.filter((u) => u._searchText.includes(q))
+        : entry.used;
 
-      const filteredUnused = entry.unused.filter(matchesSearch);
-      const filteredUsed = entry.used.filter(matchesSearch);
-
-      // If search query is present and neither the product nor any units match, skip
       const prodMatchesQuery =
         !q || prod.name?.toLowerCase().includes(q) || prod.sku?.toLowerCase().includes(q);
 
@@ -199,7 +228,6 @@ export function SerialNumbersPage() {
         continue;
       }
 
-      // Status filter
       if (statusFilter === 'in_stock' && filteredUnused.length === 0) {
         continue;
       }
@@ -208,16 +236,19 @@ export function SerialNumbersPage() {
       }
 
       // Sort sold units latest first
-      filteredUsed.sort((a, b) => {
-        const tA = new Date(a.invoice?.created_at || a.updated_at).getTime();
-        const tB = new Date(b.invoice?.created_at || b.updated_at).getTime();
-        return tB - tA;
-      });
+      const sortedUsed =
+        filteredUsed.length > 1
+          ? [...filteredUsed].sort((a, b) => {
+              const tA = new Date(a.invoice?.created_at || a.updated_at).getTime();
+              const tB = new Date(b.invoice?.created_at || b.updated_at).getTime();
+              return tB - tA;
+            })
+          : filteredUsed;
 
       result.push({
         product: prod,
         unused: filteredUnused,
-        used: filteredUsed,
+        used: sortedUsed,
       });
     }
 
@@ -228,37 +259,77 @@ export function SerialNumbersPage() {
       }
       return (a.product.name || '').localeCompare(b.product.name || '');
     });
-  }, [activeProducts, enrichedSerials, search, selectedCategory, statusFilter]);
+  }, [activeProducts, enrichedSerials, deferredSearch, selectedCategory, statusFilter]);
 
   // Flat unit lists for Ledger Table View
   const { tableUnused, tableUsed } = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const filtered = enrichedSerials.filter((u) => {
+    const q = deferredSearch.trim().toLowerCase();
+    const unusedList = [];
+    const usedList = [];
+
+    for (const u of enrichedSerials) {
       if (selectedCategory) {
         const catName = u.products?.categories?.name || 'General';
-        if (catName !== selectedCategory) return false;
+        if (catName !== selectedCategory) continue;
       }
-      if (!q) return true;
-      return (
-        u.serial_number?.toLowerCase().includes(q) ||
-        u.products?.name?.toLowerCase().includes(q) ||
-        u.products?.sku?.toLowerCase().includes(q) ||
-        u.invoice?.invoice_number?.toLowerCase().includes(q) ||
-        u.invoice?.customer_name?.toLowerCase().includes(q)
-      );
+      if (q && !u._searchText.includes(q)) continue;
+
+      if (u.status === 'in_stock') unusedList.push(u);
+      else if (u.status === 'sold') usedList.push(u);
+    }
+
+    usedList.sort((a, b) => {
+      const tA = new Date(a.invoice?.created_at || a.updated_at).getTime();
+      const tB = new Date(b.invoice?.created_at || b.updated_at).getTime();
+      return tB - tA;
     });
 
-    const soldAt = (u) => new Date(u.invoice?.created_at || u.updated_at).getTime();
     return {
-      tableUnused: filtered.filter((u) => u.status === 'in_stock'),
-      tableUsed: filtered.filter((u) => u.status === 'sold').sort((a, b) => soldAt(b) - soldAt(a)),
+      tableUnused: unusedList,
+      tableUsed: usedList,
     };
-  }, [enrichedSerials, search, selectedCategory]);
+  }, [enrichedSerials, deferredSearch, selectedCategory]);
 
-  function handleOpenCreate(productId = '') {
+  // Handle Enter key from hardware barcode scanner in the search box
+  function handleSearchKeyDown(e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const raw = search.trim();
+    const q = raw.toLowerCase();
+    if (!q) return;
+
+    const match = serialLookupMap.get(q);
+    if (match) {
+      setHighlightedSerial(match.serial_number);
+      setSelectedCategory('');
+      setStatusFilter('all');
+      setScanFeedback({
+        found: true,
+        serial: match.serial_number,
+        status: match.status,
+        productName: match.products?.name || 'Product',
+        invoiceNumber: match.invoice?.invoice_number || null,
+        customerName: match.invoice?.customer_name || null,
+      });
+    } else {
+      setHighlightedSerial('');
+      setScanFeedback({
+        found: false,
+        serial: raw,
+      });
+    }
+    // Select input text so the next barcode scan immediately replaces it cleanly
+    e.currentTarget.select();
+  }
+
+  const handleOpenCreate = useCallback((productId = '') => {
     setTargetProductId(productId);
     setIsCreateOpen(true);
-  }
+  }, []);
+
+  const handleDeleteUnit = useCallback((unit) => {
+    setUnitToDelete(unit);
+  }, []);
 
   function handleCreated(count) {
     setSuccessMsg(`${count} serial number${count === 1 ? '' : 's'} registered and added to stock.`);
@@ -270,7 +341,7 @@ export function SerialNumbersPage() {
     setTimeout(() => setSuccessMsg(''), 4500);
   }
 
-  const isLoading = isSerialsLoading || isProdsLoading;
+  const isLoading = (isSerialsLoading && serials.length === 0) || (isProdsLoading && products.length === 0);
 
   return (
     <div className="space-y-6">
@@ -315,23 +386,31 @@ export function SerialNumbersPage() {
 
       {/* Operational KPI Metric Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-xl border border-brand-sage-border bg-brand-sage-subtle/50 p-3.5 sm:p-4 shadow-2xs space-y-1">
+        <button
+          type="button"
+          onClick={() => setStatusFilter((prev) => (prev === 'in_stock' ? 'all' : 'in_stock'))}
+          className="text-left rounded-xl border border-brand-sage-border bg-brand-sage-subtle/50 p-3.5 sm:p-4 shadow-2xs space-y-1 cursor-pointer hover:border-brand-sage transition-colors"
+        >
           <div className="flex items-center justify-between text-brand-sage-text">
             <span className="text-[11px] font-bold uppercase tracking-wider">Unused</span>
             <PackageCheck size={16} className="text-brand-sage" />
           </div>
           <div className="text-2xl font-bold text-brand-sage-text font-mono">{metrics.inStock}</div>
           <p className="text-[11px] text-brand-sage-text/80">Ready for billing & scan</p>
-        </div>
+        </button>
 
-        <div className="rounded-xl border border-brand-crimson-border bg-brand-crimson-subtle/50 p-3.5 sm:p-4 shadow-2xs space-y-1">
+        <button
+          type="button"
+          onClick={() => setStatusFilter((prev) => (prev === 'sold' ? 'all' : 'sold'))}
+          className="text-left rounded-xl border border-brand-crimson-border bg-brand-crimson-subtle/50 p-3.5 sm:p-4 shadow-2xs space-y-1 cursor-pointer hover:border-brand-crimson transition-colors"
+        >
           <div className="flex items-center justify-between text-brand-crimson-text">
             <span className="text-[11px] font-bold uppercase tracking-wider">Used</span>
             <ReceiptText size={16} className="text-brand-crimson" />
           </div>
           <div className="text-2xl font-bold text-brand-crimson-text font-mono">{metrics.sold}</div>
           <p className="text-[11px] text-brand-crimson-text/80">Billed to customer invoices</p>
-        </div>
+        </button>
 
         <div className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-2xs space-y-1">
           <div className="flex items-center justify-between text-muted">
@@ -400,91 +479,144 @@ export function SerialNumbersPage() {
       </div>
 
       {/* Search, Status & View Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border border-border bg-surface shadow-2xs">
-        <div className="flex-1 min-w-0">
-          <Input
-            id="search-serials"
-            placeholder="Search by serial number, product, SKU, invoice or customer..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Status Segmented Switch */}
-          <div className="bg-surface-subtle p-1 rounded-lg border border-border flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setStatusFilter('all')}
-              className={cn(
-                'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                statusFilter === 'all'
-                  ? 'bg-surface text-text shadow-2xs border border-border'
-                  : 'text-muted hover:text-text'
-              )}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('in_stock')}
-              className={cn(
-                'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                statusFilter === 'in_stock'
-                  ? 'bg-brand-sage-subtle text-brand-sage-text shadow-2xs border border-brand-sage-border'
-                  : 'text-muted hover:text-brand-sage-text'
-              )}
-            >
-              Unused
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('sold')}
-              className={cn(
-                'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
-                statusFilter === 'sold'
-                  ? 'bg-brand-crimson-subtle text-brand-crimson-text shadow-2xs border border-brand-crimson-border'
-                  : 'text-muted hover:text-brand-crimson-text'
-              )}
-            >
-              Used
-            </button>
+      <div className="space-y-2.5 p-4 rounded-xl border border-border bg-surface shadow-2xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <Input
+              ref={searchInputRef}
+              id="search-serials"
+              autoFocus
+              placeholder="Scan barcode or search serial number, product, SKU, invoice or customer... [F2]"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                if (highlightedSerial) setHighlightedSerial('');
+                if (scanFeedback) setScanFeedback(null);
+              }}
+              onKeyDown={handleSearchKeyDown}
+            />
           </div>
 
-          {/* View Mode Toggle: Cards vs Ledger Table */}
-          <div className="bg-surface-subtle p-1 rounded-lg border border-border flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setViewMode('cards')}
-              className={cn(
-                'p-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1',
-                viewMode === 'cards'
-                  ? 'bg-surface text-text shadow-2xs border border-border'
-                  : 'text-muted hover:text-text'
-              )}
-              title="Product Cards View"
-              aria-label="Cards View"
-            >
-              <LayoutGrid size={15} />
-              <span className="hidden sm:inline text-xs">Cards</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              className={cn(
-                'p-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1',
-                viewMode === 'table'
-                  ? 'bg-surface text-text shadow-2xs border border-border'
-                  : 'text-muted hover:text-text'
-              )}
-              title="Audit Ledger Table View"
-              aria-label="Table View"
-            >
-              <TableIcon size={15} />
-              <span className="hidden sm:inline text-xs">Table</span>
-            </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Status Segmented Switch */}
+            <div className="bg-surface-subtle p-1 rounded-lg border border-border flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setStatusFilter('all')}
+                className={cn(
+                  'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                  statusFilter === 'all'
+                    ? 'bg-surface text-text shadow-2xs border border-border'
+                    : 'text-muted hover:text-text'
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('in_stock')}
+                className={cn(
+                  'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                  statusFilter === 'in_stock'
+                    ? 'bg-brand-sage-subtle text-brand-sage-text shadow-2xs border border-brand-sage-border'
+                    : 'text-muted hover:text-brand-sage-text'
+                )}
+              >
+                Unused
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('sold')}
+                className={cn(
+                  'px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer',
+                  statusFilter === 'sold'
+                    ? 'bg-brand-crimson-subtle text-brand-crimson-text shadow-2xs border border-brand-crimson-border'
+                    : 'text-muted hover:text-brand-crimson-text'
+                )}
+              >
+                Used
+              </button>
+            </div>
+
+            {/* View Mode Toggle: Cards vs Ledger Table */}
+            <div className="bg-surface-subtle p-1 rounded-lg border border-border flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={cn(
+                  'p-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1',
+                  viewMode === 'cards'
+                    ? 'bg-surface text-text shadow-2xs border border-border'
+                    : 'text-muted hover:text-text'
+                )}
+                title="Product Cards View"
+                aria-label="Cards View"
+              >
+                <LayoutGrid size={15} />
+                <span className="hidden sm:inline text-xs">Cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'p-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1',
+                  viewMode === 'table'
+                    ? 'bg-surface text-text shadow-2xs border border-border'
+                    : 'text-muted hover:text-text'
+                )}
+                title="Audit Ledger Table View"
+                aria-label="Table View"
+              >
+                <TableIcon size={15} />
+                <span className="hidden sm:inline text-xs">Table</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Instant Scanner Match Feedback Strip */}
+        {scanFeedback && (
+          <div
+            className={cn(
+              'rounded-lg border px-3 py-2 text-xs flex items-center justify-between gap-3',
+              !scanFeedback.found
+                ? 'border-danger/30 bg-danger/10 text-danger'
+                : scanFeedback.status === 'sold'
+                ? 'border-brand-crimson-border bg-brand-crimson-subtle text-brand-crimson-text'
+                : 'border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text'
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Barcode size={14} className="shrink-0" />
+              {scanFeedback.found ? (
+                <span className="truncate">
+                  <strong className="font-mono">{scanFeedback.serial}</strong> • {scanFeedback.productName} —{' '}
+                  <strong>
+                    {scanFeedback.status === 'sold'
+                      ? `Used${scanFeedback.invoiceNumber ? ` (${scanFeedback.invoiceNumber})` : ''}${scanFeedback.customerName ? ` • ${scanFeedback.customerName}` : ''}`
+                      : 'Unused (Ready to bill)'}
+                  </strong>
+                </span>
+              ) : (
+                <span className="truncate">
+                  Serial <strong className="font-mono">{scanFeedback.serial}</strong> not found in this store.
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setHighlightedSerial('');
+                setScanFeedback(null);
+                searchInputRef.current?.focus();
+              }}
+              className="text-[11px] font-semibold underline shrink-0 cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content Area */}
@@ -515,6 +647,8 @@ export function SerialNumbersPage() {
                   setSearch('');
                   setSelectedCategory('');
                   setStatusFilter('all');
+                  setHighlightedSerial('');
+                  setScanFeedback(null);
                 }}
                 className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-surface hover:bg-surface-subtle text-text cursor-pointer transition-colors"
               >
@@ -531,8 +665,13 @@ export function SerialNumbersPage() {
                 unusedUnits={unused}
                 usedUnits={used}
                 storeCode={storeCode}
+                statusFilter={statusFilter}
+                hasSearchQuery={Boolean(deferredSearch.trim())}
+                highlightedSerial={highlightedSerial}
+                copiedSerial={copiedSerial}
+                onCopy={handleCopy}
                 onAddSerials={handleOpenCreate}
-                onDeleteUnit={(unit) => setUnitToDelete(unit)}
+                onDeleteUnit={handleDeleteUnit}
               />
             ))}
           </div>
@@ -626,7 +765,7 @@ export function SerialNumbersPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setUnitToDelete(u)}
+                                onClick={() => handleDeleteUnit(u)}
                                 className="p-1.5 rounded-md border border-border bg-surface hover:bg-danger/10 hover:border-danger/30 text-muted hover:text-danger cursor-pointer transition-colors"
                                 title="Remove / Void serial"
                                 aria-label="Delete"

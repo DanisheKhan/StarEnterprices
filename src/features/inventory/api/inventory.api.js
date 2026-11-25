@@ -177,7 +177,7 @@ export async function listProductsByStore({ storeId, categoryId, search } = {}) 
       image_url: getProductImageUrl(p),
     }));
 
-    if (!categoryId && !search && enriched.length > 0) {
+    if (!categoryId && !search) {
       setCachedStoreProducts(storeId, enriched);
     }
 
@@ -259,6 +259,27 @@ export async function checkSerialAvailability(serialNumber) {
 
   if (error) throw error;
   return !data; // true if available (no existing record)
+}
+
+/**
+ * Fast single-row lookup for barcode scanner hits that may not yet be in client cache
+ * @param {{ storeId: string, serialNumber: string }} param0
+ */
+export async function findStoreUnitBySerial({ storeId, serialNumber }) {
+  const resolvedStoreId = resolveStoreUuid(storeId) || storeId;
+  const cleanSerial = (serialNumber || '').trim();
+  if (!resolvedStoreId || !cleanSerial) return null;
+
+  const { data, error } = await supabase
+    .from('product_units')
+    .select('id, product_id, store_id, serial_number, condition_grade, battery_health, purchase_cost, status, warranty_months, notes, created_at')
+    .eq('store_id', resolvedStoreId)
+    .ilike('serial_number', cleanSerial)
+    .in('status', ['in_stock', 'sold'])
+    .maybeSingle();
+
+  if (error) throw error;
+  return data || null;
 }
 
 /**
@@ -370,27 +391,27 @@ export async function addSerializedUnit({
 
   const newCount = count || 1;
 
-  await supabase
-    .from('inventory')
-    .upsert({
-      store_id: resolvedStoreId,
-      product_id: productId,
-      quantity_on_hand: newCount,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'store_id,product_id' });
-
-  // Audit entry
-  await supabase
-    .from('stock_adjustments')
-    .insert({
-      store_id: resolvedStoreId,
-      product_id: productId,
-      previous_quantity: Math.max(0, newCount - 1),
-      new_quantity: newCount,
-      change_quantity: 1,
-      reason: 'restock',
-      notes: `Restocked serial unit ${cleanSerial}`,
-    });
+  await Promise.all([
+    supabase
+      .from('inventory')
+      .upsert({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        quantity_on_hand: newCount,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'store_id,product_id' }),
+    supabase
+      .from('stock_adjustments')
+      .insert({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        previous_quantity: Math.max(0, newCount - 1),
+        new_quantity: newCount,
+        change_quantity: 1,
+        reason: 'restock',
+        notes: `Restocked serial unit ${cleanSerial}`,
+      }),
+  ]);
 
   return unit;
 }
@@ -430,7 +451,7 @@ export async function listStoreSerials(storeId) {
           }
         : null,
     }));
-    if (enriched.length > 0 && resolvedStoreId) {
+    if (resolvedStoreId) {
       setPersistentCache(`store_serials_${resolvedStoreId}`, enriched);
     }
     return enriched;
@@ -494,7 +515,7 @@ export async function addSerializedUnitsBulk({
         notes: notes.trim() || 'Serial number created via serial number console',
       }))
     )
-    .select('id, serial_number, status');
+    .select('id, product_id, store_id, serial_number, status, condition_grade, warranty_months, purchase_cost, created_at, updated_at');
 
   if (insertError) throw insertError;
 
@@ -507,26 +528,27 @@ export async function addSerializedUnitsBulk({
 
   const newCount = count ?? serials.length;
 
-  await supabase
-    .from('inventory')
-    .upsert({
-      store_id: resolvedStoreId,
-      product_id: productId,
-      quantity_on_hand: newCount,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'store_id,product_id' });
-
-  await supabase
-    .from('stock_adjustments')
-    .insert({
-      store_id: resolvedStoreId,
-      product_id: productId,
-      previous_quantity: Math.max(0, newCount - serials.length),
-      new_quantity: newCount,
-      change_quantity: serials.length,
-      reason: 'restock',
-      notes: `Created ${serials.length} serial number(s): ${serials.slice(0, 10).join(', ')}${serials.length > 10 ? '...' : ''}`,
-    });
+  await Promise.all([
+    supabase
+      .from('inventory')
+      .upsert({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        quantity_on_hand: newCount,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'store_id,product_id' }),
+    supabase
+      .from('stock_adjustments')
+      .insert({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        previous_quantity: Math.max(0, newCount - serials.length),
+        new_quantity: newCount,
+        change_quantity: serials.length,
+        reason: 'restock',
+        notes: `Created ${serials.length} serial number(s): ${serials.slice(0, 10).join(', ')}${serials.length > 10 ? '...' : ''}`,
+      }),
+  ]);
 
   return units || [];
 }
@@ -565,26 +587,27 @@ export async function removeSerializedUnit({
 
   const newCount = count || 0;
 
-  await supabase
-    .from('inventory')
-    .upsert({
-      store_id: resolvedStoreId,
-      product_id: productId,
-      quantity_on_hand: newCount,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'store_id,product_id' });
-
-  await supabase
-    .from('stock_adjustments')
-    .insert({
-      store_id: resolvedStoreId,
-      product_id: productId,
-      previous_quantity: newCount + 1,
-      new_quantity: newCount,
-      change_quantity: -1,
-      reason: newStatus === 'defective' ? 'damage' : 'write_off',
-      notes: `Unit ${data.serial_number} marked ${newStatus}`,
-    });
+  await Promise.all([
+    supabase
+      .from('inventory')
+      .upsert({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        quantity_on_hand: newCount,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'store_id,product_id' }),
+    supabase
+      .from('stock_adjustments')
+      .insert({
+        store_id: resolvedStoreId,
+        product_id: productId,
+        previous_quantity: newCount + 1,
+        new_quantity: newCount,
+        change_quantity: -1,
+        reason: newStatus === 'defective' ? 'damage' : 'write_off',
+        notes: `Unit ${data.serial_number} marked ${newStatus}`,
+      }),
+  ]);
 
   return data;
 }

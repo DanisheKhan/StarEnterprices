@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { Modal, Input, Select } from '@/shared/ui';
 import { useAddSerializedUnitsBulk } from '../hooks/useInventory';
 import { MAX_SERIALS_PER_BATCH } from '../api/inventory.api';
@@ -55,6 +55,7 @@ function CreateSerialsForm({ storeId, products, initialProductId = '', onClose, 
   const [productId, setProductId] = useState(() => initialProductId || '');
   const [mode, setMode] = useState('manual');
   const [manualText, setManualText] = useState('');
+  const deferredManualText = useDeferredValue(manualText);
   const [prefix, setPrefix] = useState(() => (initialProduct?.sku ? `${initialProduct.sku.toUpperCase()}-` : ''));
   const [startNumber, setStartNumber] = useState('1');
   const [quantity, setQuantity] = useState('10');
@@ -75,13 +76,21 @@ function CreateSerialsForm({ storeId, products, initialProductId = '', onClose, 
   const generateInputsValid =
     !isNaN(parsedStart) && parsedStart >= 0 && !isNaN(parsedQuantity) && parsedQuantity > 0;
 
-  const serials = useMemo(() => {
-    if (mode === 'manual') return [...new Set(parseManualSerials(manualText))];
-    if (!generateInputsValid || parsedQuantity > MAX_SERIALS_PER_BATCH) return [];
-    return generateSerials({ prefix, start: parsedStart, quantity: parsedQuantity });
-  }, [mode, manualText, prefix, parsedStart, parsedQuantity, generateInputsValid]);
+  const { serials, manualDuplicateCount } = useMemo(() => {
+    if (mode === 'manual') {
+      const parsed = parseManualSerials(deferredManualText);
+      const unique = [...new Set(parsed)];
+      return { serials: unique, manualDuplicateCount: parsed.length - unique.length };
+    }
+    if (!generateInputsValid || parsedQuantity > MAX_SERIALS_PER_BATCH) {
+      return { serials: [], manualDuplicateCount: 0 };
+    }
+    return {
+      serials: generateSerials({ prefix, start: parsedStart, quantity: parsedQuantity }),
+      manualDuplicateCount: 0,
+    };
+  }, [mode, deferredManualText, prefix, parsedStart, parsedQuantity, generateInputsValid]);
 
-  const manualDuplicateCount = mode === 'manual' ? parseManualSerials(manualText).length - serials.length : 0;
   const tooMany =
     mode === 'manual' ? serials.length > MAX_SERIALS_PER_BATCH : parsedQuantity > MAX_SERIALS_PER_BATCH;
 

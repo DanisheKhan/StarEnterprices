@@ -10,8 +10,8 @@ import {
   processReturn,
   listReturns,
 } from '../api/billing.api';
-import { inventoryKeys } from '@/features/inventory';
-import { getPersistentCache } from '@/shared/lib/cachePersistence';
+import { inventoryKeys, resolveStoreUuid } from '@/features/inventory';
+import { getPersistentCache, setPersistentCache } from '@/shared/lib/cachePersistence';
 
 export const billingKeys = {
   all: ['billing'],
@@ -26,8 +26,9 @@ export function useInvoices(storeId) {
     queryFn: () => listInvoices({ storeId }),
     placeholderData: () => getPersistentCache(`invoices_${storeId}`) || undefined,
     enabled: Boolean(storeId),
-    staleTime: 1000 * 60 * 3,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -37,8 +38,9 @@ export function useAllInvoices(filters = {}) {
     queryKey: billingKeys.allInvoices(filters),
     queryFn: () => listAllInvoices(filters),
     placeholderData: () => (isDefault ? getPersistentCache('all_invoices') || undefined : undefined),
-    staleTime: 1000 * 60 * 3,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -50,11 +52,74 @@ export function useInvoiceDetail(invoiceId) {
   });
 }
 
+function applyBilledSerialsToList(units, billedUnitIds, invoiceMeta, nowIso, includeOrderItems) {
+  if (!Array.isArray(units)) return units;
+  const next = [];
+  for (const u of units) {
+    if (!billedUnitIds.has(u.id)) {
+      next.push(u);
+      continue;
+    }
+    // Reused 'sold' serials become 'retired' and leave both Unused and Used lists
+    if (u.status === 'sold') {
+      continue;
+    }
+    // Unused 'in_stock' serials shift immediately to 'sold' (Used)
+    const updated = {
+      ...u,
+      status: 'sold',
+      updated_at: nowIso,
+    };
+    if (includeOrderItems) {
+      updated.order_items = [
+        ...(u.order_items || []),
+        {
+          id: `live-${u.id}`,
+          invoices: invoiceMeta,
+        },
+      ];
+    }
+    next.push(updated);
+  }
+  return next;
+}
+
 export function usePlaceSale() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: placeSale,
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
+      const storeId = variables?.storeId;
+      const resolvedStoreId = resolveStoreUuid(storeId) || storeId;
+      const billedUnitIds = new Set((variables?.items || []).map((it) => it.unit_id).filter(Boolean));
+
+      if (resolvedStoreId && billedUnitIds.size > 0) {
+        const nowIso = new Date().toISOString();
+        const invoiceMeta = {
+          id: result?.invoice_id || null,
+          invoice_number: result?.invoice_number || null,
+          customer_name: variables?.customerName || 'Walk-in Customer',
+          created_at: nowIso,
+        };
+
+        for (const keyId of new Set([storeId, resolvedStoreId].filter(Boolean))) {
+          queryClient.setQueryData(inventoryKeys.serials(keyId), (old) => {
+            const next = applyBilledSerialsToList(old, billedUnitIds, invoiceMeta, nowIso, true);
+            if (Array.isArray(next)) {
+              setPersistentCache(`store_serials_${resolvedStoreId}`, next);
+            }
+            return next;
+          });
+          queryClient.setQueryData(inventoryKeys.units(keyId, null, null), (old) => {
+            const next = applyBilledSerialsToList(old, billedUnitIds, invoiceMeta, nowIso, false);
+            if (Array.isArray(next)) {
+              setPersistentCache(`store_product_units_${resolvedStoreId}`, next);
+            }
+            return next;
+          });
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['reports'] });

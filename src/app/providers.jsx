@@ -13,6 +13,7 @@ function RealtimeSyncManager({ children }) {
     const unsubscribe = subscribeToFinancialEvents((table) => {
       if (table === 'invoices' || table === 'payments' || table === 'order_items' || table === 'sales_returns') {
         qc.invalidateQueries({ queryKey: ['billing'] });
+        qc.invalidateQueries({ queryKey: ['inventory'] });
         qc.invalidateQueries({ queryKey: ['reports'] });
         qc.invalidateQueries({ queryKey: ['stores'] });
       } else if (table === 'inventory' || table === 'products' || table === 'product_units') {
