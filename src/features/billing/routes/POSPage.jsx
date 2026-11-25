@@ -87,7 +87,7 @@ export function POSPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
-  const [customerRegion, setCustomerRegion] = useState('Bhusawal Town');
+  const [customerCity, setCustomerCity] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
 
   // Payment Tender State (Step 3)
@@ -377,6 +377,7 @@ export function POSPage() {
     setCustomerName('');
     setCustomerPhone('');
     setCustomerGstin('');
+    setCustomerCity('');
     setCustomerAddress('');
     setSettlementType('full');
     setPartialCollectedAmount('');
@@ -454,6 +455,12 @@ export function POSPage() {
       return;
     }
 
+    if (!customerCity.trim()) {
+      setErrorMessage('Customer City is mandatory. Please provide the city in Step 2.');
+      setCurrentStep(2);
+      return;
+    }
+
     if (!customerAddress.trim()) {
       setErrorMessage('Customer Address is mandatory. Please provide the address in Step 2.');
       setCurrentStep(2);
@@ -523,7 +530,7 @@ export function POSPage() {
         customerName: resolvedCustomerName,
         customerPhone: resolvedCustomerPhone,
         customerGstin: customerGstin.trim().toUpperCase() || null,
-        customerRegion: customerRegion.trim() || 'Bhusawal Town',
+        customerCity: customerCity.trim() || null,
         customerAddress: customerAddress.trim() || null,
         items: cart.map((item) => {
           const itemGross = (item.selling_price || 0) * (item.quantity || 1);
@@ -550,7 +557,7 @@ export function POSPage() {
       setCustomerName('');
       setCustomerPhone('');
       setCustomerGstin('');
-      setCustomerRegion('Bhusawal Town');
+      setCustomerCity('');
       setCustomerAddress('');
       setCashTendered('');
       setPaymentReference('');
@@ -1168,56 +1175,28 @@ export function POSPage() {
                       setCustomerName(match.name);
                       setCustomerPhone(match.phone);
                       setCustomerGstin(match.gstin || '');
-                      setCustomerRegion(match.region || 'Bhusawal Town');
+                      if (match.city) setCustomerCity(match.city);
                       if (match.address) setCustomerAddress(match.address);
                       setCustomerType(match.gstin ? 'registered' : 'walkin');
                       if (errorMessage) setErrorMessage('');
                     }}
                     className="px-2.5 py-1 rounded-md border border-border bg-surface hover:border-brand-sage text-text cursor-pointer transition-colors font-medium"
                   >
-                    {match.name} • <span className="font-mono text-muted">{match.phone}</span>
+                    {match.name}
+                    {match.city ? ` • ${match.city}` : ''} • <span className="font-mono text-muted">{match.phone}</span>
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Customer Region / Area */}
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-medium text-muted block">Customer Area / Region</span>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  'Bhusawal Town',
-                  'Khadka / Varangaon Rd',
-                  'Jalgaon City',
-                  'Jamner / Bodwad',
-                  'Raver / Yawal',
-                  'Muktainagar',
-                  'Outstation',
-                ].map((regionOption) => (
-                  <button
-                    key={regionOption}
-                    type="button"
-                    onClick={() => setCustomerRegion(regionOption)}
-                    className={cn(
-                      'px-2.5 py-1 rounded-md border text-xs font-medium cursor-pointer transition-colors',
-                      customerRegion === regionOption
-                        ? 'bg-accent text-accent-fg border-accent'
-                        : 'bg-surface text-muted border-border hover:text-text'
-                    )}
-                  >
-                    {regionOption}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Customer Address */}
+            {/* Customer City & Address */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-medium text-muted">Customer Delivery / Billing Address</span>
+                <span className="text-[11px] font-medium text-muted">Customer City &amp; Delivery / Billing Address</span>
                 <button
                   type="button"
                   onClick={() => {
+                    setCustomerCity('Bhusawal');
                     setCustomerAddress('Showroom Counter Pickup, Khadka Road, Bhusawal');
                     if (errorMessage) setErrorMessage('');
                   }}
@@ -1226,17 +1205,34 @@ export function POSPage() {
                   Use Bhusawal Counter Pickup
                 </button>
               </div>
-              <Input
-                id="pos-customer-address"
-                label="Address"
-                value={customerAddress}
-                onChange={(e) => {
-                  setCustomerAddress(e.target.value);
-                  if (errorMessage) setErrorMessage('');
-                }}
-                placeholder="e.g. Khadka Road, Near Station, Bhusawal"
-                required
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div className="sm:col-span-4">
+                  <Input
+                    id="pos-customer-city"
+                    label="City"
+                    value={customerCity}
+                    onChange={(e) => {
+                      setCustomerCity(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="e.g. Bhusawal, Jalgaon"
+                    required
+                  />
+                </div>
+                <div className="sm:col-span-8">
+                  <Input
+                    id="pos-customer-address"
+                    label="Address"
+                    value={customerAddress}
+                    onChange={(e) => {
+                      setCustomerAddress(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    placeholder="e.g. Khadka Road, Near Station, Bhusawal"
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Mini Bill Preview Strip */}
@@ -1286,6 +1282,10 @@ export function POSPage() {
                   }
                   if (customerGstin.trim() && !isValidGstin(customerGstin)) {
                     setErrorMessage('Please enter a valid 15-character GSTIN (e.g. 27ABCDE1234F1Z5).');
+                    return;
+                  }
+                  if (!customerCity.trim()) {
+                    setErrorMessage('Customer City is mandatory. Please enter the city.');
                     return;
                   }
                   if (!customerAddress.trim()) {

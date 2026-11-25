@@ -40,6 +40,8 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
   const [customerName, setCustomerName] = useState(invoiceDetail.customer_name || '');
   const [customerPhone, setCustomerPhone] = useState(invoiceDetail.customer_phone || '');
   const [customerGstin, setCustomerGstin] = useState(invoiceDetail.customer_gstin || '');
+  const [customerCity, setCustomerCity] = useState(invoiceDetail.customer_city || '');
+  const [customerAddress, setCustomerAddress] = useState(invoiceDetail.customer_address || '');
   const [status, setStatus] = useState(invoiceDetail.status || 'paid');
   const [paymentMethod, setPaymentMethod] = useState(
     (primaryPayment?.payment_method || 'cash').toLowerCase()
@@ -201,6 +203,8 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
           customer_name: customerName.trim(),
           customer_phone: cleanPhone(customerPhone),
           customer_gstin: customerGstin.trim().toUpperCase() || null,
+          customer_city: customerCity.trim() || null,
+          customer_address: customerAddress.trim() || null,
           status,
           subtotal: financialTotals.subtotal,
           cgst_amount: financialTotals.cgst,
@@ -279,6 +283,25 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
             maxLength={15}
             className="font-mono uppercase"
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Input
+            id="edit-customer-city"
+            label="City"
+            value={customerCity}
+            onChange={(e) => setCustomerCity(e.target.value)}
+            placeholder="e.g. Bhusawal, Jalgaon"
+          />
+          <div className="sm:col-span-2">
+            <Input
+              id="edit-customer-address"
+              label="Address"
+              value={customerAddress}
+              onChange={(e) => setCustomerAddress(e.target.value)}
+              placeholder="e.g. Khadka Road, Near Station, Bhusawal"
+            />
+          </div>
         </div>
       </div>
 

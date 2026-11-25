@@ -267,6 +267,12 @@ We appreciate your business and look forward to serving you again!`;
               <span className="font-mono">{invoiceDetail.customer_phone}</span>
             </div>
           )}
+          {(invoiceDetail.customer_address || invoiceDetail.customer_city) && (
+            <div className="text-slate-700">
+              <span className="font-semibold text-slate-900">Address:</span>{' '}
+              {[invoiceDetail.customer_address, invoiceDetail.customer_city].filter(Boolean).join(', ')}
+            </div>
+          )}
           <div>
             <span className="font-semibold text-slate-900">Customer GSTIN:</span>{' '}
             <span className="font-mono font-bold">

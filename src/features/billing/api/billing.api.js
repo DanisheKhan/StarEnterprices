@@ -11,6 +11,7 @@ export async function placeSale({
   customerGstin = null,
   customerRegion = null,
   customerAddress = null,
+  customerCity = null,
   items,
   payments,
 }) {
@@ -23,6 +24,7 @@ export async function placeSale({
     p_payments: payments,
     p_customer_region: customerRegion,
     p_customer_address: customerAddress,
+    p_customer_city: customerCity,
   });
 
   if (error) throw error;
@@ -66,6 +68,7 @@ export async function listAllInvoices({
     .from('invoices')
     .select(`
       id, store_id, invoice_number, financial_year, customer_name, customer_phone, customer_gstin,
+      customer_region, customer_address, customer_city,
       subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, grand_total, status, created_at,
       stores (id, name, code, invoice_prefix, gstin, city),
       payments (id, payment_method, amount, reference_number),
@@ -86,7 +89,7 @@ export async function listAllInvoices({
     const q = search.trim().replace(/[,%()]/g, '');
     if (q) {
       query = query.or(
-        `invoice_number.ilike.%${q}%,customer_name.ilike.%${q}%,customer_phone.ilike.%${q}%,customer_gstin.ilike.%${q}%`
+        `invoice_number.ilike.%${q}%,customer_name.ilike.%${q}%,customer_phone.ilike.%${q}%,customer_gstin.ilike.%${q}%,customer_city.ilike.%${q}%`
       );
     }
   }
@@ -146,6 +149,7 @@ export async function listAllInvoices({
           (inv.customer_name && inv.customer_name.toLowerCase().includes(q)) ||
           (inv.customer_phone && inv.customer_phone.toLowerCase().includes(q)) ||
           (inv.customer_gstin && inv.customer_gstin.toLowerCase().includes(q)) ||
+          (inv.customer_city && inv.customer_city.toLowerCase().includes(q)) ||
           (inv.stores?.name && inv.stores.name.toLowerCase().includes(q))
       );
     }
@@ -171,6 +175,9 @@ export async function updateInvoice({ invoiceId, updates, items = [], payment = 
       customer_name: updates.customer_name ?? 'Walk-in Customer',
       customer_phone: updates.customer_phone || null,
       customer_gstin: updates.customer_gstin || null,
+      ...(updates.customer_city !== undefined ? { customer_city: updates.customer_city || null } : {}),
+      ...(updates.customer_address !== undefined ? { customer_address: updates.customer_address || null } : {}),
+      ...(updates.customer_region !== undefined ? { customer_region: updates.customer_region || null } : {}),
       status: updates.status || 'paid',
       subtotal: updates.subtotal,
       discount_amount: updates.discount_amount || 0,
@@ -213,6 +220,7 @@ export async function getInvoiceDetail(invoiceId) {
       .from('invoices')
       .select(`
         id, store_id, invoice_number, financial_year, customer_name, customer_phone, customer_gstin,
+        customer_region, customer_address, customer_city,
         subtotal, discount_amount, cgst_amount, sgst_amount, grand_total, status, created_at,
         stores (id, name, code, gstin, address_line1, city, pincode, phone, email)
       `)
@@ -362,7 +370,7 @@ export async function searchCustomersByPhone(phonePrefix) {
 
   const { data, error } = await supabase
     .from('invoices')
-    .select('id, customer_name, customer_phone, customer_gstin, customer_region, customer_address, created_at')
+    .select('id, customer_name, customer_phone, customer_gstin, customer_region, customer_address, customer_city, created_at')
     .ilike('customer_phone', `%${digits}%`)
     .neq('status', 'void')
     .order('created_at', { ascending: false })
@@ -382,6 +390,7 @@ export async function searchCustomersByPhone(phonePrefix) {
       gstin: row.customer_gstin || '',
       region: row.customer_region || 'Bhusawal Town',
       address: row.customer_address || '',
+      city: row.customer_city || '',
     });
     if (matches.length >= 5) break;
   }

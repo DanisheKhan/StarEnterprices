@@ -27,6 +27,7 @@ import {
   AlertCircle,
   User,
   Phone,
+  MapPin,
 } from 'lucide-react';
 
 export const InvoiceCard = memo(function InvoiceCard({
@@ -171,6 +172,21 @@ export const InvoiceCard = memo(function InvoiceCard({
               <div className="flex items-center gap-1.5 font-mono text-text/80">
                 <Phone size={11} className="text-muted shrink-0" />
                 <span>{formatPhone(inv.customer_phone)}</span>
+              </div>
+            )}
+            {(inv.customer_city || inv.customer_address) && (
+              <div
+                className="text-[11px] text-muted flex items-start gap-1.5"
+                title={[inv.customer_address, inv.customer_city].filter(Boolean).join(', ')}
+              >
+                <MapPin size={11} className="shrink-0 mt-0.5" />
+                <span className="truncate">
+                  {inv.customer_city
+                    ? inv.customer_address
+                      ? `${inv.customer_city} — ${inv.customer_address}`
+                      : inv.customer_city
+                    : inv.customer_address}
+                </span>
               </div>
             )}
             <div className="text-[11px] text-muted flex items-center gap-1.5">

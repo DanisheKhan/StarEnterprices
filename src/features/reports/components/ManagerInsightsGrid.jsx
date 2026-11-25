@@ -10,7 +10,7 @@ export function ManagerInsightsGrid({
   categories = [],
   starProducts = [],
   payments = {},
-  regions = [],
+  cities = [],
 }) {
   const topCategory = categories[0] || null;
   const maxCategoryRev = Math.max(1, ...categories.map((c) => Number(c.netRevenue ?? c.revenue ?? 0)));
@@ -22,7 +22,7 @@ export function ManagerInsightsGrid({
   const cashVsEmi = payments.cashVsEmi || {};
   const totalPaymentPersons = paymentList.reduce((sum, p) => sum + Number(p.personsCount || 0), 0);
 
-  const maxRegionSales = Math.max(1, ...regions.map((r) => Number(r.grossSales || 0)));
+  const maxCityCustomers = Math.max(1, ...cities.map((c) => Number(c.customersCount || c.billsCount || 0)));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 min-w-0">
@@ -270,42 +270,50 @@ export function ManagerInsightsGrid({
         </div>
       </div>
 
-      {/* 4. CUSTOMER REGION BREAKDOWN */}
+      {/* 4. CUSTOMER CITY MATRIX */}
       <div className="p-5 sm:p-6 rounded-xl border border-border bg-surface shadow-2xs space-y-4 min-w-0 flex flex-col justify-between">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2 pb-3 border-b border-border">
             <div>
               <h3 className="text-sm font-bold text-text flex items-center gap-2">
                 <MapPin size={15} className="text-brand-sage shrink-0" />
-                <span>Customer Region Reach</span>
+                <span>Customer Origin by City</span>
               </h3>
-              <p className="text-xs text-muted">Where buyers come from &amp; Cash vs EMI mix per area</p>
+              <p className="text-xs text-muted">
+                Cities customers come from, customer count &amp; Cash vs EMI mix
+              </p>
             </div>
-            <span className="text-xs font-mono text-muted">{regions.length} areas</span>
+            <span className="text-xs font-mono text-muted shrink-0">
+              {cities.length} {cities.length === 1 ? 'city' : 'cities'}
+            </span>
           </div>
 
-          {regions.length === 0 ? (
+          {cities.length === 0 ? (
             <div className="py-10 text-center text-xs text-muted">
-              No regional sales data recorded in this period.
+              No customer city data recorded in this period.
             </div>
           ) : (
-            <div className="space-y-3">
-              {regions.slice(0, 6).map((reg, idx) => {
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              {cities.slice(0, 12).map((item, idx) => {
+                const custCount = Number(item.customersCount || item.billsCount || 0);
                 const widthPct =
-                  reg.grossSales > 0 ? Math.max(4, Math.round((Number(reg.grossSales) / maxRegionSales) * 100)) : 0;
+                  custCount > 0 ? Math.max(4, Math.round((custCount / maxCityCustomers) * 100)) : 0;
 
                 return (
-                  <div key={reg.region || idx} className="space-y-1 text-xs">
+                  <div key={item.city || idx} className="space-y-1 text-xs">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="font-semibold text-text truncate">{reg.region}</div>
+                        <div className="font-semibold text-text truncate flex items-center gap-1.5">
+                          <span className="font-mono text-[11px] text-muted">{idx + 1}.</span>
+                          <span className="truncate">{item.city}</span>
+                        </div>
                         <div className="text-[11px] text-muted font-mono">
-                          {reg.customersCount || reg.billsCount} customers • Cash {reg.cashCount || 0} • EMI {reg.emiCount || 0}
+                          {custCount} {custCount === 1 ? 'customer' : 'customers'} ({Number(item.customerSharePct ?? 0).toFixed(1)}%) • {item.billsCount || 0} bills • Cash {item.cashCount || 0} • EMI {item.emiCount || 0}
                         </div>
                       </div>
                       <div className="text-right font-mono shrink-0">
-                        <div className="font-semibold text-text">{formatCurrency(reg.grossSales || 0)}</div>
-                        <div className="text-[11px] text-muted">{Number(reg.sharePct || 0).toFixed(1)}% share</div>
+                        <div className="font-semibold text-text">{formatCurrency(item.grossSales || 0)}</div>
+                        <div className="text-[11px] text-muted">{Number(item.sharePct || 0).toFixed(1)}% sales</div>
                       </div>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-bg border border-border/50 overflow-hidden">
@@ -322,7 +330,7 @@ export function ManagerInsightsGrid({
         </div>
 
         <div className="p-2.5 px-3 rounded-lg border border-border bg-bg text-[11px] text-muted">
-          Region tags are captured on every new POS bill in Step 2 (older pre-update bills show as Counter / Unassigned).
+          Customer city is captured on every POS bill in Step 2 (older pre-update bills show as Not Specified).
         </div>
       </div>
     </div>

@@ -50,7 +50,7 @@ function ReportsConsoleContent({ initialStoreCode }) {
   const categories = dashboardData?.categories || [];
   const starProducts = dashboardData?.starProducts || [];
   const payments = dashboardData?.payments || {};
-  const regions = dashboardData?.regions || [];
+  const cities = dashboardData?.cities || [];
   const profitLevers = dashboardData?.profitLevers || {};
 
   const activeBranchMeta = branches.find((b) => b.code === storeCode);
@@ -137,12 +137,12 @@ function ReportsConsoleContent({ initialStoreCode }) {
         dateRange={dateRange}
       />
 
-      {/* 4. Manager Insights Grid (Most Selling Category, Star Product, EMI vs Cash Persons, Region) */}
+      {/* 4. Manager Insights Grid (Most Selling Category, Star Product, EMI vs Cash Persons, City Matrix) */}
       <ManagerInsightsGrid
         categories={categories}
         starProducts={starProducts}
         payments={payments}
-        regions={regions}
+        cities={cities}
       />
 
       {/* 5. Actionable Profit-Doubling Levers */}
