@@ -1,5 +1,5 @@
 import { useState, useMemo, useDeferredValue } from 'react';
-import { Container, Card, Button, Input } from '@/shared/ui';
+import { Container, Button, Input } from '@/shared/ui';
 import { Seo } from '@/shared/seo';
 import { motion } from '@/shared/motion';
 import { usePublicProducts, useCart } from '../hooks/useCatalog';
@@ -156,15 +156,15 @@ export function PublicHomePage() {
       <StoreDepartmentsSection onSelectDepartment={handleSelectCategory} />
 
       {/* 4. Live Inventory Catalog Grid */}
-      <section id="catalog-grid-section" className="py-20 sm:py-28 border-b border-border bg-surface min-w-0 scroll-mt-20">
-        <Container size="xl" className="space-y-8 sm:space-y-10">
+      <section id="catalog-grid-section" className="py-10 sm:py-16 lg:py-20 border-b border-border bg-surface min-w-0 scroll-mt-14 sm:scroll-mt-16">
+        <Container size="xl" className="space-y-5 sm:space-y-8">
           {/* Consistent Section Header & Global Catalog Search */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-brand-crimson">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-brand-crimson">
                 SHOWROOM INVENTORY
               </span>
-              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-text">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-text">
                 Browse Live Products
               </h2>
             </div>
@@ -176,7 +176,7 @@ export function PublicHomePage() {
                 placeholder="Search sofa, fridge, AC, iPhone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pr-16 text-xs sm:text-sm"
+                className="pr-16 text-sm"
               />
               {search ? (
                 <button
@@ -194,23 +194,23 @@ export function PublicHomePage() {
           </div>
 
           {/* Department Filter Tabs & Subcategory Controls */}
-          <div className="border border-border rounded-2xl bg-bg p-4 sm:p-5 space-y-4 shadow-sm">
+          <div className="border border-border rounded-xl sm:rounded-2xl bg-bg p-3 sm:p-5 space-y-3 sm:space-y-4 shadow-2xs">
             {/* Primary Department Switcher */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-border">
-              <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 no-scrollbar">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 sm:pb-3 border-b border-border">
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto w-full sm:w-auto pb-0.5 sm:pb-0 no-scrollbar">
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedStore('all');
                     setSelectedCategory('');
                   }}
-                  className={`px-3.5 py-1.5 text-xs rounded-lg border cursor-pointer font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 text-xs rounded-lg border cursor-pointer font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
                     selectedStore === 'all'
                       ? 'bg-text text-accent-fg border-text shadow-2xs font-semibold'
                       : 'bg-surface text-muted border-border hover:text-text hover:bg-surface-hover'
                   }`}
                 >
-                  <Layers size={13} /> All Collections ({products.length})
+                  <Layers size={13} /> All ({products.length})
                 </button>
                 <button
                   type="button"
@@ -218,13 +218,13 @@ export function PublicHomePage() {
                     setSelectedStore('furniture-electronics');
                     setSelectedCategory('');
                   }}
-                  className={`px-3.5 py-1.5 text-xs rounded-lg border cursor-pointer font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 text-xs rounded-lg border cursor-pointer font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
                     selectedStore === 'furniture-electronics'
                       ? 'bg-text text-accent-fg border-text shadow-2xs font-semibold'
                       : 'bg-surface text-muted border-border hover:text-text hover:bg-surface-hover'
                   }`}
                 >
-                  <Tv size={13} /> Furniture & Electronics
+                  <Tv size={13} /> Furniture &amp; Home
                 </button>
                 <button
                   type="button"
@@ -232,13 +232,13 @@ export function PublicHomePage() {
                     setSelectedStore('mobiles');
                     setSelectedCategory('');
                   }}
-                  className={`px-3.5 py-1.5 text-xs rounded-lg border cursor-pointer font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 text-xs rounded-lg border cursor-pointer font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
                     selectedStore === 'mobiles'
                       ? 'bg-text text-accent-fg border-text shadow-2xs font-semibold'
                       : 'bg-surface text-muted border-border hover:text-text hover:bg-surface-hover'
                   }`}
                 >
-                  <Smartphone size={13} /> Star Mobiles
+                  <Smartphone size={13} /> Mobiles
                 </button>
               </div>
 
@@ -259,7 +259,7 @@ export function PublicHomePage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-surface border border-border rounded-md px-2.5 py-1 text-xs text-text cursor-pointer focus:outline-none"
+                    className="bg-surface border border-border rounded-md px-2 py-1 text-xs text-text cursor-pointer focus:outline-none"
                     aria-label="Sort catalog"
                   >
                     <option value="featured">Featured</option>
@@ -273,8 +273,8 @@ export function PublicHomePage() {
 
             {/* Category Sub-Filters */}
             {availableCategories.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
-                <span className="text-muted font-medium shrink-0">Filter:</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 text-xs no-scrollbar">
+                <span className="hidden sm:inline text-muted font-medium shrink-0">Filter:</span>
                 <button
                   type="button"
                   onClick={() => setSelectedCategory('')}
@@ -304,15 +304,15 @@ export function PublicHomePage() {
             )}
           </div>
 
-          {/* Product Cards Grid with Shorter, Cleaner Cards (No Stock Badge, No GST, No EMI) */}
+          {/* Product Cards Grid — 2-col minimal mobile cards, 3-col rich desktop cards */}
           {isLoading && allProducts.length === 0 ? (
-            <div className="py-20 text-center space-y-3">
+            <div className="py-16 text-center space-y-3">
               <div className="w-6 h-6 rounded-full border-2 border-brand-sage border-t-transparent animate-spin mx-auto" />
               <p className="text-xs text-muted">Loading showroom inventory...</p>
             </div>
           ) : products.length === 0 ? (
-            <div className="py-16 text-center border border-border rounded-xl bg-surface space-y-3">
-              <Search size={28} className="mx-auto text-muted" />
+            <div className="py-12 text-center border border-border rounded-xl bg-bg space-y-3">
+              <Search size={26} className="mx-auto text-muted" />
               <h3 className="text-sm font-semibold text-text">No products found</h3>
               <p className="text-xs text-muted max-w-sm mx-auto">
                 Try searching for another keyword or clearing the filters.
@@ -334,7 +334,7 @@ export function PublicHomePage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 min-w-0">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-5 min-w-0">
                 {visibleProducts.map((product) => {
                   const isMobiles = product.stores?.code === 'mobiles';
                   const isRecentlyAdded = recentlyAddedId === product.id;
@@ -343,23 +343,22 @@ export function PublicHomePage() {
                   const basePrice = Number(product.selling_price || 0);
                   const gstRate = !isNaN(parseFloat(product.gst_rate)) ? parseFloat(product.gst_rate) : 18;
                   const finalPrice = basePrice + Math.round(basePrice * (gstRate / 100));
+                  const specs = product.specs || {};
 
                 return (
                   <motion.div
                     key={product.id}
-                    whileHover={{ y: -3 }}
+                    whileHover={{ y: -2 }}
                     transition={{ duration: 0.15 }}
                     className="min-w-0"
                   >
-                    <Card
-                      className="group p-4 flex flex-col justify-between space-y-3 hover:border-border-strong transition-colors bg-surface border border-border shadow-2xs h-full min-w-0"
+                    <div
+                      onClick={() => setActiveModalProduct(product)}
+                      className="group p-2.5 sm:p-4 flex flex-col justify-between space-y-2.5 sm:space-y-3 hover:border-border-strong transition-colors bg-surface border border-border rounded-xl sm:rounded-2xl shadow-2xs h-full min-w-0 cursor-pointer"
                     >
-                      <div className="space-y-2.5 min-w-0">
-                        {/* Taller 4:3 Image Container */}
-                        <div
-                          onClick={() => setActiveModalProduct(product)}
-                          className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-surface-subtle border border-border flex items-center justify-center cursor-pointer transition-opacity group-hover:opacity-95"
-                        >
+                      <div className="space-y-2 sm:space-y-2.5 min-w-0">
+                        {/* 4:3 Image Container */}
+                        <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-surface-subtle border border-border flex items-center justify-center transition-opacity group-hover:opacity-95">
                           {product.image_url ? (
                             <img
                               src={product.image_url}
@@ -371,14 +370,14 @@ export function PublicHomePage() {
                               }}
                             />
                           ) : (
-                            <div className="flex flex-col items-center justify-center text-muted gap-1.5 py-6">
-                              {isMobiles ? <Smartphone size={24} className="opacity-30" /> : <Tv size={24} className="opacity-30" />}
+                            <div className="flex flex-col items-center justify-center text-muted gap-1 py-4">
+                              {isMobiles ? <Smartphone size={20} className="opacity-30" /> : <Tv size={20} className="opacity-30" />}
                               <span className="text-[10px] uppercase font-mono tracking-wider opacity-60">{product.sku}</span>
                             </div>
                           )}
 
                           <span
-                            className={`absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                            className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full border ${
                               !isInStock
                                 ? 'bg-surface border-brand-crimson-border text-brand-crimson-text'
                                 : stockQty <= 2
@@ -386,7 +385,7 @@ export function PublicHomePage() {
                                 : 'bg-surface border-brand-sage-border text-brand-sage-text'
                             }`}
                           >
-                            {!isInStock ? 'Out of Stock' : stockQty <= 2 ? `Only ${stockQty} left` : 'In Stock'}
+                            {!isInStock ? 'Out' : stockQty <= 2 ? `${stockQty} left` : 'In Stock'}
                           </span>
                         </div>
 
@@ -395,75 +394,80 @@ export function PublicHomePage() {
                           <div className="text-[10px] uppercase tracking-wider text-muted font-semibold truncate">
                             {product.brands?.name || (isMobiles ? 'Star Mobiles' : 'Star Enterprises')}
                           </div>
-                          <h3 className="text-sm font-bold text-text line-clamp-2 min-h-10 mt-0.5 leading-snug">
+                          <h3 className="text-xs sm:text-sm font-bold text-text line-clamp-2 min-h-8 sm:min-h-10 mt-0.5 leading-snug">
                             {product.name}
                           </h3>
                         </div>
 
-                        {/* Spec Highlights Snippet */}
-                        <div className="flex flex-wrap gap-1.5 min-h-6 items-start">
-                            {product.specs.storage && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
-                                {product.specs.storage}
-                              </span>
-                            )}
-                            {product.specs.battery_health && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text font-medium">
-                                {product.specs.battery_health}% Battery
-                              </span>
-                            )}
-                            {product.specs.screen_size && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
-                                {product.specs.screen_size}
-                              </span>
-                            )}
-                            {product.specs.capacity && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
-                                {product.specs.capacity}
-                              </span>
-                            )}
-                            {product.specs.tonnage && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
-                                {product.specs.tonnage}
-                              </span>
-                            )}
-                            {product.specs.star_rating && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-brand-gold-border bg-brand-gold-subtle text-brand-gold-text font-medium">
-                                {product.specs.star_rating}
-                              </span>
-                            )}
-                            {product.specs?.seating && (
-                              <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
-                                {product.specs.seating}
-                              </span>
-                            )}
+                        {/* Spec Highlights Snippet (desktop/tablet) */}
+                        <div className="hidden sm:flex flex-wrap gap-1.5 min-h-6 items-start">
+                          {specs.storage && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
+                              {specs.storage}
+                            </span>
+                          )}
+                          {specs.battery_health && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text font-medium">
+                              {specs.battery_health}% Battery
+                            </span>
+                          )}
+                          {specs.screen_size && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
+                              {specs.screen_size}
+                            </span>
+                          )}
+                          {specs.capacity && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
+                              {specs.capacity}
+                            </span>
+                          )}
+                          {specs.tonnage && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
+                              {specs.tonnage}
+                            </span>
+                          )}
+                          {specs.star_rating && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-brand-gold-border bg-brand-gold-subtle text-brand-gold-text font-medium">
+                              {specs.star_rating}
+                            </span>
+                          )}
+                          {specs.seating && (
+                            <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
+                              {specs.seating}
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       {/* Transparent GST-Inclusive Price & Action Footer */}
-                      <div className="pt-2.5 border-t border-border space-y-2">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <div>
-                            <div className="text-lg font-bold font-mono text-text tracking-tight">
+                      <div className="pt-2 border-t border-border space-y-2">
+                        <div className="flex items-baseline justify-between gap-1.5 flex-wrap">
+                          <div className="min-w-0">
+                            <div className="text-sm sm:text-lg font-bold font-mono text-text tracking-tight">
                               {formatCurrency(finalPrice)}
                             </div>
-                            <div className="text-[10px] text-muted font-mono">
+                            <div className="sm:hidden text-[10px] text-muted">Incl. GST</div>
+                            <div className="hidden sm:block text-[10px] text-muted font-mono">
                               Base {formatCurrency(basePrice)} + {gstRate}% GST
                             </div>
                           </div>
                           {product.mrp && product.mrp > finalPrice && (
-                            <div className="text-xs text-muted line-through font-mono">
-                              MRP {formatCurrency(product.mrp)}
+                            <div className="text-[10px] sm:text-xs text-muted line-through font-mono">
+                              {formatCurrency(product.mrp)}
                             </div>
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        {/* Mobile: single crisp primary button (tap card for View modal) | sm+: View + Add */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setActiveModalProduct(product)}
-                            className="text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveModalProduct(product);
+                            }}
+                            className="hidden sm:inline-flex text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
                           >
                             <Eye size={13} /> View
                           </Button>
@@ -472,7 +476,7 @@ export function PublicHomePage() {
                               variant="solid"
                               size="sm"
                               onClick={(e) => handleAddToCart(e, product)}
-                              className="text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
+                              className="text-[11px] sm:text-xs justify-center gap-1 sm:gap-1.5 cursor-pointer font-semibold py-1.5"
                             >
                               {isRecentlyAdded ? (
                                 <>
@@ -489,14 +493,14 @@ export function PublicHomePage() {
                               variant="outline"
                               size="sm"
                               onClick={(e) => handleAskAvailability(e, product, finalPrice)}
-                              className="text-xs justify-center gap-1.5 cursor-pointer font-medium py-1.5"
+                              className="text-[11px] sm:text-xs justify-center gap-1 sm:gap-1.5 cursor-pointer font-semibold py-1.5"
                             >
                               <MessageCircle size={13} /> Ask Store
                             </Button>
                           )}
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -504,12 +508,12 @@ export function PublicHomePage() {
 
             {/* Toggle Show All / Show Less Button */}
             {products.length > 6 && (
-              <div className="pt-4 text-center">
+              <div className="pt-2 sm:pt-4 text-center">
                 <Button
                   variant="outline"
                   size="md"
                   onClick={() => setShowAllProducts((prev) => !prev)}
-                  className="px-6 py-2.5 rounded-xl border-border bg-surface text-text hover:border-brand-sage hover:text-brand-sage font-bold text-xs sm:text-sm cursor-pointer shadow-2xs gap-2 inline-flex items-center"
+                  className="px-5 py-2 rounded-xl border-border bg-surface text-text hover:border-brand-sage hover:text-brand-sage font-bold text-xs sm:text-sm cursor-pointer shadow-2xs gap-2 inline-flex items-center"
                 >
                   {showAllProducts ? (
                     <>Show Less (6 Products)</>
@@ -554,17 +558,17 @@ export function PublicHomePage() {
       )}
 
       {/* Mobile Sticky Quick Action Bar */}
-      <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-surface px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around gap-2 shadow-xs">
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-surface px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center gap-2 shadow-2xs">
         <button
           type="button"
           onClick={scrollToCatalog}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-text bg-bg border border-border cursor-pointer"
+          className="flex-1 h-10 inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-text bg-bg border border-border cursor-pointer"
         >
           <Layers size={14} /> Catalog
         </button>
         <a
           href={`tel:${SITE.supportPhone.replace(/\s+/g, '')}`}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-text bg-bg border border-border"
+          className="flex-1 h-10 inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-text bg-bg border border-border"
         >
           <Phone size={14} /> Call
         </a>
@@ -574,7 +578,7 @@ export function PublicHomePage() {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-accent text-accent-fg"
+          className="flex-1 h-10 inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold bg-accent text-accent-fg"
         >
           <MessageCircle size={14} /> WhatsApp
         </a>

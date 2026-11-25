@@ -45,7 +45,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onCalculateEmi })
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={product.name} size="xl">
-      <div className="space-y-6 text-text min-w-0">
+      <div className="space-y-4 sm:space-y-6 text-text min-w-0">
         {/* Brand & Store Header */}
         <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onCalculateEmi })
         )}
 
         {/* Pricing Banner */}
-        <div className="p-4 rounded-xl border border-border bg-bg space-y-2.5">
+        <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-bg space-y-2">
           <div className="flex items-baseline justify-between flex-wrap gap-2">
             <div>
               <div className="text-xs text-muted">Final Showroom Price (Incl. {gstRate}% GST):</div>
@@ -138,7 +138,7 @@ export function ProductDetailModal({ product, isOpen, onClose, onCalculateEmi })
             <h4 className="text-xs font-medium uppercase tracking-wider text-muted">
               Technical Specifications
             </h4>
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               {Object.entries(product.specs).map(([key, val]) => (
                 <div
                   key={key}

@@ -1,5 +1,5 @@
 import { Star, ShieldCheck } from 'lucide-react';
-import { Container, Card } from '@/shared/ui';
+import { Container } from '@/shared/ui';
 
 const REVIEWS = [
   {
@@ -36,80 +36,79 @@ const REVIEWS = [
 
 export function StoreReviewsSection() {
   return (
-    <section id="reviews-section" className="py-16 sm:py-24 lg:py-28 border-b border-border bg-surface min-w-0 scroll-mt-20">
-      <Container size="xl" className="space-y-8 sm:space-y-12">
+    <section id="reviews-section" className="py-10 sm:py-16 lg:py-20 border-b border-border bg-surface min-w-0 scroll-mt-14 sm:scroll-mt-16">
+      <Container size="xl" className="space-y-5 sm:space-y-8">
 
         {/* Consistent Section Header with Rating Badge */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 min-w-0">
-          <div className="space-y-2 min-w-0">
-            <span className="text-xs font-bold uppercase tracking-widest text-brand-sage">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-6 min-w-0">
+          <div className="space-y-1.5 min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-brand-sage">
               VERIFIED REVIEWS
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-text">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-text">
               Trusted by Bhusawal Families
             </h2>
-            <p className="text-xs sm:text-sm text-muted max-w-xl leading-relaxed">
+            <p className="hidden sm:block text-sm text-muted max-w-xl leading-relaxed">
               Real experiences from real customers who visited our Khadka Road showroom.
             </p>
           </div>
 
-          {/* Aggregate Rating Badge - Responsive padding and wrapping */}
-          <div className="inline-flex flex-wrap items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-bg border border-border shadow-sm shrink-0">
+          {/* Aggregate Rating Badge */}
+          <div className="inline-flex self-start items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-bg border border-border shadow-2xs shrink-0">
             <div className="flex items-center gap-0.5 text-brand-gold">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} size={14} className="fill-brand-gold" />
+                <Star key={i} size={13} className="fill-brand-gold" />
               ))}
             </div>
             <span className="text-xs sm:text-sm font-bold text-text">4.9 / 5.0</span>
             <span className="text-[11px] sm:text-xs text-muted border-l border-border pl-2 sm:pl-3">
-              500+ Showroom Deliveries
+              500+ Deliveries
             </span>
           </div>
         </div>
 
-        {/* 3 Review Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 min-w-0">
+        {/* Horizontal Snap Strip on Mobile, 3-Col Grid on Desktop */}
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-1 -mx-4 px-4 no-scrollbar md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible min-w-0">
           {REVIEWS.map((review) => (
-            <Card
+            <div
               key={review.id}
-              className="p-5 sm:p-6 h-full flex flex-col justify-between space-y-4 sm:space-y-5 bg-bg border border-border rounded-2xl shadow-sm min-w-0"
+              className="w-72 sm:w-80 md:w-auto shrink-0 snap-start p-4 sm:p-6 flex flex-col justify-between space-y-3 sm:space-y-4 bg-bg border border-border rounded-xl sm:rounded-2xl shadow-2xs min-w-0"
             >
-              <div className="space-y-3 sm:space-y-4 min-w-0">
-                {/* Large quote mark */}
-                <div className="text-3xl sm:text-4xl font-black text-brand-gold/30 leading-none select-none">"</div>
+              <div className="space-y-2.5 sm:space-y-3 min-w-0">
+                <div className="hidden sm:block text-4xl font-black text-brand-gold/30 leading-none select-none">"</div>
 
                 {/* Stars & Verified */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-0.5 text-brand-gold">
                     {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} size={13} className="fill-brand-gold text-brand-gold" />
+                      <Star key={i} size={12} className="fill-brand-gold text-brand-gold" />
                     ))}
                   </div>
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-brand-sage bg-brand-sage-subtle px-2 py-0.5 rounded border border-brand-sage-border">
-                    <ShieldCheck size={11} /> Verified Buyer
+                    <ShieldCheck size={10} /> Verified
                   </span>
                 </div>
 
                 {/* Review Text */}
-                <p className="text-xs text-muted leading-relaxed">
+                <p className="text-xs text-muted leading-relaxed line-clamp-4 sm:line-clamp-none">
                   {review.comment}
                 </p>
               </div>
 
               {/* Reviewer Details */}
-              <div className="pt-3 sm:pt-4 border-t border-border space-y-1">
+              <div className="pt-2.5 sm:pt-3 border-t border-border space-y-0.5">
                 <div className="flex items-center justify-between text-xs font-bold text-text">
                   <span>{review.name}</span>
                   <span className="text-[10px] font-normal text-muted">{review.date}</span>
                 </div>
-                <div className="text-[11px] text-muted">
+                <div className="text-[11px] text-muted truncate">
                   {review.location}
                 </div>
                 <div className="text-[10px] text-brand-sage font-medium truncate pt-0.5">
-                  Purchased: {review.product}
+                  {review.product}
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       </Container>

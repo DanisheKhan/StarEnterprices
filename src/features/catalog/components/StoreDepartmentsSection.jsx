@@ -5,7 +5,7 @@ import {
   Smartphone, 
   ArrowRight
 } from 'lucide-react';
-import { Container, Card } from '@/shared/ui';
+import { Container } from '@/shared/ui';
 import { motion } from '@/shared/motion';
 
 /**
@@ -65,71 +65,69 @@ export function StoreDepartmentsSection({ onSelectDepartment }) {
   ];
 
   return (
-    <section id="departments-section" className="py-20 sm:py-28 border-b border-border bg-bg min-w-0 scroll-mt-20">
-      <Container size="xl" className="space-y-10 sm:space-y-12">
+    <section id="departments-section" className="py-10 sm:py-16 lg:py-20 border-b border-border bg-bg min-w-0 scroll-mt-14 sm:scroll-mt-16">
+      <Container size="xl" className="space-y-5 sm:space-y-8">
 
         {/* Consistent Section Header */}
-        <div className="space-y-2 mb-10 sm:mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-brand-crimson">
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-brand-crimson">
             SHOWROOM DEPARTMENTS
           </span>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-text">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-text">
             Shop by Category
           </h2>
-          <p className="text-sm text-muted max-w-xl">
+          <p className="hidden sm:block text-sm text-muted max-w-xl leading-relaxed">
             Everything for your home under one roof. Inspect real floor models at our Bhusawal showroom with direct warranty.
           </p>
         </div>
 
-        {/* 4 Department Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 min-w-0">
+        {/* 2x2 Minimal Grid on Mobile, 4-Col Grid on Desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5 min-w-0">
           {departments.map((dept) => {
             const Icon = dept.icon;
             return (
-              <motion.div
+              <motion.button
+                type="button"
                 key={dept.id}
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -2 }}
                 transition={{ duration: 0.15 }}
-                className="min-w-0"
+                onClick={() => onSelectDepartment(dept.categorySlug, dept.storeCode)}
+                className="text-left p-3.5 sm:p-5 flex flex-col justify-between h-full bg-surface border border-border rounded-xl sm:rounded-2xl hover:border-border-strong cursor-pointer transition-all shadow-2xs group min-w-0"
               >
-                <Card
-                  onClick={() => onSelectDepartment(dept.categorySlug, dept.storeCode)}
-                  className="p-5 flex flex-col justify-between h-full bg-surface border border-border rounded-2xl hover:border-border-strong cursor-pointer transition-all shadow-sm group min-w-0"
-                >
-                  <div className="space-y-4 min-w-0">
-                    {/* Icon */}
-                    <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${dept.iconBg} ${dept.accentColor}`}>
-                      <Icon size={22} />
-                    </div>
-
-                    {/* Title & Subtitle */}
-                    <div className="space-y-1 min-w-0">
-                      <h3 className="text-base font-bold text-text">
-                        {dept.title}
-                      </h3>
-                      <p className="text-xs text-muted leading-relaxed line-clamp-2">
-                        {dept.subtitle}
-                      </p>
-                    </div>
-
-                    {/* Simple tag label */}
-                    <span className="text-[11px] font-medium text-muted">
-                      {dept.tag}
-                    </span>
+                <div className="space-y-2.5 sm:space-y-4 min-w-0">
+                  {/* Icon */}
+                  <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl border flex items-center justify-center ${dept.iconBg} ${dept.accentColor}`}>
+                    <Icon size={18} className="sm:hidden" />
+                    <Icon size={22} className="hidden sm:block" />
                   </div>
 
-                  {/* Action bar */}
-                  <div className="pt-4 mt-3 border-t border-border flex items-center justify-between text-xs">
-                    <span className="text-[11px] font-medium text-muted">
-                      {dept.itemsCount}
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-bold text-brand-sage group-hover:underline">
-                      <span>Explore</span>
-                      <ArrowRight size={13} />
-                    </span>
+                  {/* Title & Subtitle */}
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-xs sm:text-base font-bold text-text leading-snug">
+                      {dept.title}
+                    </h3>
+                    <p className="hidden sm:block text-xs text-muted leading-relaxed line-clamp-2">
+                      {dept.subtitle}
+                    </p>
                   </div>
-                </Card>
-              </motion.div>
+
+                  {/* Tag label (desktop) */}
+                  <span className="hidden sm:inline-block text-[11px] font-medium text-muted">
+                    {dept.tag}
+                  </span>
+                </div>
+
+                {/* Action bar */}
+                <div className="pt-2.5 sm:pt-4 mt-2.5 sm:mt-3 border-t border-border flex items-center justify-between text-xs w-full">
+                  <span className="hidden sm:inline text-[11px] font-medium text-muted truncate pr-2">
+                    {dept.itemsCount}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-brand-sage group-hover:underline">
+                    <span>Explore</span>
+                    <ArrowRight size={12} />
+                  </span>
+                </div>
+              </motion.button>
             );
           })}
         </div>

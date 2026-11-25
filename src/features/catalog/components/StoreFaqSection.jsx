@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Container, Card } from '@/shared/ui';
+import { Container } from '@/shared/ui';
 
 const FAQS = [
   {
@@ -29,37 +29,37 @@ export function StoreFaqSection() {
   }
 
   return (
-    <section className="py-20 sm:py-28 border-b border-border bg-bg min-w-0">
+    <section className="py-10 sm:py-16 lg:py-20 border-b border-border bg-bg min-w-0">
       <Container size="xl">
-        <div className="max-w-3xl mx-auto space-y-8 sm:space-y-10">
+        <div className="max-w-3xl mx-auto space-y-5 sm:space-y-8">
 
           {/* Consistent Section Header — centered */}
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-brand-crimson">
+          <div className="text-center space-y-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-brand-crimson">
               FAQ
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-text">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-text">
               Frequently Asked Questions
             </h2>
-            <p className="text-sm text-muted">
+            <p className="hidden sm:block text-sm text-muted">
               Everything you need to know before visiting our showroom.
             </p>
           </div>
 
           {/* Accordion Cards */}
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             {FAQS.map((faq, idx) => {
               const isOpen = openIndex === idx;
               return (
-                <Card
+                <div
                   key={faq.q}
-                  className="overflow-hidden border border-border bg-surface rounded-2xl transition-colors"
+                  className="overflow-hidden border border-border bg-surface rounded-xl sm:rounded-2xl transition-colors"
                 >
                   <button
                     type="button"
                     onClick={() => toggle(idx)}
                     aria-expanded={isOpen}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
+                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 cursor-pointer focus:outline-none"
                   >
                     <span className="text-xs sm:text-sm font-semibold text-text leading-snug">
                       {faq.q}
@@ -73,11 +73,11 @@ export function StoreFaqSection() {
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs text-muted leading-relaxed border-t border-border">
+                    <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs text-muted leading-relaxed border-t border-border">
                       <p className="pt-3">{faq.a}</p>
                     </div>
                   )}
-                </Card>
+                </div>
               );
             })}
           </div>

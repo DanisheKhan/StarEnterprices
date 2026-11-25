@@ -10,11 +10,11 @@ import { SITE } from '@/shared/lib/site';
 export function StoreFooter({ onSelectCategory }) {
   return (
     <footer className="bg-accent text-accent-fg min-w-0">
-      <Container size="xl" className="py-14 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 min-w-0">
+      <Container size="xl" className="py-10 sm:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 min-w-0">
 
           {/* Column 1: Brand + Address */}
-          <div className="space-y-4">
+          <div className="space-y-3.5 sm:space-y-4">
             {/* Logo on dark bg */}
             <div>
               <div className="flex items-center gap-0 font-black tracking-tight text-base leading-none">
@@ -26,7 +26,7 @@ export function StoreFooter({ onSelectCategory }) {
               </div>
             </div>
 
-            <p className="text-xs text-white/60 leading-relaxed">
+            <p className="hidden sm:block text-xs text-white/60 leading-relaxed">
               Hallmark living furniture, inverter appliances, and certified smartphones with direct showroom pricing and instant 0% EMI financing.
             </p>
 
@@ -47,18 +47,18 @@ export function StoreFooter({ onSelectCategory }) {
           </div>
 
           {/* Column 2: Departments */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/80">
               Departments
             </h4>
-            <ul className="space-y-2.5 text-xs text-white/55">
+            <ul className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-2 text-xs text-white/55">
               <li>
                 <button
                   type="button"
                   onClick={() => onSelectCategory?.('living-room-furniture', 'furniture-electronics')}
                   className="hover:text-white transition-colors text-left cursor-pointer"
                 >
-                  Hall &amp; Living Furniture
+                  Hall Furniture
                 </button>
               </li>
               <li>
@@ -67,7 +67,7 @@ export function StoreFooter({ onSelectCategory }) {
                   onClick={() => onSelectCategory?.('refrigerators', 'furniture-electronics')}
                   className="hover:text-white transition-colors text-left cursor-pointer"
                 >
-                  Refrigerators &amp; Freezers
+                  Refrigerators
                 </button>
               </li>
               <li>
@@ -76,7 +76,7 @@ export function StoreFooter({ onSelectCategory }) {
                   onClick={() => onSelectCategory?.('', 'furniture-electronics')}
                   className="hover:text-white transition-colors text-left cursor-pointer"
                 >
-                  Home Electronics &amp; Appliances
+                  Home Electronics
                 </button>
               </li>
               <li>
@@ -94,14 +94,14 @@ export function StoreFooter({ onSelectCategory }) {
                   onClick={() => onSelectCategory?.('smartphones', 'mobiles')}
                   className="hover:text-white transition-colors text-left cursor-pointer"
                 >
-                  Smartphones &amp; Wearables
+                  Smartphones
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Services */}
-          <div className="space-y-4">
+          {/* Column 3: Services (sm+) */}
+          <div className="hidden sm:block space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/80">
               Services
             </h4>
@@ -115,12 +115,12 @@ export function StoreFooter({ onSelectCategory }) {
           </div>
 
           {/* Column 4: Contact */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-white/80">
               Showroom Support
             </h4>
             <p className="text-xs text-white/55 leading-relaxed">
-              Open 7 days a week: 10:00 AM – 10:00 PM. Directly message our store manager on WhatsApp for immediate assistance.
+              Open 7 days: 10:00 AM – 10:00 PM. Message us directly on WhatsApp for stock or 0% EMI help.
             </p>
             <div>
               <a
@@ -136,11 +136,11 @@ export function StoreFooter({ onSelectCategory }) {
         </div>
 
         {/* Bottom Strip */}
-        <div className="pt-10 mt-10 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-white/40">
-          <span>Finance Partners: Bajaj Finserv • TVS Credit • HDB Financial</span>
+        <div className="pt-8 mt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs text-white/40">
+          <span>Bajaj Finserv • TVS Credit • HDB Financial</span>
 
-          <div className="flex items-center gap-5">
-            <span>© {new Date().getFullYear()} Star Enterprises. All rights reserved.</span>
+          <div className="flex items-center gap-4 sm:gap-5">
+            <span>© {new Date().getFullYear()} Star Enterprises</span>
             <Link
               to="/login"
               className="text-white/40 hover:text-white/70 transition-colors flex items-center gap-1"

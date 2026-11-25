@@ -31,34 +31,34 @@ export function StoreEmiCalculatorSection({ initialAmount = null }) {
   )}`;
 
   return (
-    <section id="emi-calculator-section" className="py-16 sm:py-24 lg:py-28 border-b border-border bg-surface min-w-0 scroll-mt-20">
-      <Container size="xl" className="space-y-8 sm:space-y-12">
+    <section id="emi-calculator-section" className="py-10 sm:py-16 lg:py-20 border-b border-border bg-surface min-w-0 scroll-mt-14 sm:scroll-mt-16">
+      <Container size="xl" className="space-y-5 sm:space-y-8">
 
         {/* Consistent Section Header */}
-        <div className="space-y-2 mb-8 sm:mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-brand-gold">
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-brand-gold">
             FINANCE PARTNER
           </span>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-text">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-text">
             0% Paperless EMI
           </h2>
           <p className="text-xs sm:text-sm text-muted max-w-xl leading-relaxed">
-            All finance available in-store with Bajaj Finserv, TVS Credit, and HDB. Walk in with just your Aadhaar and PAN card for instant 10-minute approvals.
+            In-store finance with Bajaj Finserv, TVS Credit &amp; HDB. Aadhaar &amp; PAN only — 10-minute approval.
           </p>
         </div>
 
         {/* 2-Column Calculator & Step-by-Step Flow */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start min-w-0">
 
           {/* Left: Interactive Calculator */}
           <div className="lg:col-span-7 min-w-0">
-            <Card className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 bg-bg border border-border rounded-2xl shadow-sm min-w-0">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 bg-bg border border-border rounded-xl sm:rounded-2xl shadow-2xs min-w-0">
 
               {/* Amount Slider */}
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-2.5 sm:space-y-3.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-text uppercase tracking-wide">
-                    Estimated Purchase Value
+                    Purchase Value
                   </span>
                   <span className="font-mono font-bold text-base sm:text-lg text-text">
                     {formatCurrency(amount)}
@@ -76,15 +76,15 @@ export function StoreEmiCalculatorSection({ initialAmount = null }) {
                   aria-label="Purchase Value Range"
                 />
 
-                {/* Quick Presets */}
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 text-xs">
-                  <span className="text-muted text-[11px] font-medium mr-1">Presets:</span>
+                {/* Quick Presets — horizontal strip on mobile */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar sm:flex-wrap pt-1 text-xs">
+                  <span className="hidden sm:inline text-muted text-[11px] font-medium mr-1">Presets:</span>
                   {PURCHASE_PRESETS.map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setAmount(preset)}
-                      className={`px-2.5 py-1 rounded-md border text-xs font-mono font-medium transition-colors cursor-pointer ${
+                      className={`shrink-0 px-2.5 py-1 rounded-md border text-[11px] sm:text-xs font-mono font-medium transition-colors cursor-pointer ${
                         amount === preset
                           ? 'bg-text text-accent-fg border-text'
                           : 'bg-surface text-muted border-border hover:text-text'
@@ -96,70 +96,85 @@ export function StoreEmiCalculatorSection({ initialAmount = null }) {
                 </div>
               </div>
 
-              {/* Tenure Selection - Responsive 2-col on mobile, 4-col on desktop */}
-              <div className="space-y-3 pt-4 border-t border-border">
-                <div className="text-xs font-semibold text-text uppercase tracking-wide">
-                  Select EMI Tenure (Months)
+              {/* Tenure Selection — single row 4-col on mobile */}
+              <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t border-border">
+                <div className="text-[11px] sm:text-xs font-semibold text-text uppercase tracking-wide">
+                  Tenure (0% Interest)
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   {TENURES.map((months) => (
                     <button
                       key={months}
                       type="button"
                       onClick={() => setTenure(months)}
-                      className={`py-2 px-2.5 sm:px-3 rounded-lg border text-center font-medium text-xs transition-all cursor-pointer ${
+                      className={`py-2 px-1.5 sm:px-3 rounded-lg border text-center font-medium text-xs transition-all cursor-pointer ${
                         tenure === months
                           ? 'bg-brand-gold-subtle border-brand-gold-border text-brand-gold-text font-bold'
                           : 'bg-surface border-border text-muted hover:text-text hover:bg-surface-hover'
                       }`}
                     >
-                      <div className="font-bold">{months} Months</div>
-                      <div className="text-[10px] opacity-75">0% Interest</div>
+                      <div className="font-bold sm:hidden">{months}M</div>
+                      <div className="font-bold hidden sm:block">{months} Months</div>
+                      <div className="text-[10px] opacity-75 hidden sm:block">0% Interest</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Result Box — elegant gold-tinted */}
-              <div className="p-4 sm:p-5 rounded-xl bg-brand-gold-subtle border border-brand-gold-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1 min-w-0">
-                  <div className="text-xs text-brand-gold-text font-medium flex items-center gap-1.5">
-                    <Calculator size={14} className="text-brand-gold shrink-0" />
-                    <span>Calculated Zero-Interest Installment</span>
+              {/* Result Box — compact horizontal layout */}
+              <div className="p-3.5 sm:p-5 rounded-xl bg-brand-gold-subtle border border-brand-gold-border flex items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="text-[11px] sm:text-xs text-brand-gold-text font-medium flex items-center gap-1.5">
+                    <Calculator size={13} className="text-brand-gold shrink-0" />
+                    <span>Monthly Installment</span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-text tracking-tight truncate">
+                  <div className="text-xl sm:text-3xl font-extrabold font-mono text-text tracking-tight truncate">
                     {formatCurrency(monthlyInstallment)}
-                    <span className="text-xs font-normal text-muted font-sans ml-1">/ month</span>
+                    <span className="text-[11px] sm:text-xs font-normal text-muted font-sans ml-1">/ mo</span>
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right text-xs space-y-0.5 border-t sm:border-t-0 sm:border-l border-brand-gold-border pt-2.5 sm:pt-0 sm:pl-4">
-                  <div className="text-muted">Total Repayment:</div>
+                <div className="text-right text-[11px] sm:text-xs space-y-0.5 border-l border-brand-gold-border pl-3 sm:pl-4 shrink-0">
+                  <div className="text-muted">Total ({tenure}M)</div>
                   <div className="font-mono font-bold text-text">{formatCurrency(totalPayable)}</div>
-                  <div className="text-[11px] text-brand-sage font-medium">₹0 Hidden Charges</div>
+                  <div className="text-[10px] sm:text-[11px] text-brand-sage font-medium">₹0 Extra</div>
+                </div>
+              </div>
+
+              {/* Compact 3-Step Strip on Mobile */}
+              <div className="grid grid-cols-3 gap-1.5 sm:hidden text-center text-[10px] text-muted">
+                <div className="p-2 rounded-lg bg-surface border border-border">
+                  <div className="font-bold text-text">1. Select Item</div>
+                  <div>₹5k+ purchase</div>
+                </div>
+                <div className="p-2 rounded-lg bg-surface border border-border">
+                  <div className="font-bold text-text">2. ID Docs</div>
+                  <div>Aadhaar + PAN</div>
+                </div>
+                <div className="p-2 rounded-lg bg-surface border border-border">
+                  <div className="font-bold text-brand-sage">3. Instant OK</div>
+                  <div>10-min setup</div>
                 </div>
               </div>
 
               {/* WhatsApp CTA */}
-              <div className="pt-2">
-                <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-                  <a
-                    href={inquiryUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 sm:px-5 rounded-lg bg-text text-accent-fg hover:bg-accent text-xs sm:text-sm font-bold transition-colors text-center"
-                  >
-                    <MessageCircle size={16} className="shrink-0" />
-                    <span>Pre-Approve This 0% EMI on WhatsApp</span>
-                  </a>
-                </motion.div>
-              </div>
-            </Card>
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+                <a
+                  href={inquiryUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 sm:py-3 px-4 rounded-lg bg-text text-accent-fg hover:bg-accent text-xs sm:text-sm font-bold transition-colors text-center"
+                >
+                  <MessageCircle size={15} className="shrink-0" />
+                  <span>Check 0% EMI on WhatsApp</span>
+                </a>
+              </motion.div>
+            </div>
           </div>
 
-          {/* Right: Step-by-Step Process */}
-          <div className="lg:col-span-5 space-y-4 sm:space-y-5 min-w-0">
-            <Card className="p-5 sm:p-6 space-y-5 bg-bg border border-border rounded-2xl shadow-sm min-w-0">
+          {/* Right: Full Step-by-Step Process (sm+ viewports) */}
+          <div className="hidden sm:block lg:col-span-5 space-y-4 sm:space-y-5 min-w-0">
+            <Card className="p-5 sm:p-6 space-y-5 bg-bg border border-border rounded-2xl shadow-2xs min-w-0">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <span className="text-xs font-bold text-text uppercase tracking-wider">
                   How 0% In-Store Financing Works
@@ -233,7 +248,7 @@ export function StoreEmiCalculatorSection({ initialAmount = null }) {
             </Card>
 
             {/* Trust guarantee */}
-            <div className="p-4 rounded-2xl border border-border bg-bg flex items-center gap-3 text-xs shadow-sm">
+            <div className="p-4 rounded-2xl border border-border bg-bg flex items-center gap-3 text-xs shadow-2xs">
               <CheckCircle2 size={18} className="text-brand-sage shrink-0" />
               <div className="text-muted leading-relaxed">
                 <strong className="text-text font-semibold">100% Transparent:</strong> No upfront security deposits. All EMI terms and cashback benefits are printed on your official GST invoice.
