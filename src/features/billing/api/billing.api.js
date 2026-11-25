@@ -55,7 +55,9 @@ export async function listAllInvoices({
   status = 'all',
   dateRange = 'all',
   search = '',
+  limit = 200,
 } = {}) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storeId || '');
   let query = supabase
     .from('invoices')
     .select(`
@@ -65,10 +67,24 @@ export async function listAllInvoices({
       payments (id, payment_method, amount, reference_number),
       order_items (id, product_id, unit_id, item_name, serial_number, quantity, unit_price, discount, total_amount, gst_rate)
     `)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (storeId && storeId !== 'all' && isUuid) {
+    query = query.eq('store_id', storeId);
+  }
 
   if (status && status !== 'all') {
     query = query.eq('status', status);
+  }
+
+  if (search && search.trim()) {
+    const q = search.trim().replace(/[,%()]/g, '');
+    if (q) {
+      query = query.or(
+        `invoice_number.ilike.%${q}%,customer_name.ilike.%${q}%,customer_phone.ilike.%${q}%,customer_gstin.ilike.%${q}%`
+      );
+    }
   }
 
   if (dateRange && dateRange !== 'all') {
@@ -142,13 +158,12 @@ export async function listAllInvoices({
 }
 
 /**
- * Updates an invoice, its line items, and payment details
+ * Updates an invoice, its line items, and payment details atomically via database RPC
  */
 export async function updateInvoice({ invoiceId, updates, items = [], payment = null }) {
-  // 1. Update invoice header
-  const { data: invData, error: invErr } = await supabase
-    .from('invoices')
-    .update({
+  const { data, error } = await supabase.rpc('update_invoice_atomic', {
+    p_invoice_id: invoiceId,
+    p_updates: {
       customer_name: updates.customer_name ?? 'Walk-in Customer',
       customer_phone: updates.customer_phone || null,
       customer_gstin: updates.customer_gstin || null,
@@ -158,78 +173,31 @@ export async function updateInvoice({ invoiceId, updates, items = [], payment = 
       cgst_amount: updates.cgst_amount,
       sgst_amount: updates.sgst_amount,
       grand_total: updates.grand_total,
-    })
-    .eq('id', invoiceId)
-    .select('id, store_id, invoice_number, customer_name, customer_phone, customer_gstin, subtotal, discount_amount, cgst_amount, sgst_amount, grand_total, status, created_at')
-    .single();
+    },
+    p_items: (items || [])
+      .filter((it) => it.id)
+      .map((it) => ({
+        id: it.id,
+        item_name: it.item_name,
+        quantity: Number(it.quantity),
+        unit_price: Number(it.unit_price),
+        discount: Number(it.discount || 0),
+        gst_rate: Number(it.gst_rate ?? 18),
+      })),
+    p_removed_item_ids: updates.removedItemIds || [],
+    p_payment: payment
+      ? {
+          id: payment.id || null,
+          payment_method: payment.payment_method || 'cash',
+          ...(payment.reference_number !== undefined
+            ? { reference_number: payment.reference_number || null }
+            : {}),
+        }
+      : null,
+  });
 
-  if (invErr) throw invErr;
-
-  // 2. Update line items
-  if (items && items.length > 0) {
-    for (const item of items) {
-      if (item.id) {
-        const taxable = Math.max((Number(item.unit_price) - Number(item.discount || 0)) * Number(item.quantity), 0);
-        const gstRate = Number(item.gst_rate ?? 18);
-        const cgst = taxable * (gstRate / 200);
-        const sgst = taxable * (gstRate / 200);
-        const total = Math.round(taxable + cgst + sgst);
-
-        const { error: itemErr } = await supabase
-          .from('order_items')
-          .update({
-            item_name: item.item_name,
-            quantity: Number(item.quantity),
-            unit_price: Number(item.unit_price),
-            discount: Number(item.discount || 0),
-            taxable_value: taxable,
-            cgst_amount: cgst,
-            sgst_amount: sgst,
-            total_amount: total,
-          })
-          .eq('id', item.id);
-
-        if (itemErr) throw itemErr;
-      }
-    }
-  }
-
-  // 3. Handle removed items if any
-  if (updates.removedItemIds && updates.removedItemIds.length > 0) {
-    const { error: delErr } = await supabase
-      .from('order_items')
-      .delete()
-      .in('id', updates.removedItemIds);
-
-    if (delErr) throw delErr;
-  }
-
-  // 4. Update payment details if provided
-  if (payment) {
-    const paymentUpdates = {
-      payment_method: payment.payment_method || 'cash',
-      amount: updates.grand_total,
-    };
-    if (payment.reference_number !== undefined) {
-      paymentUpdates.reference_number = payment.reference_number || null;
-    }
-
-    if (payment.id) {
-      const { error: payErr } = await supabase
-        .from('payments')
-        .update(paymentUpdates)
-        .eq('id', payment.id);
-      if (payErr) throw payErr;
-    } else {
-      const { error: payErr } = await supabase
-        .from('payments')
-        .update(paymentUpdates)
-        .eq('invoice_id', invoiceId);
-      if (payErr) throw payErr;
-    }
-  }
-
-  return invData;
+  if (error) throw error;
+  return data;
 }
 
 /**

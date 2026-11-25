@@ -33,9 +33,11 @@ export function useDealers({ storeId, includeInactive = false } = {}) {
   return useQuery({
     queryKey: [...dealerKeys.list(storeId), includeInactive],
     queryFn: () => listDealers({ storeId, includeInactive }),
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: false,
-    initialData: () => {
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    placeholderData: (prev) => {
+      if (prev) return prev;
       const cached = getPersistentCache('dealers_directory');
       if (!Array.isArray(cached)) return undefined;
       if (storeId) {
@@ -43,7 +45,6 @@ export function useDealers({ storeId, includeInactive = false } = {}) {
       }
       return cached;
     },
-    placeholderData: (prev) => prev,
   });
 }
 
@@ -52,6 +53,8 @@ export function useDealer(dealerId) {
     queryKey: dealerKeys.detail(dealerId),
     queryFn: () => getDealerById(dealerId),
     enabled: Boolean(dealerId),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -59,14 +62,15 @@ export function useDealerBills(filters = {}) {
   return useQuery({
     queryKey: dealerKeys.bills(filters),
     queryFn: () => listDealerBills(filters),
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: false,
-    initialData: () => {
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    placeholderData: (prev) => {
+      if (prev) return prev;
       const cacheKey = `dealers_bills_${filters.storeId || 'all'}`;
       const cached = getPersistentCache(cacheKey);
       return Array.isArray(cached) ? cached : undefined;
     },
-    placeholderData: (prev) => prev,
   });
 }
 
@@ -77,15 +81,13 @@ export function useDealerBillDetail(billId, initialBill = null) {
     queryKey: dealerKeys.billDetail(billId),
     queryFn: () => getDealerBillDetail(billId),
     enabled: Boolean(billId),
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    initialData: () => {
-      // 1. If explicit initial bill passed with matching ID
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
+    placeholderData: (prev) => {
+      if (prev) return prev;
       if (initialBill && initialBill.id === billId) {
         return enrichBillTimeline(initialBill);
       }
-
-      // 2. Query Client cache: inspect loaded dealer bill list queries
       const billQueries = queryClient.getQueriesData({ queryKey: dealerKeys.all });
       for (const [, list] of billQueries) {
         if (Array.isArray(list)) {
@@ -93,23 +95,17 @@ export function useDealerBillDetail(billId, initialBill = null) {
           if (match) return enrichBillTimeline(match);
         }
       }
-
-      // 3. Persistent cache: check single bill cache first
       const singleCached = getPersistentCache(`dealer_bill_detail_${billId}`);
       if (singleCached) {
         return enrichBillTimeline(singleCached);
       }
-
-      // 4. Persistent cache: check all bills list cache
       const cachedList = getPersistentCache('dealers_bills_all');
       if (Array.isArray(cachedList)) {
         const match = cachedList.find((b) => b && b.id === billId);
         if (match) return enrichBillTimeline(match);
       }
-
       return undefined;
     },
-    placeholderData: (prev) => prev,
   });
 }
 
@@ -117,8 +113,8 @@ export function useDealerPayments(filters = {}) {
   return useQuery({
     queryKey: dealerKeys.payments(filters),
     queryFn: () => listDealerPayments(filters),
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: false,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -127,6 +123,8 @@ export function useDealerStatement(dealerId, { billType = 'all' } = {}) {
     queryKey: dealerKeys.statement(dealerId, billType),
     queryFn: () => getDealerStatement(dealerId, { billType }),
     enabled: Boolean(dealerId),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
@@ -134,14 +132,15 @@ export function useDealerAnalytics(storeId) {
   return useQuery({
     queryKey: dealerKeys.analytics(storeId),
     queryFn: () => getDealerAnalyticsSummary({ storeId }),
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: false,
-    initialData: () => {
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    placeholderData: (prev) => {
+      if (prev) return prev;
       const cacheKey = `dealers_analytics_${storeId || 'all'}`;
       const cached = getPersistentCache(cacheKey);
       return cached || undefined;
     },
-    placeholderData: (prev) => prev,
   });
 }
 

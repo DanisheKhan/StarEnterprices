@@ -24,8 +24,8 @@ export function useStaffProfiles() {
     queryKey: STAFF_QUERY_KEYS.allProfiles,
     queryFn: listStaffProfiles,
     placeholderData: () => getPersistentCache('staff_profiles') || undefined,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 }
 

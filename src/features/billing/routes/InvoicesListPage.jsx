@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -78,6 +78,7 @@ export function InvoicesListPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [viewMode, setViewMode] = useState('cards');
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -108,7 +109,7 @@ export function InvoicesListPage() {
     storeId: storeFilter,
     status: statusFilter,
     dateRange: dateFilter,
-    search: searchQuery,
+    search: deferredSearchQuery,
   });
 
   const { data: viewingInvoiceDetail } = useInvoiceDetail(activeViewingInvoiceId);

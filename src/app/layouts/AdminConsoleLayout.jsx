@@ -20,7 +20,6 @@ import {
   Armchair,
   Building2,
   Barcode,
-  FileText,
 } from 'lucide-react';
 
 export function AdminConsoleLayout() {
@@ -94,7 +93,6 @@ export function AdminConsoleLayout() {
   const basePath = `/admin/${currentStoreCode}`;
   const isDashboardActive = path === basePath || path === `${basePath}/` || path === `${basePath}/dashboard`;
   const isBillingActive = path === `${basePath}/billing`;
-  const isInvoicesActive = path.startsWith(`${basePath}/invoices`) || path === '/admin/invoices';
   const isInventoryActive = path.startsWith(`${basePath}/inventory`);
   const isSerialsActive = path.startsWith(`${basePath}/serials`);
   const isDealersActive = path.startsWith(`${basePath}/dealers`) || path.startsWith('/admin/dealers');

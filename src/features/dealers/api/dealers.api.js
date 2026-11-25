@@ -1,76 +1,27 @@
 import { supabase } from '@/shared/lib/supabase';
 import { getPersistentCache, setPersistentCache } from '@/shared/lib/cachePersistence';
 
+const DEALER_COLUMNS = 'id, store_id, name, trade_name, brand_name, contact_person, phone, alternate_phone, email, address, city, state_code, gstin, pan_number, bank_name, account_number, ifsc_code, upi_id, dealer_type, billing_mode, default_credit_days, opening_balance, notes, is_active, created_at, updated_at';
+const DEALER_BILL_COLUMNS = 'id, store_id, dealer_id, bill_type, bill_number, bill_date, credit_days, due_date, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_tax_amount, round_off, total_amount, paid_amount, balance_amount, status, cleared_at, payment_days_taken, attachment_url, notes, items, created_at, updated_at';
+const DEALER_PAYMENT_COLUMNS = 'id, store_id, dealer_id, bill_id, payment_number, payment_date, amount, payment_mode, payment_channel, transaction_ref, cheque_date, receipt_attachment_url, notes, created_at';
+const DEALER_DEBIT_NOTE_COLUMNS = 'id, store_id, dealer_id, bill_id, note_number, note_date, amount, reason, description, attachment_url, created_at';
+
 /**
- * Lists all active dealers with computed ledger summaries
+ * Lists all active dealers with computed ledger summaries via server-side RPC
  */
 export async function listDealers({ storeId, includeInactive = false } = {}) {
   try {
-    let query = supabase
-      .from('dealers')
-      .select(`
-        *,
-        bills:dealer_bills(id, bill_type, total_amount, paid_amount, balance_amount, status, due_date, cleared_at, payment_days_taken)
-      `)
-      .order('brand_name', { ascending: true });
-
-    if (!includeInactive) {
-      query = query.eq('is_active', true);
-    }
-    if (storeId) {
-      query = query.or(`store_id.eq.${storeId},store_id.is.null`);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    const enriched = (data || []).map((dealer) => {
-      const bills = dealer.bills || [];
-      const totalPurchases = bills.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
-      const totalPaid = bills.reduce((sum, b) => sum + Number(b.paid_amount || 0), 0);
-      const totalBalance = bills.reduce((sum, b) => sum + Number(b.balance_amount || 0), 0);
-
-      const gstBalance = bills
-        .filter((b) => b.bill_type === 'gst')
-        .reduce((sum, b) => sum + Number(b.balance_amount || 0), 0);
-
-      const kacchaBalance = bills
-        .filter((b) => b.bill_type === 'kaccha')
-        .reduce((sum, b) => sum + Number(b.balance_amount || 0), 0);
-
-      const todayStr = new Date().toISOString().split('T')[0];
-      const overdueBills = bills.filter(
-        (b) => b.balance_amount > 0 && b.due_date && b.due_date < todayStr
-      );
-      const overdueAmount = overdueBills.reduce((sum, b) => sum + Number(b.balance_amount || 0), 0);
-
-      // Average payment speed (days taken for cleared bills)
-      const clearedBills = bills.filter((b) => b.status === 'paid' && b.payment_days_taken != null);
-      const avgDaysTaken =
-        clearedBills.length > 0
-          ? Math.round(
-              clearedBills.reduce((sum, b) => sum + Number(b.payment_days_taken), 0) /
-                clearedBills.length
-            )
-          : null;
-
-      return {
-        ...dealer,
-        metrics: {
-          totalBills: bills.length,
-          totalPurchases,
-          totalPaid,
-          totalBalance,
-          gstBalance,
-          kacchaBalance,
-          overdueCount: overdueBills.length,
-          overdueAmount,
-          avgDaysTaken,
-        },
-      };
+    const { data, error } = await supabase.rpc('get_dealer_directory_summary', {
+      p_store_id: storeId || null,
+      p_include_inactive: Boolean(includeInactive),
     });
 
-    setPersistentCache('dealers_directory', enriched);
+    if (error) throw error;
+    const enriched = Array.isArray(data) ? data : [];
+
+    if (!storeId && !includeInactive) {
+      setPersistentCache('dealers_directory', enriched);
+    }
     return enriched;
   } catch (err) {
     console.warn('[Dealers API] Network error loading dealers, using cache:', err);
@@ -86,10 +37,10 @@ export async function getDealerById(dealerId) {
   const { data, error } = await supabase
     .from('dealers')
     .select(`
-      *,
-      bills:dealer_bills(*),
-      payments:dealer_payments(*),
-      debit_notes:dealer_debit_notes(*)
+      ${DEALER_COLUMNS},
+      bills:dealer_bills(${DEALER_BILL_COLUMNS}),
+      payments:dealer_payments(${DEALER_PAYMENT_COLUMNS}),
+      debit_notes:dealer_debit_notes(${DEALER_DEBIT_NOTE_COLUMNS})
     `)
     .eq('id', dealerId)
     .single();
@@ -199,7 +150,7 @@ export async function listDealerBills({
     let query = supabase
       .from('dealer_bills')
       .select(`
-        *,
+        ${DEALER_BILL_COLUMNS},
         dealer:dealers(id, name, brand_name, phone, gstin, billing_mode),
         payments:dealer_payments(id, payment_number, payment_date, amount, payment_mode, payment_channel, transaction_ref, notes, cheque_date),
         debit_notes:dealer_debit_notes(id, note_number, note_date, amount, reason, description)
@@ -270,10 +221,10 @@ export async function getDealerBillDetail(billId) {
     const { data, error } = await supabase
       .from('dealer_bills')
       .select(`
-        *,
-        dealer:dealers(*),
-        payments:dealer_payments(*),
-        debit_notes:dealer_debit_notes(*)
+        ${DEALER_BILL_COLUMNS},
+        dealer:dealers(${DEALER_COLUMNS}),
+        payments:dealer_payments(${DEALER_PAYMENT_COLUMNS}),
+        debit_notes:dealer_debit_notes(${DEALER_DEBIT_NOTE_COLUMNS})
       `)
       .eq('id', billId)
       .single();
@@ -468,7 +419,7 @@ export async function listDealerPayments({ dealerId, billId, limit = 100 } = {})
   let query = supabase
     .from('dealer_payments')
     .select(`
-      *,
+      ${DEALER_PAYMENT_COLUMNS},
       dealer:dealers(id, name, brand_name),
       bill:dealer_bills(id, bill_number, bill_type, total_amount, balance_amount, status)
     `)

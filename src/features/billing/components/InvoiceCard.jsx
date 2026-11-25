@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Badge } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -31,7 +32,7 @@ function WhatsAppIcon({ size = 13, className }) {
   );
 }
 
-export function InvoiceCard({
+export const InvoiceCard = memo(function InvoiceCard({
   invoice,
   storeName = '',
   onViewPrint,
@@ -365,4 +366,4 @@ export function InvoiceCard({
       </div>
     </div>
   );
-}
+});

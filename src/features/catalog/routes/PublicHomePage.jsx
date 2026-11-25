@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { Container, Card, Button, Input } from '@/shared/ui';
 import { Seo } from '@/shared/seo';
 import { motion } from '@/shared/motion';
@@ -26,6 +26,7 @@ import {
 
 export function PublicHomePage() {
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('featured');
@@ -64,8 +65,8 @@ export function PublicHomePage() {
     if (inStockOnly) {
       list = list.filter((p) => (p.inventory?.[0]?.quantity_on_hand ?? 0) > 0);
     }
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.trim().toLowerCase();
       list = list.filter(
         (p) =>
           p.name?.toLowerCase().includes(q) ||
@@ -90,7 +91,7 @@ export function PublicHomePage() {
     }
 
     return list;
-  }, [allProducts, selectedStore, selectedCategory, search, inStockOnly, sortBy]);
+  }, [allProducts, selectedStore, selectedCategory, deferredSearch, inStockOnly, sortBy]);
 
   // Display only 6 products initially with a "View All" toggle button
   const visibleProducts = useMemo(() => {

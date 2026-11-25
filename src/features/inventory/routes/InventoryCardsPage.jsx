@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Button, Input, Select } from '@/shared/ui';
 import {
@@ -31,6 +31,7 @@ export function InventoryCardsPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -126,8 +127,8 @@ export function InventoryCardsPage() {
     } else if (stockFilter === 'out_of_stock') {
       list = list.filter((p) => (p.inventory?.[0]?.quantity_on_hand ?? 0) <= 0);
     }
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    if (deferredSearch.trim()) {
+      const q = deferredSearch.trim().toLowerCase();
       list = list.filter(
         (p) =>
           p.name?.toLowerCase().includes(q) ||
@@ -137,7 +138,7 @@ export function InventoryCardsPage() {
       );
     }
     return list;
-  }, [rawProducts, selectedCategoryId, stockFilter, search]);
+  }, [rawProducts, selectedCategoryId, stockFilter, deferredSearch]);
 
   return (
     <div className="space-y-6">

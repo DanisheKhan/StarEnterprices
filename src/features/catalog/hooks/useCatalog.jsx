@@ -16,7 +16,8 @@ export function usePublicProducts(params = {}) {
     queryKey: CATALOG_QUERY_KEYS.list(params),
     queryFn: () => listPublicProducts(params),
     placeholderData: () => (isDefaultView ? getCachedPublicCatalog() || undefined : undefined),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
   });
 }
 

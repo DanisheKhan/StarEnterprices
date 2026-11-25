@@ -1,6 +1,11 @@
 import { supabase } from '@/shared/lib/supabase';
-import { getProductImageUrl, FALLBACK_PRODUCTS } from '@/features/catalog';
+import { getProductImageUrl } from '@/shared/lib/productImages';
 import { getPersistentCache, setPersistentCache } from '@/shared/lib/cachePersistence';
+
+async function loadFallbackProducts() {
+  const mod = await import('@/features/catalog');
+  return mod.FALLBACK_PRODUCTS || [];
+}
 
 const INVENTORY_CACHE_PREFIX = 'star_inv_prods_';
 
@@ -40,7 +45,8 @@ export async function listCategoriesByStore(storeId) {
     return data || [];
   } catch (err) {
     console.warn('Network error listing categories, returning fallback list:', err);
-    const storeProducts = FALLBACK_PRODUCTS.filter((p) => {
+    const fallbackProducts = await loadFallbackProducts();
+    const storeProducts = fallbackProducts.filter((p) => {
       return (
         p.store_id === resolvedId ||
         p.stores?.id === resolvedId ||
@@ -186,7 +192,8 @@ export async function listProductsByStore({ storeId, categoryId, search } = {}) 
     console.warn('Network error querying inventory by store, using cached/fallback:', err);
     const cached = getCachedStoreProducts(storeId);
     if (cached && cached.length > 0) return cached;
-    const fallbackForStore = FALLBACK_PRODUCTS.filter((p) => {
+    const fallbackProducts = await loadFallbackProducts();
+    const fallbackForStore = fallbackProducts.filter((p) => {
       return (
         p.store_id === storeId ||
         p.stores?.id === storeId ||
@@ -756,10 +763,10 @@ export async function listAllProducts({ storeId, categoryId, search } = {}) {
       }
       return list;
     }
-    return getPersistentCache('all_products') || FALLBACK_PRODUCTS;
+    return getPersistentCache('all_products') || (await loadFallbackProducts());
   } catch (err) {
     console.warn('Network error listing all products, using catalog fallback:', err);
-    return getPersistentCache('all_products') || FALLBACK_PRODUCTS;
+    return getPersistentCache('all_products') || (await loadFallbackProducts());
   }
 }
 
