@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { compressImageUnder300KB, MAX_PRODUCT_IMAGE_SIZE_KB } from '@/shared/lib/imageCompression';
 import { cn } from '@/shared/lib/cn';
-import { UploadCloud, CheckCircle2, Image as ImageIcon, Trash2, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle2, Trash2, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 
 /**
  * Single-image product photo uploader with mandatory validation

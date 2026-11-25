@@ -11,10 +11,8 @@ export {
   useInvoiceDetail,
   usePlaceSale,
   useUpdateInvoice,
-  useVoidInvoice,
   useRecordPayment,
   useProcessReturn,
-  useInvoiceReturns,
   useCustomerLookup,
   billingKeys,
 } from './hooks/useBilling';
@@ -24,9 +22,7 @@ export {
   listAllInvoices,
   getInvoiceDetail,
   updateInvoice,
-  voidInvoice,
   recordPayment,
   processReturn,
-  listReturns,
   searchCustomersByPhone,
 } from './api/billing.api';

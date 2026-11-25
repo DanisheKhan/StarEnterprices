@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Modal } from '@/shared/ui';
 import { useRecordDealerPayment, useDealerBills } from '../hooks/useDealers';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
@@ -15,7 +15,13 @@ import {
   Landmark,
 } from 'lucide-react';
 
-export function RecordPaymentModal({
+export function RecordPaymentModal(props) {
+  if (!props.isOpen) return null;
+  const modalKey = `${props.preselectedBill?.id || 'none'}-${props.preselectedDealer?.id || 'none'}`;
+  return <RecordPaymentModalContent key={modalKey} {...props} />;
+}
+
+function RecordPaymentModalContent({
   isOpen,
   onClose,
   dealers = [],
@@ -28,32 +34,33 @@ export function RecordPaymentModal({
   const isSpecificBill = Boolean(preselectedBill);
 
   const [dealerId, setDealerId] = useState(
-    preselectedBill?.dealer_id || preselectedBill?.dealer?.id || preselectedDealer?.id || ''
+    () => preselectedBill?.dealer_id || preselectedBill?.dealer?.id || preselectedDealer?.id || dealers[0]?.id || ''
   );
-  const [billId, setBillId] = useState(preselectedBill?.id || '');
+  const [billId, setBillId] = useState(() => preselectedBill?.id || '');
 
   // Settlement Type: 'full' | 'partial'
   const [settlementType, setSettlementType] = useState('full');
-  const [paymentAmount, setPaymentAmount] = useState(
-    preselectedBill?.balance_amount ? String(preselectedBill.balance_amount) : ''
-  );
+  const [paymentAmount, setPaymentAmount] = useState(() => {
+    const bal = Number(preselectedBill?.balance_amount || 0);
+    return bal > 0 ? String(bal) : '';
+  });
 
   // Payment Instrument: 'cheque' | 'cash' | 'upi' | 'bank_transfer'
   const [paymentMode, setPaymentMode] = useState(
-    preselectedBill?.bill_type === 'kaccha' ? 'cash' : 'cheque'
+    () => (preselectedBill?.bill_type === 'kaccha' ? 'cash' : 'cheque')
   );
   const [paymentChannel, setPaymentChannel] = useState(
-    preselectedBill?.bill_type === 'kaccha' ? 'secondary_cash' : 'official_bank'
+    () => (preselectedBill?.bill_type === 'kaccha' ? 'secondary_cash' : 'official_bank')
   );
 
   // Instrument Details
   const [chequeNumber, setChequeNumber] = useState('');
-  const [chequeDate, setChequeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [chequeDate, setChequeDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [chequeBank, setChequeBank] = useState('');
   const [transactionRef, setTransactionRef] = useState('');
 
   const [paymentDate, setPaymentDate] = useState(
-    new Date().toISOString().split('T')[0]
+    () => new Date().toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -75,60 +82,12 @@ export function RecordPaymentModal({
     return dealers.filter((d) => d.dealer_type !== 'brand_direct');
   }, [dealers]);
 
-  // Sync state whenever modal opens or props change
-  useEffect(() => {
-    if (isOpen) {
-      setSettlementType('full');
-      setChequeNumber('');
-      setChequeBank('');
-      setChequeDate(new Date().toISOString().split('T')[0]);
-      setTransactionRef('');
-      setNotes('');
-
-      if (preselectedBill) {
-        setBillId(preselectedBill.id);
-        setDealerId(
-          preselectedBill.dealer_id || preselectedBill.dealer?.id || preselectedDealer?.id || ''
-        );
-        const bal = Number(preselectedBill.balance_amount || 0);
-        setPaymentAmount(bal > 0 ? String(bal) : '');
-        if (preselectedBill.bill_type === 'kaccha') {
-          setPaymentChannel('secondary_cash');
-          setPaymentMode('cash');
-        } else {
-          setPaymentChannel('official_bank');
-          setPaymentMode('cheque');
-        }
-      } else if (preselectedDealer) {
-        setDealerId(preselectedDealer.id);
-        setBillId('');
-        setPaymentAmount('');
-      } else if (dealers.length > 0 && !dealerId) {
-        setDealerId(dealers[0].id);
-        setBillId('');
-        setPaymentAmount('');
-      }
-      setErrorMsg('');
-    }
-  }, [isOpen, preselectedBill, preselectedDealer, dealers]);
-
   const selectedBill = useMemo(() => {
     if (preselectedBill && (!billId || billId === preselectedBill.id)) {
       return preselectedBill;
     }
     return bills.find((b) => b.id === billId) || preselectedBill;
   }, [bills, billId, preselectedBill]);
-
-  // When bill changes manually, sync channel and mode
-  useEffect(() => {
-    if (selectedBill) {
-      if (selectedBill.bill_type === 'kaccha') {
-        setPaymentChannel('secondary_cash');
-      } else {
-        setPaymentChannel('official_bank');
-      }
-    }
-  }, [selectedBill]);
 
   // Live Auto-Balance Calculation Preview
   const balancePreview = useMemo(() => {
@@ -433,6 +392,7 @@ export function RecordPaymentModal({
                               setBillId(b.id);
                               setPaymentAmount(String(b.balance_amount || ''));
                               setSettlementType('full');
+                              setPaymentChannel(b.bill_type === 'kaccha' ? 'secondary_cash' : 'official_bank');
                             }}
                             className={cn(
                               'px-3.5 py-2 text-xs cursor-pointer transition-colors flex items-center justify-between',

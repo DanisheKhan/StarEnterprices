@@ -22,15 +22,6 @@ export async function signOut() {
 }
 
 /**
- * Get current session user
- */
-export async function getCurrentUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
-}
-
-/**
  * Fetch profile and store assignments for the authenticated user
  * @param {string} userId
  */

@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listProductsByStore,
   listProductUnits,
-  createProductUnit,
   createProduct,
   adjustInventoryStock,
   addSerializedUnit,
@@ -61,17 +60,6 @@ export function useProductUnits(storeId, productId = null, status = null, option
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
     ...options,
-  });
-}
-
-export function useCreateProductUnit() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createProductUnit,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
-    },
   });
 }
 

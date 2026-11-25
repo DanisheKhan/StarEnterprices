@@ -82,20 +82,6 @@ export async function listStaffLeaves({ status } = {}) {
 }
 
 /**
- * Submits a new leave request (from staff)
- */
-export async function submitLeaveRequest(payload) {
-  const { data, error } = await supabase
-    .from('staff_leaves')
-    .insert(payload)
-    .select('id, staff_id, leave_type, start_date, end_date, total_days, reason, status')
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-/**
  * Reviews a leave request (Owner action: approve or reject)
  */
 export async function reviewLeaveRequest({ leaveId, status, reviewNotes, reviewerName = 'Mazhar Sheikh' }) {
@@ -153,20 +139,6 @@ export async function markSalaryPaid({ salaryId, paymentMethod, transactionRef, 
     })
     .eq('id', salaryId)
     .select('id, payment_status, payment_date, payment_method, transaction_ref')
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-/**
- * Generates or updates monthly payroll for an employee
- */
-export async function upsertSalaryRecord(payload) {
-  const { data, error } = await supabase
-    .from('staff_salaries')
-    .upsert(payload, { onConflict: 'staff_id,month_year' })
-    .select('id, staff_id, month_year, base_salary, allowances, deductions, net_salary, payment_status')
     .single();
 
   if (error) throw error;

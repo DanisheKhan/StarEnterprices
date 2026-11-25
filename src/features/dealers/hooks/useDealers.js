@@ -4,14 +4,11 @@ import {
   listDealers,
   getDealerById,
   createDealer,
-  updateDealer,
   listDealerBills,
   getDealerBillDetail,
   enrichBillTimeline,
-  createDealerBill,
   recordDealerPayment,
   createDealerDebitNote,
-  listDealerPayments,
   getDealerStatement,
   getDealerAnalyticsSummary,
 } from '../api/dealers.api';
@@ -24,7 +21,6 @@ export const dealerKeys = {
   detail: (dealerId) => [...dealerKeys.details(), dealerId],
   bills: (filters) => [...dealerKeys.all, 'bills', filters],
   billDetail: (billId) => [...dealerKeys.all, 'bill-detail', billId],
-  payments: (filters) => [...dealerKeys.all, 'payments', filters],
   statement: (dealerId, billType) => [...dealerKeys.all, 'statement', dealerId, billType || 'all'],
   analytics: (storeId) => [...dealerKeys.all, 'analytics', storeId || 'all'],
 };
@@ -109,15 +105,6 @@ export function useDealerBillDetail(billId, initialBill = null) {
   });
 }
 
-export function useDealerPayments(filters = {}) {
-  return useQuery({
-    queryKey: dealerKeys.payments(filters),
-    queryFn: () => listDealerPayments(filters),
-    staleTime: 1000 * 30,
-    refetchOnWindowFocus: true,
-  });
-}
-
 export function useDealerStatement(dealerId, { billType = 'all' } = {}) {
   return useQuery({
     queryKey: dealerKeys.statement(dealerId, billType),
@@ -148,27 +135,6 @@ export function useCreateDealer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createDealer,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: dealerKeys.all });
-    },
-  });
-}
-
-export function useUpdateDealer() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }) => updateDealer(id, payload),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: dealerKeys.all });
-      queryClient.invalidateQueries({ queryKey: dealerKeys.detail(variables.id) });
-    },
-  });
-}
-
-export function useCreateDealerBill() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createDealerBill,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealerKeys.all });
     },

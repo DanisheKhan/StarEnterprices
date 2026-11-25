@@ -9,7 +9,7 @@ async function loadFallbackProducts() {
 
 const INVENTORY_CACHE_PREFIX = 'star_inv_prods_';
 
-export const STORE_UUID_MAP = {
+const STORE_UUID_MAP = {
   mobiles: '83a779be-95ac-4b81-9c96-9589dfb7df38',
   'store-1': '83a779be-95ac-4b81-9c96-9589dfb7df38',
   '83a779be-95ac-4b81-9c96-9589dfb7df38': '83a779be-95ac-4b81-9c96-9589dfb7df38',
@@ -138,7 +138,7 @@ export function getCachedStoreProducts(storeId) {
   }
 }
 
-export function setCachedStoreProducts(storeId, products) {
+function setCachedStoreProducts(storeId, products) {
   if (!storeId || !products) return;
   try {
     if (products.length > 0) {
@@ -252,23 +252,6 @@ export async function listProductUnits({ storeId, productId, status } = {}) {
 }
 
 /**
- * Checks if an IMEI / Serial number is available globally
- * @param {string} serialNumber
- */
-export async function checkSerialAvailability(serialNumber) {
-  if (!serialNumber) return false;
-
-  const { data, error } = await supabase
-    .from('product_units')
-    .select('id, serial_number, status')
-    .eq('serial_number', serialNumber.trim())
-    .maybeSingle();
-
-  if (error) throw error;
-  return !data; // true if available (no existing record)
-}
-
-/**
  * Fast single-row lookup for barcode scanner hits that may not yet be in client cache
  * @param {{ storeId: string, serialNumber: string }} param0
  */
@@ -326,20 +309,6 @@ export async function createProduct({ initialQuantity = 0, ...payload }) {
       });
   }
 
-  return data;
-}
-
-/**
- * Adds a new serialized unit
- */
-export async function createProductUnit(payload) {
-  const { data, error } = await supabase
-    .from('product_units')
-    .insert([payload])
-    .select('id, serial_number, status, condition_grade')
-    .single();
-
-  if (error) throw error;
   return data;
 }
 

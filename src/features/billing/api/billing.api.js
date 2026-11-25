@@ -205,21 +205,6 @@ export async function updateInvoice({ invoiceId, updates, items = [], payment = 
 }
 
 /**
- * Voids an invoice
- */
-export async function voidInvoice(invoiceId) {
-  const { data, error } = await supabase
-    .from('invoices')
-    .update({ status: 'void' })
-    .eq('id', invoiceId)
-    .select('id, invoice_number, status')
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-/**
  * Fetches complete invoice with items and payments for receipt printing or editing
  */
 export async function getInvoiceDetail(invoiceId) {
@@ -366,38 +351,6 @@ export async function processReturn({
 
   if (error) throw error;
   return data;
-}
-
-/**
- * Lists return records for an invoice or store with deduction breakdown
- */
-export async function listReturns({ invoiceId, storeId } = {}) {
-  let query = supabase
-    .from('sales_returns')
-    .select(`
-      id,
-      store_id,
-      invoice_id,
-      return_number,
-      customer_name,
-      refund_amount,
-      gross_amount,
-      deduction_amount,
-      deduction_reason,
-      refund_method,
-      reason,
-      notes,
-      items,
-      created_at
-    `)
-    .order('created_at', { ascending: false });
-
-  if (invoiceId) query = query.eq('invoice_id', invoiceId);
-  if (storeId) query = query.eq('store_id', storeId);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
 }
 
 /**

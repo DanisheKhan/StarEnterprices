@@ -464,7 +464,7 @@ export function getCachedPublicCatalog() {
   }));
 }
 
-export function setCachedPublicCatalog(products) {
+function setCachedPublicCatalog(products) {
   try {
     if (products && products.length > 0) {
       localStorage.setItem(PUBLIC_CATALOG_CACHE_KEY, JSON.stringify(products));

@@ -1,6 +1,6 @@
 import { supabase } from '@/shared/lib/supabase';
 
-export const STORE_DIRECTORY = {
+const STORE_DIRECTORY = {
   mobiles: {
     display_name: 'Star Mobile',
     manager_name: 'Mazhar Sheikh',
@@ -90,7 +90,7 @@ export function getCachedStores() {
   }
 }
 
-export function setCachedStores(stores) {
+function setCachedStores(stores) {
   try {
     if (stores && stores.length > 0) {
       localStorage.setItem(STORES_CACHE_KEY, JSON.stringify(stores));

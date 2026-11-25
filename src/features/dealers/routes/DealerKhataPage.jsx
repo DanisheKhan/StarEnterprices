@@ -5,7 +5,7 @@ import { DealerKhataLedger } from '../components/DealerKhataLedger';
 import { RecordPaymentModal } from '../components/RecordPaymentModal';
 import { DebitNoteModal } from '../components/DebitNoteModal';
 import { BillTimelineModal } from '../components/BillTimelineModal';
-import { ArrowLeft, Building2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export function DealerKhataPage() {
   const { dealerId, storeCode } = useParams();

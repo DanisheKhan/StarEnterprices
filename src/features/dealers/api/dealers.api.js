@@ -88,24 +88,6 @@ export async function createDealer(payload) {
 }
 
 /**
- * Updates an existing dealer profile
- */
-export async function updateDealer(id, payload) {
-  const { data, error } = await supabase
-    .from('dealers')
-    .update({
-      ...payload,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-/**
  * Enriches a bill with sortedTimeline combining payments and debit notes
  */
 export function enrichBillTimeline(bill) {
@@ -410,32 +392,6 @@ export async function createDealerDebitNote(payload) {
 
   if (error) throw error;
   return data;
-}
-
-/**
- * Lists all payment records with filters
- */
-export async function listDealerPayments({ dealerId, billId, limit = 100 } = {}) {
-  let query = supabase
-    .from('dealer_payments')
-    .select(`
-      ${DEALER_PAYMENT_COLUMNS},
-      dealer:dealers(id, name, brand_name),
-      bill:dealer_bills(id, bill_number, bill_type, total_amount, balance_amount, status)
-    `)
-    .order('payment_date', { ascending: false })
-    .limit(limit);
-
-  if (dealerId) {
-    query = query.eq('dealer_id', dealerId);
-  }
-  if (billId) {
-    query = query.eq('bill_id', billId);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
 }
 
 /**

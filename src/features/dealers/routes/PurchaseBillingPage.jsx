@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext, useNavigate, useParams, Link } from 'react-router-dom';
 import { Badge, Button } from '@/shared/ui';
 import { useDealers } from '../hooks/useDealers';
@@ -9,7 +9,6 @@ import { cn } from '@/shared/lib/cn';
 import {
   Package,
   Building2,
-  Banknote,
   Check,
   CheckCircle2,
   ArrowRight,
@@ -19,22 +18,18 @@ import {
   Calendar,
   Clock,
   Coins,
-  CreditCard,
   AlertCircle,
   Building,
   Receipt,
   Landmark,
-  ChevronRight,
-  Info,
   FileText,
-  Sparkles,
-  ShieldCheck,
-  AlertTriangle,
-  RotateCcw,
   QrCode,
-  ArrowDownCircle,
-  HelpCircle,
 } from 'lucide-react';
+
+let nextRowSeq = 2;
+function createRowId() {
+  return nextRowSeq++;
+}
 
 const COMMON_BANKS = [
   'HDFC Bank',
@@ -58,7 +53,7 @@ export function PurchaseBillingPage() {
   const storeId = store?.id || null;
   const basePath = effectiveStoreCode ? `/admin/${effectiveStoreCode}/dealers` : '/admin/dealers';
 
-  const { data: rawDealers = [], isLoading: isLoadingDealers } = useDealers({ storeId });
+  const { data: rawDealers = [] } = useDealers({ storeId });
   const dealers = useMemo(() => (Array.isArray(rawDealers) ? rawDealers.filter(Boolean) : []), [rawDealers]);
 
   // Stepper state: 1: Goods & Bill Details, 2: Payment Plan & Cheque Schedule
@@ -86,16 +81,20 @@ export function PurchaseBillingPage() {
     return dealers.find((d) => d.id === selectedDealerId) || null;
   }, [dealers, selectedDealerId]);
 
-  // Auto-set billing mode default if dealer has preferred billing mode
-  useEffect(() => {
-    if (selectedDealer) {
-      if (selectedDealer.billing_mode === 'kaccha') {
+  function handleSelectDealer(nextDealerId, explicitDealer = null) {
+    setSelectedDealerId(nextDealerId);
+    const dealer = explicitDealer || dealers.find((d) => d.id === nextDealerId) || null;
+    if (dealer) {
+      if (dealer.billing_mode === 'kaccha') {
         setBillType('kaccha');
-      } else if (selectedDealer.billing_mode === 'gst') {
+      } else if (dealer.billing_mode === 'gst') {
         setBillType('gst');
       }
+      if (dealer.default_credit_days) {
+        setCreditDays(Number(dealer.default_credit_days));
+      }
     }
-  }, [selectedDealer]);
+  }
 
   // Itemized calculation
   const calculatedItemsTotal = useMemo(() => {
@@ -124,7 +123,6 @@ export function PurchaseBillingPage() {
   const [fullPaymentMode, setFullPaymentMode] = useState('cash'); // 'cash' | 'cheque' | 'bank_transfer' | 'upi'
   const [fullChequeNumber, setFullChequeNumber] = useState('');
   const [fullChequeBank, setFullChequeBank] = useState('HDFC Bank');
-  const [fullChequeCustomBank, setFullChequeCustomBank] = useState('');
   const [fullChequeDate, setFullChequeDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [fullTransactionRef, setFullTransactionRef] = useState('');
   const [fullPaymentNotes, setFullPaymentNotes] = useState('');
@@ -155,13 +153,6 @@ export function PurchaseBillingPage() {
   const [creditDays, setCreditDays] = useState(30);
   const [customDueDate, setCustomDueDate] = useState('');
   const [promiseNotes, setPromiseNotes] = useState('');
-
-  // Auto-update credit days if dealer specifies default_credit_days
-  useEffect(() => {
-    if (selectedDealer?.default_credit_days) {
-      setCreditDays(Number(selectedDealer.default_credit_days));
-    }
-  }, [selectedDealer]);
 
   // Computed Due Date based on bill date + credit days
   const computedDueDate = useMemo(() => {
@@ -330,7 +321,7 @@ export function PurchaseBillingPage() {
   function handleAddItemRow() {
     setItems((prev) => [
       ...prev,
-      { id: Date.now() + Math.random(), name: '', quantity: 1, unitPrice: '', total: 0 },
+      { id: createRowId(), name: '', quantity: 1, unitPrice: '', total: 0 },
     ]);
   }
 
@@ -349,7 +340,7 @@ export function PurchaseBillingPage() {
 
   function handleRemoveItemRow(id) {
     if (items.length <= 1) {
-      setItems([{ id: Date.now(), name: '', quantity: 1, unitPrice: '', total: 0 }]);
+      setItems([{ id: createRowId(), name: '', quantity: 1, unitPrice: '', total: 0 }]);
       return;
     }
     setItems((prev) => prev.filter((it) => it.id !== id));
@@ -364,7 +355,7 @@ export function PurchaseBillingPage() {
     setCheques((prev) => [
       ...prev,
       {
-        id: Date.now() + Math.random(),
+        id: createRowId(),
         amount: remainingBalance > 0 ? String(remainingBalance) : '',
         chequeNumber: '',
         bankName: selectedDealer?.bank_name || 'HDFC Bank',
@@ -385,7 +376,7 @@ export function PurchaseBillingPage() {
     if (cheques.length <= 1) {
       setCheques([
         {
-          id: Date.now(),
+          id: createRowId(),
           amount: '',
           chequeNumber: '',
           bankName: 'HDFC Bank',
@@ -466,7 +457,7 @@ export function PurchaseBillingPage() {
       const initialPayments = [];
 
       if (settlementMode === 'full') {
-        const fullBank = fullChequeBank === 'Other Bank' ? (fullChequeCustomBank || 'Other Bank') : fullChequeBank;
+        const fullBank = fullChequeBank;
         initialPayments.push({
           payment_date: billDate,
           cheque_date: fullPaymentMode === 'cheque' ? (fullChequeDate || billDate) : null,
@@ -729,7 +720,7 @@ export function PurchaseBillingPage() {
                 </label>
                 <select
                   value={selectedDealerId}
-                  onChange={(e) => setSelectedDealerId(e.target.value)}
+                  onChange={(e) => handleSelectDealer(e.target.value)}
                   className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-surface-subtle font-medium text-text focus:outline-none focus:ring-2 focus:ring-brand-sage/20 focus:border-brand-sage"
                 >
                   <option value="">-- Choose Brand Supplier / Mandi Workshop --</option>
@@ -1777,7 +1768,7 @@ export function PurchaseBillingPage() {
         storeId={storeId}
         onSuccess={(newDealer) => {
           if (newDealer?.id) {
-            setSelectedDealerId(newDealer.id);
+            handleSelectDealer(newDealer.id, newDealer);
           }
           setIsAddDealerModalOpen(false);
         }}

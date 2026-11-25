@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui';
 import { formatCurrency, formatPhone } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import {
@@ -11,12 +11,10 @@ import {
   CreditCard,
   Plus,
   ArrowRight,
-  ShieldCheck,
   Clock,
   AlertCircle,
   CheckCircle2,
   MapPin,
-  Layers,
 } from 'lucide-react';
 
 export function DealerDirectoryTable({

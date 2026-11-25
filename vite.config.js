@@ -28,7 +28,7 @@ export default defineConfig({
             if (id.includes('@supabase/')) {
               return 'vendor-supabase';
             }
-            if (id.includes('framer-motion') || id.includes('/motion/')) {
+            if (id.includes('/motion/')) {
               return 'vendor-motion';
             }
             if (id.includes('lucide-react')) {

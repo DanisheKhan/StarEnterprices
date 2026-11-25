@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Badge, LoadingState } from '@/shared/ui';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -8,13 +7,10 @@ import {
   FileText,
   Calendar,
   Search,
-  Plus,
-  TrendingDown,
   Coins,
   History,
   Receipt,
   Package,
-  CreditCard,
   Building2,
   Clock,
   AlertCircle,

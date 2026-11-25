@@ -15,28 +15,22 @@ export {
   useDealer,
   useDealerBills,
   useDealerBillDetail,
-  useDealerPayments,
   useDealerStatement,
   useDealerAnalytics,
   useCreateDealer,
-  useUpdateDealer,
-  useCreateDealerBill,
   useRecordDealerPayment,
   useCreateDealerDebitNote,
-  dealerKeys,
 } from './hooks/useDealers';
 
 export {
   listDealers,
   getDealerById,
   createDealer,
-  updateDealer,
   listDealerBills,
   getDealerBillDetail,
   createDealerBill,
   recordDealerPayment,
   createDealerDebitNote,
-  listDealerPayments,
   getDealerStatement,
   getDealerAnalyticsSummary,
 } from './api/dealers.api';

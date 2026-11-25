@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useInView } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/cn";
 
 /**
  * @param {Object} props
@@ -80,8 +80,8 @@ export const FlipWords = ({
             position: "absolute",
           }}
           className={cn(
-            "z-10 inline-block relative text-left text-text px-2",
-            className
+            "z-10 inline-block relative text-left text-text",
+            className || "px-2"
           )}
           key={currentWord}
         >

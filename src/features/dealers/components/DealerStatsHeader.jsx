@@ -1,33 +1,20 @@
 import { useMemo } from 'react';
-import { Card, Badge, KpiGridSkeleton } from '@/shared/ui';
+import { Card, KpiGridSkeleton } from '@/shared/ui';
 import { formatCurrency } from '@/shared/lib/format';
 import {
-  TrendingUp,
   Receipt,
   FileText,
   AlertTriangle,
   Clock,
-  CheckCircle2,
   Layers,
-  ArrowUpRight,
 } from 'lucide-react';
 
 export function DealerStatsHeader({ analytics, isLoading }) {
-  if (isLoading || !analytics) {
-    return <KpiGridSkeleton count={4} className="mb-4" />;
-  }
-
-  const aging = analytics?.aging || {};
-
-  const totalOverdue = analytics?.overdueAmount || 0;
-  const overdueCount = analytics?.overdueCount || 0;
   const totalPayable = analytics?.totalPayable || 0;
-  const gstPayable = analytics?.gstPayable || 0;
-  const kacchaPayable = analytics?.kacchaPayable || 0;
-  const avgTurnaround = analytics?.avgDaysToClear;
 
-  // Aging proportions for visual bar
+  // Aging proportions for visual bar (always invoked before early loading return)
   const agingSegments = useMemo(() => {
+    const aging = analytics?.aging || {};
     if (totalPayable <= 0) return [];
     return [
       {
@@ -66,7 +53,17 @@ export function DealerStatsHeader({ analytics, isLoading }) {
         textColor: 'text-red-900',
       },
     ].filter((seg) => seg.amount > 0);
-  }, [totalPayable, aging]);
+  }, [totalPayable, analytics]);
+
+  if (isLoading || !analytics) {
+    return <KpiGridSkeleton count={4} className="mb-4" />;
+  }
+
+  const totalOverdue = analytics?.overdueAmount || 0;
+  const overdueCount = analytics?.overdueCount || 0;
+  const gstPayable = analytics?.gstPayable || 0;
+  const kacchaPayable = analytics?.kacchaPayable || 0;
+  const avgTurnaround = analytics?.avgDaysToClear;
 
   return (
     <div className="space-y-4">

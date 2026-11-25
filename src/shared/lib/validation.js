@@ -61,24 +61,3 @@ export function isValidImei(imei) {
   return /^\d{15}$/.test(String(imei).trim());
 }
 
-/**
- * Validates 6-digit Indian PIN code.
- * @param {string|number} pin
- * @returns {boolean}
- */
-export function isValidPincode(pin) {
-  if (!pin) return false;
-  return /^[1-9]\d{5}$/.test(String(pin).trim());
-}
-
-/**
- * Validates 12-digit Indian Aadhaar number.
- * @param {string} aadhaar
- * @returns {boolean}
- */
-export function isValidAadhaar(aadhaar) {
-  if (!aadhaar) return false;
-  const digits = String(aadhaar).replace(/\D/g, '');
-  return /^\d{12}$/.test(digits);
-}
-

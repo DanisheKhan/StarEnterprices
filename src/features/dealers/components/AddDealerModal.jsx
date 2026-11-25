@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Modal, Button, Input } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
 import { useCreateDealer } from '../hooks/useDealers';
-import { Building2, ShieldCheck, CreditCard } from 'lucide-react';
 
 export function AddDealerModal({ isOpen, onClose, storeId }) {
   const createDealerMutation = useCreateDealer();

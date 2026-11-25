@@ -5,10 +5,8 @@ import {
   listAllInvoices,
   getInvoiceDetail,
   updateInvoice,
-  voidInvoice,
   recordPayment,
   processReturn,
-  listReturns,
   searchCustomersByPhone,
 } from '../api/billing.api';
 import { inventoryKeys, resolveStoreUuid } from '@/features/inventory';
@@ -153,18 +151,6 @@ export function useUpdateInvoice() {
   });
 }
 
-export function useVoidInvoice() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: voidInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: billingKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
-      queryClient.invalidateQueries({ queryKey: ['stores'] });
-    },
-  });
-}
-
 export function useRecordPayment() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -188,13 +174,5 @@ export function useProcessReturn() {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['stores'] });
     },
-  });
-}
-
-export function useInvoiceReturns(invoiceId) {
-  return useQuery({
-    queryKey: [...billingKeys.all, 'returns', invoiceId],
-    queryFn: () => listReturns({ invoiceId }),
-    enabled: Boolean(invoiceId),
   });
 }

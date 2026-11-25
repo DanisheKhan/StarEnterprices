@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Modal, Button } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
 import { useCreateDealerDebitNote, useDealerBills } from '../hooks/useDealers';
 import { formatCurrency } from '@/shared/lib/format';
-import { TrendingDown, AlertCircle } from 'lucide-react';
 
 export function DebitNoteModal({
   isOpen,

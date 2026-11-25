@@ -12,7 +12,6 @@ export { ProductSerialCard } from './components/ProductSerialCard';
 export {
   useProducts,
   useProductUnits,
-  useCreateProductUnit,
   useAdjustStock,
   useAddSerializedUnit,
   useAddSerializedUnitsBulk,
@@ -30,11 +29,9 @@ export {
 export {
   listProductsByStore,
   listProductUnits,
-  checkSerialAvailability,
   findStoreUnitBySerial,
   resolveStoreUuid,
   createProduct,
-  createProductUnit,
   adjustInventoryStock,
   addSerializedUnit,
   addSerializedUnitsBulk,

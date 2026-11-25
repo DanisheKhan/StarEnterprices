@@ -432,7 +432,7 @@ export function SerialNumbersPage() {
       </div>
 
       {/* Category Pills Ribbon */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         <button
           type="button"
           onClick={() => setSelectedCategory('')}

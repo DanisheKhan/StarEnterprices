@@ -8,6 +8,7 @@ export { Modal } from './Modal';
 export { Table, TableHead, TableBody, TableRow, TableCell, TableHeaderCell } from './Table';
 export { RouteErrorBoundary } from './RouteErrorBoundary';
 export { LoadingState } from './LoadingState';
-export { Spinner, Skeleton, TableSkeleton, KpiGridSkeleton, CardSkeleton } from './Skeleton';
+export { WhatsAppIcon } from './WhatsAppIcon';
+export { TableSkeleton, KpiGridSkeleton } from './Skeleton';
 
 

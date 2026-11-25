@@ -1,4 +1,3 @@
 export { ReportsConsolePage } from './routes/ReportsConsolePage';
-export { useOwnerOverview, useOwnerDashboard, reportKeys } from './hooks/useReports';
-export { getOwnerOverview, getOwnerDashboardData } from './api/reports.api';
+export { useOwnerDashboard } from './hooks/useReports';
 export { DayEndZReportModal } from './components/DayEndZReportModal';
