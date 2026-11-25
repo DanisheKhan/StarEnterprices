@@ -51,7 +51,7 @@ function ProductThumbnail({ imageUrl, sku, name }) {
         src={imageUrl}
         alt={name}
         loading="lazy"
-        className="w-full h-full object-contain p-0.5 group-hover:opacity-90 transition-opacity duration-200"
+        className="w-full h-full object-cover block group-hover:opacity-95 transition-opacity duration-200"
         onError={() => setError(true)}
       />
     );
@@ -833,7 +833,7 @@ export function POSPage() {
                   >
                     <div>
                       {/* Compact Product Image Container */}
-                      <div className="relative w-full h-24 rounded-lg bg-surface-subtle/70 border border-border/60 overflow-hidden flex items-center justify-center p-2 mb-2.5 group-hover:border-brand-sage/40 transition-colors">
+                      <div className="relative w-full aspect-[16/10] rounded-lg bg-surface-subtle border border-border/80 overflow-hidden flex items-center justify-center mb-2.5 group-hover:border-brand-sage/50 transition-colors">
                         <ProductThumbnail
                           imageUrl={p.image_url}
                           sku={p.sku}
@@ -843,18 +843,18 @@ export function POSPage() {
                         {/* Floating Stock Badge */}
                         <span
                           className={cn(
-                            'absolute top-1.5 right-1.5 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shadow-2xs',
+                            'absolute top-1.5 right-1.5 z-10 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shadow-2xs',
                             stockQty > 2
-                              ? 'bg-surface text-brand-sage border-brand-sage-border'
+                              ? 'bg-surface/95 text-brand-sage-text border-brand-sage-border'
                               : stockQty > 0
-                              ? 'bg-surface text-brand-gold-text border-brand-gold-border'
-                              : 'bg-surface text-brand-crimson border-brand-crimson-border'
+                              ? 'bg-surface/95 text-brand-gold-text border-brand-gold-border'
+                              : 'bg-surface/95 text-brand-crimson-text border-brand-crimson-border'
                           )}
                         >
                           Stock: {stockQty}
                         </span>
                         {p.is_serialized === false && (
-                          <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded border bg-surface border-border text-muted">
+                          <span className="absolute top-1.5 left-1.5 z-10 text-[9px] font-semibold px-1.5 py-0.5 rounded border bg-surface/95 border-border text-muted shadow-2xs">
                             Direct Qty
                           </span>
                         )}

@@ -1,26 +1,55 @@
 /* src/styles/globals.css */
 @import './tokens.css';
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-padding-top: 5rem;
-  scrollbar-gutter: stable;
-  overflow-y: auto;
-  overflow-x: clip !important;
-  max-width: 100%;
-  background-color: var(--bg);
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--text) 32%, transparent) transparent;
-}
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+    scrollbar-gutter: stable;
+    overflow-y: auto;
+    overflow-x: clip !important;
+    max-width: 100%;
+    background-color: var(--bg);
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text) 32%, transparent) transparent;
+  }
 
-/* Custom scrollbar styling: smooth, clearly visible, vertical only */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--text) 24%, transparent) transparent;
+  /* Custom scrollbar styling: smooth, clearly visible, vertical only */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text) 24%, transparent) transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    overflow-x: clip !important;
+    max-width: 100%;
+    width: 100%;
+    overflow-wrap: break-word;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100dvh;
+    overflow-x: clip !important;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  img, video, svg, canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 }
 
 .no-scrollbar {
@@ -57,33 +86,6 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--text) 45%, transparent);
-}
-
-body {
-  margin: 0;
-  min-height: 100dvh;
-  overflow-x: clip !important;
-  max-width: 100%;
-  width: 100%;
-  overflow-wrap: break-word;
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#root {
-  min-height: 100dvh;
-  overflow-x: clip !important;
-  max-width: 100%;
-  width: 100%;
-}
-
-img, video, svg, canvas {
-  max-width: 100%;
-  height: auto;
-  display: block;
 }
 
 /* Print portal visibility */
