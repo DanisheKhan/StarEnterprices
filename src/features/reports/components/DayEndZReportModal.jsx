@@ -36,7 +36,7 @@ export function DayEndZReportModal({ isOpen, onClose, eodData = {} }) {
           </div>
 
           {/* Invoice Shift Range */}
-          <div className="grid grid-cols-3 gap-2 p-3 rounded-lg border border-border bg-bg/50 text-xs text-center font-mono">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 rounded-lg border border-border bg-bg/50 text-xs text-center font-mono">
             <div>
               <span className="text-[10px] text-muted block uppercase">Opening Bill</span>
               <strong className="text-text">{eodData.openingInvoice || 'N/A'}</strong>

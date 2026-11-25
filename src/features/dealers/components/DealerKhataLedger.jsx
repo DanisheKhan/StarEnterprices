@@ -199,9 +199,85 @@ export function DealerKhataLedger({
           </div>
         </div>
 
-        {/* Ledger Passbook Table - 100% fluid, strictly zero horizontal overflow */}
-        <div className="w-full overflow-hidden min-w-0">
-          <table className="w-full table-fixed text-left text-xs border-collapse">
+        {/* Mobile Passbook Card Stack */}
+        <div className="sm:hidden divide-y divide-border min-w-0">
+          {isLoading ? (
+            <LoadingState size="sm" message="Loading Khata statement..." className="py-12" />
+          ) : entries.length === 0 ? (
+            <div className="py-12 text-center text-xs text-muted">
+              No transactions recorded for this dealer yet.
+            </div>
+          ) : (
+            entries.map((row) => {
+              const isBill = row.entryType === 'BILL';
+              const isPayment = row.entryType === 'PAYMENT';
+
+              return (
+                <div key={row.id} className="p-3.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono text-[11px] text-muted shrink-0">
+                        {formatDate(row.date, false)}
+                      </span>
+                      {isBill ? (
+                        <span
+                          className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
+                            row.billType === 'gst'
+                              ? 'bg-brand-sage-subtle text-brand-sage border-brand-sage-border'
+                              : 'bg-amber-50 text-amber-800 border-amber-300'
+                          }`}
+                        >
+                          {row.billType === 'gst' ? 'GST Bill' : 'Kaccha'}
+                        </span>
+                      ) : isPayment ? (
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          Payment
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300">
+                          Debit Note
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-mono font-semibold text-text truncate">{row.refNumber}</span>
+                  </div>
+
+                  {row.description && (
+                    <p className="text-[11px] text-muted line-clamp-2">{row.description}</p>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/60 font-mono">
+                    <div className="flex items-center gap-3">
+                      {row.debit > 0 && (
+                        <span className="text-text font-semibold">+{formatCurrency(row.debit)}</span>
+                      )}
+                      {row.credit > 0 && (
+                        <span className="text-brand-sage font-semibold">-{formatCurrency(row.credit)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-950 font-bold">Bal: {formatCurrency(row.runningBalance)}</span>
+                      {isBill && onOpenTimeline && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenTimeline(row.id, row.metadata)}
+                          title="Inspect Payment Speed & Timeline"
+                          className="p-1 rounded text-muted hover:text-accent hover:bg-surface-subtle cursor-pointer"
+                        >
+                          <Clock size={13} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Ledger Passbook Table */}
+        <div className="hidden sm:block w-full overflow-x-auto min-w-0">
+          <table className="w-full min-w-176 table-fixed text-left text-xs border-collapse">
             <thead>
               <tr className="bg-surface-subtle/80 border-b border-border text-[11px] font-bold text-muted uppercase tracking-wider">
                 <th className="py-3 px-3 w-[11%]">Date</th>

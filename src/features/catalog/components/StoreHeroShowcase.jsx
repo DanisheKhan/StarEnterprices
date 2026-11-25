@@ -49,7 +49,7 @@ export function StoreHeroShowcase({ onExploreCatalog, onOpenCalculator }) {
                 <h1 className="text-[clamp(2.5rem,8vw,5.5rem)] font-black tracking-tight leading-[0.95] text-brand-crimson">
                   STAR
                 </h1>
-                <div className="text-[clamp(1.6rem,5vw,3.2rem)] font-black tracking-tight leading-tight text-text">
+                <div className="text-[clamp(1.6rem,5vw,3.2rem)] font-black tracking-tight leading-tight text-text overflow-x-clip max-w-full">
                   <FlipWords
                     words={HERO_WORDS}
                     className="px-0 text-text font-black tracking-tight"

@@ -251,7 +251,7 @@ export function DealersHubPage() {
       <DealerStatsHeader analytics={analytics} isLoading={isLoadingAnalytics} />
 
       {/* 3. Navigation Tabs */}
-      <div className="flex items-center justify-between gap-4 border-b border-border pb-px overflow-x-hidden">
+      <div className="flex items-center justify-between gap-4 border-b border-border pb-px overflow-x-auto no-scrollbar min-w-0">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('bills')}

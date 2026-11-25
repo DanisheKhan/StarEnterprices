@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/shared/ui';
 import { formatCurrency, formatDate, amountToWords } from '@/shared/lib/format';
+import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { cn } from '@/shared/lib/cn';
 import { Printer, X } from 'lucide-react';
 
@@ -68,15 +69,14 @@ export function InvoicePrintModal({ isOpen, onClose, invoiceDetail }) {
   });
 
   useEffect(() => {
+    if (!isOpen) return undefined;
     function handleKeyDown(e) {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
     }
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    lockBodyScroll();
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = '';
+      unlockBodyScroll();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -97,7 +97,7 @@ export function InvoicePrintModal({ isOpen, onClose, invoiceDetail }) {
   const totalPaid = Math.round(payments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0));
   const balanceDue = Math.round(Math.max(grandTotal - totalPaid, 0));
 
-  const gstin = store.gstin || '27AAAAA0000A1Z5';
+  const gstin = store.gstin || '27AATPQ6775F1ZV';
   const pan = gstin && gstin.length >= 12 ? gstin.substring(2, 12) : null;
 
   const isReturned = invoiceDetail.status === 'returned';

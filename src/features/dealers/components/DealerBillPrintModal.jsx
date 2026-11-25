@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/shared/ui';
 import { formatCurrency, formatDate, formatPhone, amountToWords } from '@/shared/lib/format';
+import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { cn } from '@/shared/lib/cn';
 import { Printer, X } from 'lucide-react';
 
@@ -24,15 +25,14 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
   });
 
   useEffect(() => {
+    if (!isOpen) return undefined;
     function handleKeyDown(e) {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
     }
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    lockBodyScroll();
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = '';
+      unlockBodyScroll();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);

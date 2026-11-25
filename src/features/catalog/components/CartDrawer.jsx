@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useCart } from '../hooks/useCatalog';
 import { formatCurrency } from '@/shared/lib/format';
+import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { Button, Badge } from '@/shared/ui';
 import { SITE } from '@/shared/lib/site';
 import { X, Trash2, Plus, Minus, MessageSquare, ShoppingBag, ArrowRight } from 'lucide-react';
@@ -14,6 +16,19 @@ export function CartDrawer() {
     clearCart,
     totalCount,
   } = useCart();
+
+  useEffect(() => {
+    if (!isCartOpen) return undefined;
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setIsCartOpen(false);
+    }
+    lockBodyScroll();
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      unlockBodyScroll();
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCartOpen, setIsCartOpen]);
 
   if (!isCartOpen) return null;
 
@@ -85,7 +100,7 @@ export function CartDrawer() {
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-md bg-surface border-l border-border flex flex-col h-full z-10 min-w-0">
+      <div className="relative w-full max-w-md bg-surface border-l border-border flex flex-col h-dvh z-10 min-w-0 overscroll-contain">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">

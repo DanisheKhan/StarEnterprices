@@ -7,6 +7,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
+  scrollbar-gutter: stable;
   overflow-y: auto;
   overflow-x: clip !important;
   max-width: 100%;
@@ -33,26 +35,15 @@ html {
   height: 0 !important;
 }
 
-/* Vertical scrollbar styling */
+/* Vertical & intentional inner container scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
-  height: 0px !important;
+  height: 5px;
 }
 
-/* Completely kill horizontal scrollbar globally on all browsers */
-::-webkit-scrollbar:horizontal,
-::-webkit-scrollbar-thumb:horizontal,
-::-webkit-scrollbar-track:horizontal,
-::-webkit-scrollbar-corner,
-*::-webkit-scrollbar:horizontal,
-*::-webkit-scrollbar-thumb:horizontal,
-*::-webkit-scrollbar-track:horizontal {
-  display: none !important;
-  width: 0px !important;
-  height: 0px !important;
-  background: transparent !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
+.stable-scroll {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 ::-webkit-scrollbar-track {
@@ -159,7 +150,7 @@ img, video, svg, canvas {
 .invoice-dialog-window {
   width: 100%;
   max-width: 58rem;
-  height: 92vh;
+  height: 92dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -168,6 +159,8 @@ img, video, svg, canvas {
 .invoice-preview-body {
   flex: 1 1 0%;
   overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
   padding: 1.5rem;
 }
 

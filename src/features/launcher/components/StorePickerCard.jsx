@@ -73,7 +73,7 @@ export function StorePickerCard({ store, analytics, onOpen }) {
         </div>
 
         {/* Essential Store Details */}
-        <div className="mt-4 grid grid-cols-3 gap-2 min-w-0">
+        <div className="mt-4 grid grid-cols-1 xs:grid-cols-3 gap-2 min-w-0">
           <div className="rounded-lg border border-border bg-surface-subtle p-2.5 min-w-0">
             <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted">
               <User size={11} className="shrink-0" />
@@ -110,7 +110,7 @@ export function StorePickerCard({ store, analytics, onOpen }) {
           <div className="text-[10px] font-medium uppercase tracking-wider text-muted mb-2">
             Store Performance (This Month)
           </div>
-          <div className="grid grid-cols-3 gap-2 min-w-0">
+          <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-1 text-[10px] text-muted">
                 <TrendingUp size={11} className="text-brand-sage shrink-0" />

@@ -507,7 +507,7 @@ export function StorePerformanceChart({
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border text-xs">
+                  <div className="grid grid-cols-1 xs:grid-cols-3 gap-2 pt-2 border-t border-border text-xs">
                     <div>
                       <span className="text-[10px] uppercase tracking-wider text-muted block">Avg Bill</span>
                       <span className="font-mono font-semibold text-text">{formatCurrency(branch.aov || 0)}</span>

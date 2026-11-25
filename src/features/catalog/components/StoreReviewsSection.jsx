@@ -36,7 +36,7 @@ const REVIEWS = [
 
 export function StoreReviewsSection() {
   return (
-    <section id="reviews-section" className="py-16 sm:py-24 lg:py-28 border-b border-border bg-surface min-w-0">
+    <section id="reviews-section" className="py-16 sm:py-24 lg:py-28 border-b border-border bg-surface min-w-0 scroll-mt-20">
       <Container size="xl" className="space-y-8 sm:space-y-12">
 
         {/* Consistent Section Header with Rating Badge */}

@@ -732,6 +732,32 @@ export function POSPage() {
       {/* ------------------------------------------------------------- */}
       {currentStep === 1 && (
         <div className="space-y-6">
+          {/* Quick Mobile Cart Bar so cashiers can proceed without scrolling past the catalog */}
+          {cart.length > 0 && (
+            <div className="sm:hidden sticky top-0 z-20 p-3 rounded-xl border border-brand-sage-border bg-surface shadow-xs flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-brand-sage-text">
+                  {cart.length} {cart.length === 1 ? 'item' : 'items'} in bill
+                </div>
+                <div className="text-base font-bold font-mono text-text truncate">
+                  {formatCurrency(grandTotal)}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => {
+                  setErrorMessage('');
+                  setCurrentStep(2);
+                }}
+                className="gap-1.5 text-xs font-semibold shrink-0"
+              >
+                <span>Customer</span>
+                <ArrowRight size={13} />
+              </Button>
+            </div>
+          )}
+
           {/* Barcode Search & Category Filters */}
           <Card className="p-4 sm:p-5 rounded-xl border border-border bg-surface space-y-3.5 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1324,7 +1350,7 @@ export function POSPage() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => {

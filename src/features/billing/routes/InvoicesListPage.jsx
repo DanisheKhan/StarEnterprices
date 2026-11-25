@@ -429,7 +429,7 @@ We appreciate your business and look forward to serving you again!`;
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 self-end sm:self-auto">
+          <div className="hidden md:flex items-center gap-1.5 self-end sm:self-auto">
             <span className="text-[11px] text-muted font-medium mr-1">View:</span>
             <div className="bg-surface-subtle p-0.5 rounded-lg border border-border flex items-center gap-0.5">
               <button
@@ -503,7 +503,28 @@ We appreciate your business and look forward to serving you again!`;
           })}
         </div>
       ) : (
-        <Table className="w-full min-w-190 table-fixed">
+        <>
+          {/* Mobile Automatic Cards View */}
+          <div className="space-y-3.5 md:hidden">
+            {invoices.map((inv) => {
+              const matchedStore = stores.find((s) => s.id === inv.store_id);
+              return (
+                <InvoiceCard
+                  key={inv.id}
+                  invoice={inv}
+                  storeName={matchedStore?.name || ''}
+                  onViewPrint={(id) => setViewingInvoiceId(id)}
+                  onEdit={(id) => setEditingInvoiceId(id)}
+                  onWhatsApp={(invoiceToShare) => handleSendWhatsApp(invoiceToShare)}
+                  onCollect={(invoiceToCollect) => setCollectingInvoice(invoiceToCollect)}
+                  onReturn={(invoiceToReturn) => setReturningInvoice(invoiceToReturn)}
+                />
+              );
+            })}
+          </div>
+
+          <div className="hidden md:block">
+            <Table className="w-full min-w-190 table-fixed">
           <TableHead>
             <TableRow className="bg-surface-subtle">
               <TableHeaderCell className="w-[14%]">Date of Purchase</TableHeaderCell>
@@ -726,6 +747,8 @@ We appreciate your business and look forward to serving you again!`;
             })}
           </TableBody>
         </Table>
+          </div>
+        </>
       )}
 
       {/* 5. Edit Invoice Modal */}

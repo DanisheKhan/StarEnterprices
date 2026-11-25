@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useCart, CartDrawer } from '@/features/catalog';
 import { Button } from '@/shared/ui';
@@ -17,6 +17,21 @@ export function RootLayout() {
     setPrevPath(location.pathname);
     setIsMobileMenuOpen(false);
   }
+
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setIsMobileMenuOpen(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isMobileMenuOpen]);
 
   const isPublicPage = location.pathname === '/';
 

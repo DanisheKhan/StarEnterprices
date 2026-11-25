@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { cn } from '@/shared/lib/cn';
+import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { X } from 'lucide-react';
 
 const SIZE_MAP = {
@@ -25,15 +26,14 @@ const SIZE_MAP = {
  */
 export function Modal({ isOpen, onClose, title, size = 'lg', className, children }) {
   useEffect(() => {
+    if (!isOpen) return undefined;
     function handleKeyDown(e) {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
     }
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    lockBodyScroll();
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = '';
+      unlockBodyScroll();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -52,7 +52,7 @@ export function Modal({ isOpen, onClose, title, size = 'lg', className, children
       <div
         className={cn(
           'relative w-full rounded-xl border border-border bg-surface text-text',
-          'max-h-[92vh] flex flex-col min-w-0 shadow-2xs animate-in zoom-in-95 duration-150',
+          'max-h-[92dvh] flex flex-col min-w-0 shadow-2xs animate-in zoom-in-95 duration-150',
           resolvedSizeClass,
           className
         )}
@@ -79,7 +79,7 @@ export function Modal({ isOpen, onClose, title, size = 'lg', className, children
             )}
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-7 min-w-0">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-7 min-w-0">
           {children}
         </div>
       </div>

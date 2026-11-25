@@ -17,7 +17,7 @@ export function StoreSpotlightSection() {
   )}`;
 
   return (
-    <section id="showroom-section" className="py-20 sm:py-28 border-b border-border bg-bg min-w-0">
+    <section id="showroom-section" className="py-20 sm:py-28 border-b border-border bg-bg min-w-0 scroll-mt-20">
       <Container size="xl" className="space-y-10 sm:space-y-12">
 
         {/* Consistent Section Header */}

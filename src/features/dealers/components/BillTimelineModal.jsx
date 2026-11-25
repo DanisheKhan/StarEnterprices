@@ -105,7 +105,7 @@ export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpen
               <div className="h-6 w-24 bg-border/60 rounded"></div>
             </div>
             <div className="h-3 w-56 bg-border/40 rounded"></div>
-            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/70">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border/70">
               <div className="h-8 bg-border/40 rounded"></div>
               <div className="h-8 bg-border/40 rounded"></div>
               <div className="h-8 bg-border/40 rounded"></div>

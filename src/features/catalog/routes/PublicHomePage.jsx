@@ -136,7 +136,7 @@ export function PublicHomePage() {
   }
 
   return (
-    <div className="min-w-0 flex flex-col bg-bg text-text pb-16 sm:pb-0">
+    <div className="min-w-0 flex flex-col bg-bg text-text pb-20 sm:pb-0">
       <Seo
         title="Star Enterprises — Hall Furniture, Electronics & Mobiles | Bhusawal Flagship"
         description="Bhusawal’s flagship showroom near Reliance Smart Bazar on Khadka Road. Hallmark living furniture, inverter ACs, double-door refrigerators, washing machines, and certified smartphones with 0% EMI financing and GST billing."
@@ -156,7 +156,7 @@ export function PublicHomePage() {
       <StoreDepartmentsSection onSelectDepartment={handleSelectCategory} />
 
       {/* 4. Live Inventory Catalog Grid */}
-      <section id="catalog-grid-section" className="py-20 sm:py-28 border-b border-border bg-surface min-w-0">
+      <section id="catalog-grid-section" className="py-20 sm:py-28 border-b border-border bg-surface min-w-0 scroll-mt-20">
         <Container size="xl" className="space-y-8 sm:space-y-10">
           {/* Consistent Section Header & Global Catalog Search */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -392,17 +392,16 @@ export function PublicHomePage() {
 
                         {/* Product Brand & Name */}
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-muted font-semibold">
+                          <div className="text-[10px] uppercase tracking-wider text-muted font-semibold truncate">
                             {product.brands?.name || (isMobiles ? 'Star Mobiles' : 'Star Enterprises')}
                           </div>
-                          <h3 className="text-sm font-bold text-text line-clamp-1 mt-0.5">
+                          <h3 className="text-sm font-bold text-text line-clamp-2 min-h-10 mt-0.5 leading-snug">
                             {product.name}
                           </h3>
                         </div>
 
                         {/* Spec Highlights Snippet */}
-                        {product.specs && (
-                          <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-1.5 min-h-6 items-start">
                             {product.specs.storage && (
                               <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
                                 {product.specs.storage}
@@ -433,13 +432,12 @@ export function PublicHomePage() {
                                 {product.specs.star_rating}
                               </span>
                             )}
-                            {product.specs.seating && (
+                            {product.specs?.seating && (
                               <span className="text-[10px] px-2 py-0.5 rounded border border-border bg-bg text-muted">
                                 {product.specs.seating}
                               </span>
                             )}
-                          </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Transparent GST-Inclusive Price & Action Footer */}
@@ -556,7 +554,7 @@ export function PublicHomePage() {
       )}
 
       {/* Mobile Sticky Quick Action Bar */}
-      <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-surface px-3 py-2 flex items-center justify-around gap-2 shadow-xs">
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border bg-surface px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around gap-2 shadow-xs">
         <button
           type="button"
           onClick={scrollToCatalog}
