@@ -52,6 +52,16 @@ export function subscribeToFinancialEvents(onChange) {
       { event: '*', schema: 'public', table: 'product_units' },
       () => onChange('product_units')
     )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'sales_returns' },
+      () => onChange('sales_returns')
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'stores' },
+      () => onChange('stores')
+    )
     .subscribe();
 
   return () => {

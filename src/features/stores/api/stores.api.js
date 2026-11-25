@@ -3,11 +3,11 @@ import { supabase } from '@/shared/lib/supabase';
 export const STORE_DIRECTORY = {
   mobiles: {
     display_name: 'Star Mobile',
-    manager_name: 'Rajesh Kulkarni',
+    manager_name: 'Mazhar Sheikh',
   },
   'furniture-electronics': {
     display_name: 'Star Furniture',
-    manager_name: 'Priya Deshpande',
+    manager_name: 'Mazhar Sheikh',
   },
 };
 
@@ -17,7 +17,7 @@ export const DEFAULT_STORES = [
     code: 'mobiles',
     name: 'Star Mobiles',
     display_name: 'Star Mobile',
-    manager_name: 'Rajesh Kulkarni',
+    manager_name: 'Mazhar Sheikh',
     gstin: '27AAAAA0000A1Z5',
     state_code: '27',
     legal_name: 'Star Enterprises',
@@ -26,7 +26,7 @@ export const DEFAULT_STORES = [
     city: 'Bhusawal',
     pincode: '425201',
     phone: '+91 93700 11653',
-    email: 'mazharq82@gmail.com',
+    email: 'owner@starenterprises.store',
     invoice_prefix: 'MOB',
     is_active: true,
   },
@@ -35,7 +35,7 @@ export const DEFAULT_STORES = [
     code: 'furniture-electronics',
     name: 'Star Furniture & Electronics',
     display_name: 'Star Furniture',
-    manager_name: 'Priya Deshpande',
+    manager_name: 'Mazhar Sheikh',
     gstin: '27AAAAA0000A1Z5',
     state_code: '27',
     legal_name: 'Star Enterprises',
@@ -44,13 +44,13 @@ export const DEFAULT_STORES = [
     city: 'Bhusawal',
     pincode: '425201',
     phone: '+91 93700 11653',
-    email: 'mazharq82@gmail.com',
+    email: 'owner@starenterprises.store',
     invoice_prefix: 'FE',
     is_active: true,
   },
 ];
 
-const STORES_CACHE_KEY = 'star_stores_cache';
+const STORES_CACHE_KEY = 'star_stores_cache_v2';
 const EXTRA_STORES_KEY = 'star_extra_stores';
 
 export function enrichStore(store) {
@@ -60,7 +60,8 @@ export function enrichStore(store) {
     ...directory,
     ...store,
     display_name: store.display_name || directory.display_name || store.name,
-    manager_name: store.manager_name || directory.manager_name || 'Unassigned',
+    manager_name: store.manager_name || directory.manager_name || 'Mazhar Sheikh',
+    city: store.city || 'Bhusawal',
   };
 }
 
@@ -106,7 +107,7 @@ export async function listStores() {
   try {
     const { data, error } = await supabase
       .from('stores')
-      .select('id, code, name, gstin, state_code, legal_name, trade_name, address_line1, city, pincode, phone, email, invoice_prefix, is_active')
+      .select('id, code, name, manager_name, gstin, state_code, legal_name, trade_name, address_line1, city, pincode, phone, email, invoice_prefix, is_active')
       .eq('is_active', true)
       .order('name');
 
@@ -130,7 +131,7 @@ export async function getStoreByCode(code) {
   try {
     const { data, error } = await supabase
       .from('stores')
-      .select('id, code, name, gstin, state_code, legal_name, trade_name, address_line1, city, pincode, phone, email, invoice_prefix, is_active')
+      .select('id, code, name, manager_name, gstin, state_code, legal_name, trade_name, address_line1, city, pincode, phone, email, invoice_prefix, is_active')
       .eq('code', code)
       .single();
 

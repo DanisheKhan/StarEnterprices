@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { useStores, useStore } from '@/features/stores';
 import { cn } from '@/shared/lib/cn';
@@ -28,7 +28,7 @@ export function AdminConsoleLayout() {
   const location = useLocation();
   const path = location.pathname;
   const { storeCode: paramStoreCode } = useParams();
-  const { user, signOut } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const { data: stores = [] } = useStores();
 
   // Mobile drawer open state
@@ -58,15 +58,19 @@ export function AdminConsoleLayout() {
     };
   }, []);
 
-  // Live real-time digital clock
+  // Live real-time 12-hour digital clock
   const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
     function updateClock() {
       const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      setCurrentTime(`${hours}:${minutes}`);
+      setCurrentTime(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
+      );
     }
     updateClock();
     const interval = setInterval(updateClock, 1000);
@@ -100,13 +104,28 @@ export function AdminConsoleLayout() {
     stores.find((s) => s.code === currentStoreCode)?.name ||
     'Star Furniture & Electronics';
 
-  const userName = user?.user_metadata?.full_name || 'Store Owner';
+  const userName = profile?.full_name || user?.user_metadata?.full_name || 'Mazhar Sheikh';
   const userInitials = userName
     .split(' ')
     .map((w) => w[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase() || 'SE';
+    .toUpperCase() || 'MS';
+
+  if (loading) {
+    return (
+      <div className="h-screen bg-console-bg text-text flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          <span className="text-xs text-muted font-medium">Verifying owner session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="h-screen bg-console-bg text-text flex font-sans overflow-hidden w-full max-w-full">
@@ -287,9 +306,9 @@ export function AdminConsoleLayout() {
           </nav>
         </div>
 
-        {/* Bottom Status Indicator */}
+        {/* Bottom Owner Indicator */}
         <div className="p-3 border-t border-sidebar-border shrink-0 text-center">
-          <span className="text-[11px] text-muted font-medium">Star Enterprises Console v2.0</span>
+          <span className="text-[11px] text-muted font-medium truncate block">{userName}</span>
         </div>
       </aside>
 

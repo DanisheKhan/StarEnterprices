@@ -17,7 +17,10 @@ export function useStores() {
       const extraCodes = new Set(extras.map((s) => s.code));
       return [...cached.filter((s) => !extraCodes.has(s.code)), ...extras];
     },
-    staleTime: 1000 * 60 * 10,
+    initialDataUpdatedAt: 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -35,13 +38,16 @@ export function useStore(code) {
       const cached = getCachedStores();
       if (cached) {
         const found = cached.find((s) => s.code === code);
-        if (found) return found;
+        if (found) return enrichStore(found);
       }
       const extra = getExtraStores().find((s) => s.code === code);
       if (extra) return extra;
       return DEFAULT_STORES.find((s) => s.code === code) || null;
     },
+    initialDataUpdatedAt: 0,
     enabled: Boolean(code),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }

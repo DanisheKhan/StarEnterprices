@@ -72,7 +72,8 @@ export async function getOwnerDashboardData({ dateRange = 'month', storeCode = '
       payQuery,
       supabase
         .from('products')
-        .select('id, store_id, name, sku, is_serialized, cost_price, selling_price, reorder_level, is_active, stores (id, name, code), categories (id, name, slug), inventory (quantity_on_hand)'),
+        .select('id, store_id, name, sku, is_serialized, cost_price, selling_price, reorder_level, is_active, stores (id, name, code), categories (id, name, slug), inventory (quantity_on_hand)')
+        .eq('is_active', true),
       supabase
         .from('stores')
         .select('id, name, code, invoice_prefix, gstin, city'),
@@ -420,8 +421,9 @@ export async function getOwnerDashboardData({ dateRange = 'month', storeCode = '
   }
 
   // 6. Business Action Engine (Calculated ROI Levers)
-  // Lever A: Critical Stockout Watchlist
-  const stockoutAlerts = filteredProducts
+  // Lever A: Critical Stockout Watchlist (compute full list per store before slicing for UI widget)
+  const allStockoutAlerts = filteredProducts
+    .filter((p) => p.is_active !== false)
     .map((p) => {
       const qty = p.inventory?.reduce((s, inv) => s + (inv.quantity_on_hand || 0), 0) ?? 0;
       const reorder = p.reorder_level ?? 2;
@@ -441,8 +443,9 @@ export async function getOwnerDashboardData({ dateRange = 'month', storeCode = '
       };
     })
     .filter((p) => p.currentStock <= p.reorderLevel)
-    .sort((a, b) => a.currentStock - b.currentStock)
-    .slice(0, 4);
+    .sort((a, b) => a.currentStock - b.currentStock);
+
+  const stockoutAlerts = allStockoutAlerts.slice(0, 4);
 
   // Lever B: High-Margin Accessory Attach Opportunity
   const phoneCat = categoryMatrix.find((c) => c.slug === 'smartphones');
@@ -632,7 +635,7 @@ export async function getOwnerDashboardData({ dateRange = 'month', storeCode = '
         {
           sales: b.sales,
           invoiceCount: b.invoices,
-          lowStockCount: stockoutAlerts.filter((s) => s.storeCode === b.code).length,
+          lowStockCount: allStockoutAlerts.filter((s) => s.storeCode === b.code).length,
         },
       ])
     ),

@@ -9,7 +9,7 @@ export const SITE = {
   description: 'Bhusawal’s flagship showroom for hallmark furniture, top-brand electronics, home appliances, and certified smartphones with official warranty, GST billing, and 0% EMI financing.',
   url: 'https://starenterprises.store',
   defaultImage: '/images/storePic.jpeg',
-  email: 'mazharq82@gmail.com',
+  email: 'owner@starenterprises.store',
   supportPhone: '+91 93700 11653',
   whatsappPhone: '919370011653',
   displayPhone: '+91 93700 11653',

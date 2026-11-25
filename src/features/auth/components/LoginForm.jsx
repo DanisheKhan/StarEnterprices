@@ -48,7 +48,7 @@ export function LoginForm({ onSuccess }) {
           id="email"
           type="email"
           label="Owner Email"
-          placeholder="mazharq82@gmail.com"
+          placeholder="owner@starenterprises.store"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -58,7 +58,7 @@ export function LoginForm({ onSuccess }) {
           id="password"
           type="password"
           label="Password"
-          placeholder="••••••••"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

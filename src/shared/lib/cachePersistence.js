@@ -6,7 +6,7 @@
  * while background network revalidation syncs live database changes immediately.
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const PREFIX = `star_cache_${CACHE_VERSION}_`;
 
 /**
@@ -195,35 +195,12 @@ export function getPersistentCache(key, maxAgeMs = 1000 * 60 * 60 * 24) {
 }
 
 /**
- * Returns instantaneous cached dashboard metrics for the launcher and reports
+ * Returns instantaneous cached dashboard metrics from localStorage if previously fetched.
+ * Never returns hardcoded fake seed numbers so live Supabase queries remain the source of truth.
  */
 export function getCachedDashboardData(dateRange = 'month', storeCode = 'all') {
   const cacheKey = `dashboard_${dateRange}_${storeCode}`;
-  const cached = getPersistentCache(cacheKey);
-  if (cached) return cached;
-
-  // Return verified real database seed for the default month/all view
-  if (dateRange === 'month' && storeCode === 'all') {
-    return VERIFIED_DASHBOARD_SEED;
-  }
-
-  // Filter seed by storeCode if available
-  if (dateRange === 'month' && storeCode !== 'all') {
-    const storeMetrics = VERIFIED_DASHBOARD_SEED.stores[storeCode];
-    if (storeMetrics) {
-      return {
-        ...VERIFIED_DASHBOARD_SEED,
-        summary: {
-          ...VERIFIED_DASHBOARD_SEED.summary,
-          totalSales: storeMetrics.sales,
-          invoiceCount: storeMetrics.invoiceCount,
-          totalInvoices: storeMetrics.invoiceCount,
-        },
-      };
-    }
-  }
-
-  return null;
+  return getPersistentCache(cacheKey);
 }
 
 /**

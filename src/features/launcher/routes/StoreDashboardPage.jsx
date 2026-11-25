@@ -115,7 +115,7 @@ export function StoreDashboardPage() {
   }, [dashboardData]);
 
   const storeName = currentStore?.name || (effectiveStoreCode === 'mobiles' ? 'Star Mobiles' : 'Star Furniture & Living');
-  const storeCity = currentStore?.city || 'Mumbai';
+  const storeCity = currentStore?.city || 'Bhusawal';
 
   return (
     <div className="space-y-6 min-w-0">

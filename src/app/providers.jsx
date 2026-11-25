@@ -11,12 +11,15 @@ function RealtimeSyncManager({ children }) {
   useEffect(() => {
     // Listen to changes across all financial, invoice, payment, and inventory tables
     const unsubscribe = subscribeToFinancialEvents((table) => {
-      if (table === 'invoices' || table === 'payments' || table === 'order_items') {
+      if (table === 'invoices' || table === 'payments' || table === 'order_items' || table === 'sales_returns') {
         qc.invalidateQueries({ queryKey: ['billing'] });
         qc.invalidateQueries({ queryKey: ['reports'] });
         qc.invalidateQueries({ queryKey: ['stores'] });
       } else if (table === 'inventory' || table === 'products' || table === 'product_units') {
         qc.invalidateQueries({ queryKey: ['inventory'] });
+        qc.invalidateQueries({ queryKey: ['reports'] });
+      } else if (table === 'stores') {
+        qc.invalidateQueries({ queryKey: ['stores'] });
         qc.invalidateQueries({ queryKey: ['reports'] });
       }
     });

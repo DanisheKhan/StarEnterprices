@@ -12,15 +12,16 @@ export function useOwnerOverview() {
   return useQuery({
     queryKey: reportKeys.owner(),
     queryFn: getOwnerOverview,
-    staleTime: 1000 * 60 * 3,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
 /**
  * Hook to retrieve full command center metrics for the Store Owner
- * Employs Stale-While-Revalidate (SWR) with verified persistent cache
- * Hydrates at 0ms latency, revalidating accurately in the background.
+ * Hydrates from verified persistent cache if available, and always revalidates
+ * immediately against live Supabase data + real-time subscriptions.
  *
  * @param {string | { dateRange?: 'today' | 'week' | 'month' | 'all', storeCode?: 'all' | 'mobiles' | 'furniture-electronics' }} [options]
  */
@@ -32,8 +33,11 @@ export function useOwnerDashboard(options = 'month') {
     queryKey: reportKeys.dashboard(dateRange, storeCode),
     queryFn: () => getOwnerDashboardData({ dateRange, storeCode }),
     initialData: () => getCachedDashboardData(dateRange, storeCode) || undefined,
-    staleTime: 1000 * 60 * 3,
-    refetchOnWindowFocus: false,
+    initialDataUpdatedAt: 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
     retry: 2,
   });
 }

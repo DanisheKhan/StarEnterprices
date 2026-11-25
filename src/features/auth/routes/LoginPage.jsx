@@ -1,18 +1,22 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Card, Button, Input, Badge } from '@/shared/ui';
 import { Seo } from '@/shared/seo';
 import { useAuth } from '../hooks/useAuth';
 import { getErrorMessage } from '@/shared/lib/errors';
-import { Shield, Key, ArrowRight, UserCheck, ArrowLeft } from 'lucide-react';
+import { Shield, Key, ArrowLeft } from 'lucide-react';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, loginAsPersona } = useAuth();
+  const { user, loading, signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
+
+  if (!loading && user) {
+    return <Navigate to="/admin" replace />;
+  }
 
   async function handleLoginSubmit(e) {
     e.preventDefault();
@@ -36,11 +40,6 @@ export function LoginPage() {
     } finally {
       setPending(false);
     }
-  }
-
-  function handleQuickLogin(role = 'owner') {
-    const target = loginAsPersona(role);
-    navigate(target);
   }
 
   return (
@@ -87,7 +86,8 @@ export function LoginPage() {
               id="login-email"
               type="email"
               label="Store Owner Email Address"
-              placeholder="e.g. mazharq82@gmail.com"
+              placeholder="e.g. owner@starenterprises.store"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -97,7 +97,8 @@ export function LoginPage() {
               id="login-password"
               type="password"
               label="Password"
-              placeholder="••••••••••••"
+              placeholder="Enter your password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -112,39 +113,6 @@ export function LoginPage() {
               <Key size={14} /> Sign In as Store Owner
             </Button>
           </form>
-
-          {/* Quick-Fill & Demo Master Credentials */}
-          <div className="pt-5 border-t border-border space-y-3">
-            <div className="flex items-center justify-between text-xs text-muted">
-              <span className="font-semibold text-text flex items-center gap-1.5">
-                <UserCheck size={14} /> Quick Demo Owner Access
-              </span>
-              <span>1-Click Sign-in</span>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              {/* Owner Quick Button */}
-              <div className="p-3 border border-border rounded-xl bg-bg flex items-center justify-between gap-3 min-w-0 transition-colors hover:border-text/30">
-                <div className="min-w-0">
-                  <div className="font-semibold text-text flex items-center gap-1.5 truncate">
-                    <Shield size={14} className="text-text shrink-0" />
-                    <span className="truncate">Store Owner (Full Business Access)</span>
-                  </div>
-                  <div className="text-[11px] text-muted font-mono truncate">
-                    mazharq82@gmail.com
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('owner')}
-                  className="text-xs cursor-pointer shrink-0 gap-1"
-                >
-                  Enter <ArrowRight size={12} />
-                </Button>
-              </div>
-            </div>
-          </div>
         </Card>
 
         {/* Security Notice */}
