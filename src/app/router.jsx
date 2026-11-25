@@ -1,7 +1,7 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Link } from 'react-router-dom';
 import { RootLayout } from './layouts/RootLayout';
 import { AdminConsoleLayout } from './layouts/AdminConsoleLayout';
-import { RouteErrorBoundary } from '@/shared/ui';
+import { Button, RouteErrorBoundary } from '@/shared/ui';
 import { lazyWithRetry } from '@/shared/lib/lazyWithRetry';
 
 const PublicHomePage = lazyWithRetry(() => import('@/features/catalog').then((m) => ({ default: m.PublicHomePage })));
@@ -32,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: 'login',
         element: <LoginPage />,
+      },
+      {
+        path: 'star-enterprises',
+        element: <Navigate to="/" replace />,
       },
     ],
   },
@@ -117,9 +121,26 @@ export const router = createBrowserRouter([
   {
     path: '*',
     element: (
-      <div className="py-24 text-center space-y-4">
-        <h1 className="text-2xl font-semibold">404 - Page Not Found</h1>
-        <p className="text-sm text-muted">The requested URL does not exist.</p>
+      <div className="min-h-dvh bg-bg text-text flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 text-center shadow-2xs space-y-4">
+          <div className="text-xs font-mono font-bold uppercase tracking-wider text-muted">
+            404 • Not Found
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            This page doesn&apos;t exist
+          </h1>
+          <p className="text-sm text-muted leading-relaxed">
+            It may have been moved, removed, or the URL may be incorrect.
+          </p>
+          <div className="pt-2 flex items-center justify-center gap-3">
+            <Button as={Link} to="/" variant="solid" size="sm">
+              Go to Storefront
+            </Button>
+            <Button as={Link} to="/admin" variant="outline" size="sm">
+              Admin Console
+            </Button>
+          </div>
+        </div>
       </div>
     ),
   },
