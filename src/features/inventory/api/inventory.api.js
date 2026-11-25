@@ -2,12 +2,7 @@ import { supabase } from '@/shared/lib/supabase';
 import { getProductImageUrl } from '@/shared/lib/productImages';
 import { getPersistentCache, setPersistentCache } from '@/shared/lib/cachePersistence';
 
-async function loadFallbackProducts() {
-  const mod = await import('@/features/catalog');
-  return mod.FALLBACK_PRODUCTS || [];
-}
-
-const INVENTORY_CACHE_PREFIX = 'star_inv_prods_';
+const INVENTORY_CACHE_PREFIX = 'star_inv_prods_v3_';
 
 const STORE_UUID_MAP = {
   mobiles: '83a779be-95ac-4b81-9c96-9589dfb7df38',
@@ -44,31 +39,8 @@ export async function listCategoriesByStore(storeId) {
     if (error) throw error;
     return data || [];
   } catch (err) {
-    console.warn('Network error listing categories, returning fallback list:', err);
-    const fallbackProducts = await loadFallbackProducts();
-    const storeProducts = fallbackProducts.filter((p) => {
-      return (
-        p.store_id === resolvedId ||
-        p.stores?.id === resolvedId ||
-        p.stores?.code === resolvedId ||
-        STORE_UUID_MAP[p.stores?.code] === resolvedId ||
-        STORE_UUID_MAP[p.stores?.id] === resolvedId
-      );
-    });
-    const uniqueCats = new Map();
-    storeProducts.forEach((p) => {
-      if (p.categories?.name) {
-        const catId = p.categories.id || p.categories.slug;
-        uniqueCats.set(catId, {
-          id: catId,
-          store_id: resolvedId,
-          name: p.categories.name,
-          slug: p.categories.slug,
-          is_active: true,
-        });
-      }
-    });
-    return Array.from(uniqueCats.values());
+    console.warn('Network error listing categories:', err);
+    return [];
   }
 }
 
@@ -139,11 +111,9 @@ export function getCachedStoreProducts(storeId) {
 }
 
 function setCachedStoreProducts(storeId, products) {
-  if (!storeId || !products) return;
+  if (!storeId || !Array.isArray(products)) return;
   try {
-    if (products.length > 0) {
-      localStorage.setItem(`${INVENTORY_CACHE_PREFIX}${storeId}`, JSON.stringify(products));
-    }
+    localStorage.setItem(`${INVENTORY_CACHE_PREFIX}${storeId}`, JSON.stringify(products));
   } catch {
     // Ignore localStorage write error
   }
@@ -189,23 +159,9 @@ export async function listProductsByStore({ storeId, categoryId, search } = {}) 
 
     return enriched;
   } catch (err) {
-    console.warn('Network error querying inventory by store, using cached/fallback:', err);
+    console.warn('Network error querying inventory by store, using cache:', err);
     const cached = getCachedStoreProducts(storeId);
-    if (cached && cached.length > 0) return cached;
-    const fallbackProducts = await loadFallbackProducts();
-    const fallbackForStore = fallbackProducts.filter((p) => {
-      return (
-        p.store_id === storeId ||
-        p.stores?.id === storeId ||
-        p.stores?.code === storeId ||
-        STORE_UUID_MAP[p.stores?.code] === storeId ||
-        STORE_UUID_MAP[p.stores?.id] === storeId
-      );
-    }).map((p) => ({
-      ...p,
-      image_url: getProductImageUrl(p),
-    }));
-    return fallbackForStore;
+    return Array.isArray(cached) ? cached : [];
   }
 }
 
@@ -726,16 +682,13 @@ export async function listAllProducts({ storeId, categoryId, search } = {}) {
       image_url: getProductImageUrl(p),
     }));
 
-    if (list.length > 0) {
-      if (!storeId && !categoryId && !search) {
-        setPersistentCache('all_products', list);
-      }
-      return list;
+    if (!storeId && !categoryId && !search) {
+      setPersistentCache('all_products', list);
     }
-    return getPersistentCache('all_products') || (await loadFallbackProducts());
+    return list;
   } catch (err) {
-    console.warn('Network error listing all products, using catalog fallback:', err);
-    return getPersistentCache('all_products') || (await loadFallbackProducts());
+    console.warn('Network error listing all products, using cache:', err);
+    return getPersistentCache('all_products') || [];
   }
 }
 

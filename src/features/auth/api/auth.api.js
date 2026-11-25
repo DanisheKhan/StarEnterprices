@@ -47,7 +47,7 @@ export async function getUserProfile(userId) {
   if (accessRes.error) throw accessRes.error;
 
   return {
-    profile: profileRes.data || { id: userId, full_name: 'Demo Staff', role: 'owner' },
+    profile: profileRes.data || { id: userId, full_name: 'Store Owner', role: 'owner' },
     storeAccess: accessRes.data || [],
   };
 }

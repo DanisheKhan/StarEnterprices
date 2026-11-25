@@ -4,10 +4,36 @@
  * localStorage persistence via requestIdleCallback.
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const PREFIX = `star_cache_${CACHE_VERSION}_`;
+const LEGACY_CLEANUP_KEY = 'star_cache_v3_migrated';
 const memoryCache = new Map();
 const pendingWrites = new Map();
+
+// One-time purge of legacy localStorage caches from pre-handoff demo runs
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+  try {
+    if (!localStorage.getItem(LEGACY_CLEANUP_KEY)) {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const k = localStorage.key(i);
+        if (
+          k &&
+          (k.startsWith('star_cache_v2_') ||
+            (k.startsWith('star_inv_prods_') && !k.startsWith('star_inv_prods_v3_')) ||
+            k === 'star_stores_cache_v3' ||
+            k === 'star_public_catalog_cache_v2')
+        ) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      localStorage.setItem(LEGACY_CLEANUP_KEY, '1');
+    }
+  } catch {
+    // Ignore storage access errors in restricted modes
+  }
+}
 
 function scheduleIdleWrite(storageKey, serialized) {
   pendingWrites.set(storageKey, serialized);

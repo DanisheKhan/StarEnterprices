@@ -50,7 +50,7 @@ export const DEFAULT_STORES = [
   },
 ];
 
-const STORES_CACHE_KEY = 'star_stores_cache_v3';
+const STORES_CACHE_KEY = 'star_stores_cache_v4';
 const EXTRA_STORES_KEY = 'star_extra_stores';
 
 export function enrichStore(store) {

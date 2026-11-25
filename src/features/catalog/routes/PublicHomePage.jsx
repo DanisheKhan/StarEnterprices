@@ -8,7 +8,6 @@ import { StoreHeroShowcase } from '../components/StoreHeroShowcase';
 import { StoreBrandsStrip } from '../components/StoreBrandsStrip';
 import { StoreDepartmentsSection } from '../components/StoreDepartmentsSection';
 import { StoreEmiCalculatorSection } from '../components/StoreEmiCalculatorSection';
-import { StoreReviewsSection } from '../components/StoreReviewsSection';
 import { StoreSpotlightSection } from '../components/StoreSpotlightSection';
 import { StoreFaqSection } from '../components/StoreFaqSection';
 import { StoreFooter } from '../components/StoreFooter';
@@ -310,6 +309,24 @@ export function PublicHomePage() {
               <div className="w-6 h-6 rounded-full border-2 border-brand-sage border-t-transparent animate-spin mx-auto" />
               <p className="text-xs text-muted">Loading showroom inventory...</p>
             </div>
+          ) : allProducts.length === 0 ? (
+            <div className="py-12 px-4 text-center border border-border rounded-xl bg-bg space-y-3">
+              <Layers size={26} className="mx-auto text-muted" />
+              <h3 className="text-sm font-semibold text-text">Showroom catalog is being updated</h3>
+              <p className="text-xs text-muted max-w-md mx-auto leading-relaxed">
+                Visit our Khadka Road, Bhusawal showroom or message us on WhatsApp for live stock availability, pricing, and 0% EMI options.
+              </p>
+              <a
+                href={`https://wa.me/${SITE.whatsappPhone}?text=${encodeURIComponent(
+                  'Hello Star Enterprises Bhusawal! Please share current product availability and showroom offers.'
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-text text-accent-fg hover:bg-accent text-xs font-semibold transition-colors mt-1"
+              >
+                <MessageCircle size={14} /> Enquire on WhatsApp
+              </a>
+            </div>
           ) : products.length === 0 ? (
             <div className="py-12 text-center border border-border rounded-xl bg-bg space-y-3">
               <Search size={26} className="mx-auto text-muted" />
@@ -534,10 +551,7 @@ export function PublicHomePage() {
       {/* 6. Showroom Visit & In-Person Experience */}
       <StoreSpotlightSection />
 
-      {/* 7. Local Bhusawal Customer Stories */}
-      <StoreReviewsSection />
-
-      {/* 8. Frequently Asked Questions */}
+      {/* 7. Frequently Asked Questions */}
       <StoreFaqSection />
 
       {/* 9. Minimal Enterprise Footer */}

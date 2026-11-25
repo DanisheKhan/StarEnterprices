@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui';
 import { formatCurrency, formatDate, formatPhone, amountToWords } from '@/shared/lib/format';
 import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { cn } from '@/shared/lib/cn';
+import { SITE } from '@/shared/lib/site';
 import { Printer, X } from 'lucide-react';
 
 /**
@@ -55,7 +56,7 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
   const totalTax = cgstAmount + sgstAmount + igstAmount || Math.round(Number(bill.total_tax_amount || 0));
   const taxableAmount = isGst ? Math.max(0, totalAmount - totalTax) : totalAmount;
 
-  const gstin = store.gstin || '27AAAAA0000A1Z5';
+  const gstin = store.gstin || SITE.gstin;
   const pan = gstin && gstin.length >= 12 ? gstin.substring(2, 12) : null;
 
   function handlePrint() {
@@ -84,7 +85,7 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
               STAR ENTERPRISES
             </span>
             <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 border-l border-slate-300 pl-2 uppercase">
-              EST. 2020
+              EST. 2013
             </span>
           </div>
           <div className="text-xs font-bold text-slate-800 tracking-wide mt-0.5">
@@ -125,8 +126,8 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
             {store.name || 'STAR ENTERPRISES'}
           </div>
           <div className="text-slate-800">
-            {store.address_line1 || 'Main Market Road'}, {store.city || 'Bhusawal'}
-            {store.pincode ? ` - ${store.pincode}` : ''}
+            {store.address_line1 || 'Khadka Road, Near Reliance Smart Bazar'}, {store.city || SITE.city}
+            {store.pincode ? ` - ${store.pincode}` : ` - ${SITE.pincode}`}
           </div>
           <div className="flex flex-wrap gap-x-3 text-slate-700">
             <div>
@@ -146,7 +147,7 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
             </div>
             <div>
               <span className="font-semibold text-slate-900">Phone:</span>{' '}
-              <span className="font-mono">{store.phone || '+91 93700 11653'}</span>
+              <span className="font-mono">{store.phone || SITE.displayPhone}</span>
             </div>
           </div>
         </div>

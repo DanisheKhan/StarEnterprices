@@ -4,6 +4,7 @@ import { Button, WhatsAppIcon } from '@/shared/ui';
 import { formatCurrency, formatDate, amountToWords } from '@/shared/lib/format';
 import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { cn } from '@/shared/lib/cn';
+import { SITE } from '@/shared/lib/site';
 import { Printer, X } from 'lucide-react';
 
 /**
@@ -82,7 +83,7 @@ export function InvoicePrintModal({ isOpen, onClose, invoiceDetail }) {
   const totalPaid = Math.round(payments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0));
   const balanceDue = Math.round(Math.max(grandTotal - totalPaid, 0));
 
-  const gstin = store.gstin || '27AATPQ6775F1ZV';
+  const gstin = store.gstin || SITE.gstin;
   const pan = gstin && gstin.length >= 12 ? gstin.substring(2, 12) : null;
 
   const isReturned = invoiceDetail.status === 'returned';
@@ -102,8 +103,8 @@ export function InvoicePrintModal({ isOpen, onClose, invoiceDetail }) {
 
   function handleShareWhatsApp() {
     const isDue = balanceDue > 0.01;
-    const storeName = store.name || 'Star Enterprises';
-    const storePhone = store.phone || '+91 93700 11653';
+    const storeName = store.name || SITE.name;
+    const storePhone = store.phone || SITE.displayPhone;
     const customerName = invoiceDetail.customer_name?.trim() || 'Valued Customer';
     const purchaseDate = invoiceDetail.created_at
       ? formatDate(invoiceDetail.created_at, false)
@@ -182,7 +183,7 @@ We appreciate your business and look forward to serving you again!`;
               STAR ENTERPRISES
             </span>
             <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 border-l border-slate-300 pl-2 uppercase">
-              EST. 2020
+              EST. 2013
             </span>
           </div>
           <div className="text-xs font-bold text-slate-800 tracking-wide mt-0.5">
@@ -221,8 +222,8 @@ We appreciate your business and look forward to serving you again!`;
             {store.name || 'STAR ENTERPRISES'}
           </div>
           <div className="text-slate-800">
-            {store.address_line1 || 'Shop 102, Main Road Market'}, {store.city || 'Mumbai'}
-            {store.pincode ? ` - ${store.pincode}` : ''}
+            {store.address_line1 || 'Khadka Road, Near Reliance Smart Bazar'}, {store.city || SITE.city}
+            {store.pincode ? ` - ${store.pincode}` : ` - ${SITE.pincode}`}
           </div>
           <div className="flex flex-wrap gap-x-3 text-slate-700">
             <div>
@@ -242,7 +243,7 @@ We appreciate your business and look forward to serving you again!`;
             </div>
             <div>
               <span className="font-semibold text-slate-900">Phone:</span>{' '}
-              <span className="font-mono">{store.phone || '+91 98200 12346'}</span>
+              <span className="font-mono">{store.phone || SITE.displayPhone}</span>
             </div>
           </div>
           {store.email && (
@@ -523,7 +524,7 @@ We appreciate your business and look forward to serving you again!`;
 
             <div className="text-[9px] text-slate-500 pt-1 border-t border-slate-200 flex items-center justify-between">
               <span>Warranty Active From: {formatDate(invoiceDetail.created_at, false)}</span>
-              <span>Store Support: {store.phone || '+91 98200 12346'}</span>
+              <span>Store Support: {store.phone || SITE.displayPhone}</span>
             </div>
           </div>
         </div>
@@ -596,7 +597,7 @@ We appreciate your business and look forward to serving you again!`;
             <li>Goods once sold will not be returned or exchanged without original tax invoice.</li>
             <li>Warranty on electronics and mobiles is handled directly by authorized brand service centres.</li>
             <li>Star Enterprises is not liable for data loss or physical/liquid damage post delivery.</li>
-            <li>All disputes subject to Mumbai / Bhusawal jurisdiction only.</li>
+            <li>All disputes subject to Bhusawal jurisdiction only.</li>
           </ol>
           <div className="pt-6">
             <div className="border-t border-slate-400 w-44 pt-1 text-center text-slate-700 font-medium">
