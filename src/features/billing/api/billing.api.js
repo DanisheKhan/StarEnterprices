@@ -71,7 +71,7 @@ export async function listAllInvoices({
       customer_region, customer_address, customer_city,
       subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, grand_total, status, created_at,
       stores (id, name, code, invoice_prefix, gstin, city),
-      payments (id, payment_method, amount, reference_number),
+      payments (id, payment_method, amount, reference_number, created_at),
       order_items (id, product_id, unit_id, item_name, serial_number, quantity, unit_price, discount, total_amount, gst_rate)
     `)
     .order('created_at', { ascending: false })
@@ -232,12 +232,14 @@ export async function getInvoiceDetail(invoiceId) {
       .eq('invoice_id', invoiceId),
     supabase
       .from('payments')
-      .select('id, payment_method, amount, reference_number')
-      .eq('invoice_id', invoiceId),
+      .select('id, payment_method, amount, reference_number, created_at')
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: true }),
     supabase
       .from('sales_returns')
       .select('id, return_number, refund_amount, gross_amount, deduction_amount, deduction_reason, refund_method, reason, notes, created_at')
-      .eq('invoice_id', invoiceId),
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: true }),
   ]);
 
   if (invRes.error) throw invRes.error;

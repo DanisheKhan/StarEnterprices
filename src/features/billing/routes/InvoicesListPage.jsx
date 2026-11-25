@@ -15,6 +15,7 @@ import {
 import { useAllInvoices, useInvoiceDetail } from '../hooks/useBilling';
 import { useStores } from '@/features/stores';
 import { InvoicePrintModal } from '../components/InvoicePrintModal';
+import { InvoicePaymentHistoryModal } from '../components/InvoicePaymentHistoryModal';
 import { EditInvoiceModal } from '../components/EditInvoiceModal';
 import { CollectPaymentModal } from '../components/CollectPaymentModal';
 import { ReturnProductModal } from '../components/ReturnProductModal';
@@ -35,6 +36,7 @@ import {
   FileSpreadsheet,
   LayoutGrid,
   Table as TableIcon,
+  History,
 } from 'lucide-react';
 
 const STATUS_FILTERS = [
@@ -71,6 +73,7 @@ export function InvoicesListPage() {
   // Modals state
   const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   const [viewingInvoiceId, setViewingInvoiceId] = useState(null);
+  const [historyInvoice, setHistoryInvoice] = useState(null);
   const [collectingInvoice, setCollectingInvoice] = useState(null);
   const [returningInvoice, setReturningInvoice] = useState(null);
 
@@ -480,6 +483,7 @@ We appreciate your business and look forward to serving you again!`;
                 invoice={inv}
                 storeName={matchedStore?.name || ''}
                 onViewPrint={(id) => setViewingInvoiceId(id)}
+                onViewHistory={(invoiceToInspect) => setHistoryInvoice(invoiceToInspect)}
                 onEdit={(id) => setEditingInvoiceId(id)}
                 onWhatsApp={(invoiceToShare) => handleSendWhatsApp(invoiceToShare)}
                 onCollect={(invoiceToCollect) => setCollectingInvoice(invoiceToCollect)}
@@ -500,6 +504,7 @@ We appreciate your business and look forward to serving you again!`;
                   invoice={inv}
                   storeName={matchedStore?.name || ''}
                   onViewPrint={(id) => setViewingInvoiceId(id)}
+                  onViewHistory={(invoiceToInspect) => setHistoryInvoice(invoiceToInspect)}
                   onEdit={(id) => setEditingInvoiceId(id)}
                   onWhatsApp={(invoiceToShare) => handleSendWhatsApp(invoiceToShare)}
                   onCollect={(invoiceToCollect) => setCollectingInvoice(invoiceToCollect)}
@@ -703,6 +708,17 @@ We appreciate your business and look forward to serving you again!`;
                         />
                       </button>
 
+                      {/* Slot 2.5: Payment History Timeline Button */}
+                      <button
+                        type="button"
+                        onClick={() => setHistoryInvoice(inv)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:border-brand-sage hover:text-brand-sage hover:bg-brand-sage-subtle cursor-pointer shadow-2xs transition-colors shrink-0"
+                        title="View Payment History & Installment Timeline"
+                        aria-label="Payment History"
+                      >
+                        <History size={14} className="shrink-0" />
+                      </button>
+
                       {/* Slot 3: Edit Button */}
                       <button
                         type="button"
@@ -768,6 +784,18 @@ We appreciate your business and look forward to serving you again!`;
           isOpen={Boolean(returningInvoice)}
           onClose={() => setReturningInvoice(null)}
           invoice={returningInvoice}
+        />
+      )}
+
+      {/* 9. Invoice Payment History Timeline Modal */}
+      {historyInvoice && (
+        <InvoicePaymentHistoryModal
+          isOpen={Boolean(historyInvoice)}
+          onClose={() => setHistoryInvoice(null)}
+          invoiceId={historyInvoice.id}
+          initialInvoice={historyInvoice}
+          onOpenPrint={(id) => setViewingInvoiceId(id)}
+          onOpenCollect={(invoiceToCollect) => setCollectingInvoice(invoiceToCollect)}
         />
       )}
     </div>

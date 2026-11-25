@@ -28,12 +28,14 @@ import {
   User,
   Phone,
   MapPin,
+  History,
 } from 'lucide-react';
 
 export const InvoiceCard = memo(function InvoiceCard({
   invoice,
   storeName = '',
   onViewPrint,
+  onViewHistory,
   onEdit,
   onWhatsApp,
   onCollect,
@@ -315,6 +317,15 @@ export const InvoiceCard = memo(function InvoiceCard({
           >
             <Printer size={13} className="shrink-0" />
             <span>Print</span>
+          </RecordCardAction>
+
+          <RecordCardAction
+            variant="sage"
+            onClick={() => onViewHistory?.(inv)}
+            title="View payment installments and invoice timeline"
+          >
+            <History size={13} className="shrink-0" />
+            <span>Payment History</span>
           </RecordCardAction>
 
           <RecordCardAction

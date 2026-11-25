@@ -46,6 +46,13 @@ export async function getDealerById(dealerId) {
     .single();
 
   if (error) throw error;
+  if (Array.isArray(data?.bills)) {
+    data.bills = [...data.bills].sort((a, b) => {
+      const dateDiff = String(b.bill_date || '').localeCompare(String(a.bill_date || ''));
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+  }
   return data;
 }
 
@@ -138,6 +145,7 @@ export async function listDealerBills({
         debit_notes:dealer_debit_notes(id, note_number, note_date, amount, reason, description)
       `)
       .order('bill_date', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit);
 
     if (dealerId) {

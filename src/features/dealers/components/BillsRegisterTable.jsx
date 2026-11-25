@@ -80,6 +80,10 @@ export function BillsRegisterTable({
       const matchStatus = statusFilter === 'all' || b.status === statusFilter;
 
       return matchSearch && matchDealer && matchType && matchStatus;
+    }).sort((a, b) => {
+      const dateDiff = String(b.bill_date || '').localeCompare(String(a.bill_date || ''));
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
   }, [bills, search, dealerFilter, billTypeFilter, statusFilter]);
 
