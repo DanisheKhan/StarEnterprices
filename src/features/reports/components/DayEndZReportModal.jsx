@@ -25,7 +25,7 @@ export function DayEndZReportModal({ isOpen, onClose, eodData = {} }) {
               {eodData.storeName || 'Star Enterprises'}
             </div>
             <div className="text-xs text-muted font-mono">
-              GSTIN: {eodData.gstin || '27AAAAA0000A1Z5'} • Operations Shift Register
+              GSTIN: {eodData.gstin || '27AATPQ6775F1ZV'} • Operations Shift Register
             </div>
             <div className="text-[11px] font-semibold text-brand-sage uppercase tracking-wider pt-0.5">
               OFFICIAL DAY-END Z-REPORT & CASHIER HANDOVER

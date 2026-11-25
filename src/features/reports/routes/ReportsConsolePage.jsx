@@ -1,153 +1,165 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useOwnerDashboard } from '../hooks/useReports';
-import { ExecutiveHeader } from '../components/ExecutiveHeader';
-import { ExecutiveStoreTelemetry } from '../components/ExecutiveStoreTelemetry';
-import { SalesVelocityTimeline } from '../components/SalesVelocityTimeline';
-import { MostSellingCategoryGraph } from '../components/MostSellingCategoryGraph';
-import { StarProductsSalesMatrix } from '../components/StarProductsSalesMatrix';
-import { PaymentAndBranchSplit } from '../components/PaymentAndBranchSplit';
-import {
-  LayoutDashboard,
-  Trophy,
-  BarChart3,
-  Info,
-} from 'lucide-react';
+import { ReportsControlBar } from '../components/ReportsControlBar';
+import { ReportsCoreKpis } from '../components/ReportsCoreKpis';
+import { StorePerformanceChart } from '../components/StorePerformanceChart';
+import { ManagerInsightsGrid } from '../components/ManagerInsightsGrid';
+import { ProfitDoublingLevers } from '../components/ProfitDoublingLevers';
+import { DayEndZReportModal } from '../components/DayEndZReportModal';
+import { getErrorMessage } from '@/shared/lib/errors';
+import { Info, AlertCircle } from 'lucide-react';
 
-const PERSPECTIVES = [
-  { id: 'overview', label: 'Overview & Performance', icon: LayoutDashboard },
-  { id: 'products', label: 'Star Products Sales Matrix', icon: Trophy, badge: 'Hero SKUs' },
-  { id: 'categories', label: 'Category Revenue Graph', icon: BarChart3, badge: 'Departments' },
-];
+const STORE_LABELS = {
+  all: 'All Branches (Enterprise)',
+  'furniture-electronics': 'Star Furniture & Electronics',
+  mobiles: 'Star Mobiles',
+};
+
+const DATE_RANGE_LABELS = {
+  today: 'Today',
+  week: 'Last 7 Days',
+  month: 'This Month',
+  all: 'All Time',
+};
 
 export function ReportsConsolePage() {
+  const { storeCode: routeStoreCode } = useParams();
+  const initialStore = routeStoreCode || 'all';
+  return <ReportsConsoleContent key={initialStore} initialStoreCode={initialStore} />;
+}
+
+function ReportsConsoleContent({ initialStoreCode }) {
   const [dateRange, setDateRange] = useState('month');
-  const [storeCode, setStoreCode] = useState('all');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [storeCode, setStoreCode] = useState(initialStoreCode);
+  const [isZReportOpen, setIsZReportOpen] = useState(false);
 
   const {
     data: dashboardData,
     isLoading,
+    error,
   } = useOwnerDashboard({ dateRange, storeCode });
 
   const summary = dashboardData?.summary || {};
-  const payments = dashboardData?.payments || {};
+  const thisMonthProfit = dashboardData?.thisMonthProfit || {};
+  const inventoryValuation = dashboardData?.inventoryValuation || {};
+  const periodComparison = dashboardData?.periodComparison || {};
+  const salesVelocity = dashboardData?.salesVelocity || [];
+  const lifetimeTimeline = dashboardData?.lifetimeTimeline || {};
   const branches = dashboardData?.branches || [];
   const categories = dashboardData?.categories || [];
   const starProducts = dashboardData?.starProducts || [];
-  const businessActions = dashboardData?.businessActions || {};
-  const recentInvoices = dashboardData?.recentInvoices || [];
-  const salesVelocity = dashboardData?.salesVelocity || [];
-  const periodComparison = dashboardData?.periodComparison || {};
+  const payments = dashboardData?.payments || {};
+  const regions = dashboardData?.regions || [];
+  const profitLevers = dashboardData?.profitLevers || {};
+
+  const activeBranchMeta = branches.find((b) => b.code === storeCode);
+  const eodData = {
+    storeName: activeBranchMeta?.name || 'Star Enterprises (Combined Branches)',
+    gstin: activeBranchMeta?.gstin || '27AATPQ6775F1ZV',
+    dateRangeLabel: DATE_RANGE_LABELS[dateRange] || dateRange,
+    openingInvoice: summary.openingInvoice || 'N/A',
+    closingInvoice: summary.closingInvoice || 'N/A',
+    totalInvoices: summary.totalInvoices ?? 0,
+    grossSales: summary.totalSales || 0,
+    totalCogs: summary.totalCogs || 0,
+    estimatedGrossProfit: summary.estimatedGrossProfit || 0,
+    grossMarginPercent: summary.grossMarginPercent || 0,
+    cgst: summary.cgstTotal ?? (summary.totalGst || 0) / 2,
+    sgst: summary.sgstTotal ?? (summary.totalGst || 0) / 2,
+    totalTax: summary.totalGst || 0,
+    totalDiscounts: summary.totalDiscount || 0,
+    cashDrawer: {
+      cashInTill: payments.cash || 0,
+      instantUpi: payments.upi || 0,
+      posCards: payments.card || 0,
+      estimatedCardMdr: payments.estimatedCardMdrCost || 0,
+      netCardDeposit: Math.max(0, (payments.card || 0) - (payments.estimatedCardMdrCost || 0)),
+      financierReceivable: payments.emi || 0,
+    },
+  };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* 1. Executive Control Header */}
-      <ExecutiveHeader
+    <div className="space-y-6 pb-12 min-w-0">
+      {/* 1. Control Header */}
+      <ReportsControlBar
         dateRange={dateRange}
         setDateRange={setDateRange}
         storeCode={storeCode}
         setStoreCode={setStoreCode}
+        onOpenZReport={() => setIsZReportOpen(true)}
+        activeStoreLabel={STORE_LABELS[storeCode] || 'All Branches'}
       />
 
-      {/* Zero Transaction Notice if current filter is empty */}
-      {summary.totalInvoices === 0 && !isLoading && (
-        <div className="p-3.5 rounded-lg border border-border bg-surface flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-muted">
-            <Info size={15} className="text-accent shrink-0" />
-            <span>
-              No transactions recorded for the selected filter ({dateRange === 'today' ? 'Today' : dateRange}).
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDateRange('month')}
-            className="text-text font-medium underline hover:text-accent cursor-pointer"
-          >
-            Switch to This Month (View Active Store Records)
-          </button>
+      {/* Error State */}
+      {error && (
+        <div className="p-4 rounded-xl border border-brand-crimson-border bg-brand-crimson-subtle/40 text-xs text-brand-crimson-text flex items-center gap-2">
+          <AlertCircle size={15} className="shrink-0" />
+          <span>Could not load report metrics: {getErrorMessage(error)}</span>
         </div>
       )}
 
-      {/* 2. Executive Store Telemetry & Data Assets Component */}
-      <ExecutiveStoreTelemetry
-        summary={summary}
-        businessActions={businessActions}
-        periodComparison={periodComparison}
-      />
-
-      {/* 3. Interactive Sales & Profit Velocity Timeline Graph */}
-      <SalesVelocityTimeline
-        salesVelocity={salesVelocity}
-        periodComparison={periodComparison}
-      />
-
-      {/* 4. Perspective Switcher Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-border overflow-x-auto pb-px">
-        {PERSPECTIVES.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
+      {/* Empty Period Hint */}
+      {summary.totalInvoices === 0 && !isLoading && !error && (
+        <div className="p-3.5 rounded-lg border border-border bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-muted">
+            <Info size={15} className="text-accent shrink-0" />
+            <span>
+              No bills recorded for {DATE_RANGE_LABELS[dateRange] || dateRange} in {STORE_LABELS[storeCode] || storeCode}.
+            </span>
+          </div>
+          {dateRange !== 'month' && (
             <button
-              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${
-                isActive
-                  ? 'border-text text-text font-semibold'
-                  : 'border-transparent text-muted hover:text-text hover:border-border'
-              }`}
+              onClick={() => setDateRange('month')}
+              className="text-text font-semibold underline hover:text-brand-sage-text cursor-pointer self-start sm:self-auto"
             >
-              <Icon size={14} className={isActive ? 'text-text' : 'text-muted'} />
-              <span>{tab.label}</span>
-              {tab.badge && (
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono border border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text font-medium">
-                  {tab.badge}
-                </span>
-              )}
+              Switch to This Month
             </button>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
 
-      {/* 5. Dynamic Perspective Viewport */}
-      <div className="pt-2 space-y-6">
-        {activeTab === 'overview' && (
-          <>
-            {/* Most Selling Category Revenue Graph */}
-            <MostSellingCategoryGraph
-              categories={categories}
-              totalSales={summary.totalSales || 0}
-            />
+      {/* 2. Core 4 KPIs (This Month Profit, Gross Profit Excl GST, Items Valuation, Billed Sales) */}
+      <ReportsCoreKpis
+        summary={summary}
+        thisMonthProfit={thisMonthProfit}
+        inventoryValuation={inventoryValuation}
+        periodComparison={periodComparison}
+        isLoading={isLoading}
+      />
 
-            {/* Star Products Sales Matrix */}
-            <StarProductsSalesMatrix
-              starProducts={starProducts}
-              totalSales={summary.totalSales || 0}
-            />
+      {/* 3. Store Performance Graph, Lifetime Timeline & Branch Comparison */}
+      <StorePerformanceChart
+        salesVelocity={salesVelocity}
+        lifetimeTimeline={lifetimeTimeline}
+        branches={branches}
+        dateRange={dateRange}
+      />
 
-            {/* Payment & Multi-Branch Split */}
-            <PaymentAndBranchSplit
-              payments={payments}
-              branches={branches}
-              recentInvoices={recentInvoices}
-            />
-          </>
-        )}
+      {/* 4. Manager Insights Grid (Most Selling Category, Star Product, EMI vs Cash Persons, Region) */}
+      <ManagerInsightsGrid
+        categories={categories}
+        starProducts={starProducts}
+        payments={payments}
+        regions={regions}
+      />
 
-        {activeTab === 'products' && (
-          <StarProductsSalesMatrix
-            starProducts={starProducts}
-            totalSales={summary.totalSales || 0}
-          />
-        )}
+      {/* 5. Actionable Profit-Doubling Levers */}
+      <ProfitDoublingLevers
+        profitLevers={profitLevers}
+        payments={payments}
+        storeCode={storeCode}
+      />
 
-        {activeTab === 'categories' && (
-          <MostSellingCategoryGraph
-            categories={categories}
-            totalSales={summary.totalSales || 0}
-          />
-        )}
-      </div>
+      {/* Printable EOD Z-Report Modal */}
+      {isZReportOpen && (
+        <DayEndZReportModal
+          isOpen={isZReportOpen}
+          onClose={() => setIsZReportOpen(false)}
+          eodData={eodData}
+        />
+      )}
     </div>
   );
 }

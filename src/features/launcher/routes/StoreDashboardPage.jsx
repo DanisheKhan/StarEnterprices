@@ -105,9 +105,16 @@ export function StoreDashboardPage() {
         profitMargin: '0.0',
       };
     }
-    const { totalSales = 0, totalCogs = 0, estimatedGrossProfit = 0, grossMarginPercent = 0 } = dashboardData.summary;
+    const {
+      totalSales = 0,
+      netRevenue = 0,
+      totalCogs = 0,
+      estimatedGrossProfit = 0,
+      grossMarginPercent = 0,
+    } = dashboardData.summary;
     return {
       totalSales: Math.round(totalSales),
+      netRevenue: Math.round(netRevenue),
       totalExpenses: Math.round(totalCogs),
       totalProfit: Math.round(estimatedGrossProfit),
       profitMargin: Number(grossMarginPercent || 0).toFixed(1),
@@ -191,7 +198,9 @@ export function StoreDashboardPage() {
             </div>
             <p className="text-xs text-muted flex items-center gap-1 truncate">
               <TrendingUp size={13} className="text-brand-sage shrink-0" />
-              <span className="truncate">Revenue across paid & counter sales</span>
+              <span className="truncate">
+                Net {formatCurrency(financialSummary.netRevenue || 0)} (Excl. GST)
+              </span>
             </p>
           </div>
         </div>
@@ -232,9 +241,9 @@ export function StoreDashboardPage() {
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-brand-sage-subtle text-brand-sage-text border border-brand-sage-border">
-                {financialSummary.profitMargin}% Net Margin
+                {financialSummary.profitMargin}% Gross Margin
               </span>
-              <span className="text-xs text-muted truncate">Sales minus expenses</span>
+              <span className="text-xs text-muted truncate">Net sales (excl. GST) minus COGS</span>
             </div>
           </div>
         </div>

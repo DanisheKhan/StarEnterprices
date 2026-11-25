@@ -87,6 +87,7 @@ export function POSPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
+  const [customerRegion, setCustomerRegion] = useState('Bhusawal Town');
   const [customerAddress, setCustomerAddress] = useState('');
 
   // Payment Tender State (Step 3)
@@ -522,7 +523,8 @@ export function POSPage() {
         customerName: resolvedCustomerName,
         customerPhone: resolvedCustomerPhone,
         customerGstin: customerGstin.trim().toUpperCase() || null,
-        notes: customerAddress.trim() || null,
+        customerRegion: customerRegion.trim() || 'Bhusawal Town',
+        customerAddress: customerAddress.trim() || null,
         items: cart.map((item) => {
           const itemGross = (item.selling_price || 0) * (item.quantity || 1);
           const itemShareDiscount = grossTotal > 0 ? (billDiscountAmount * itemGross) / grossTotal : 0;
@@ -548,6 +550,7 @@ export function POSPage() {
       setCustomerName('');
       setCustomerPhone('');
       setCustomerGstin('');
+      setCustomerRegion('Bhusawal Town');
       setCustomerAddress('');
       setCashTendered('');
       setPaymentReference('');
@@ -1139,6 +1142,8 @@ export function POSPage() {
                       setCustomerName(match.name);
                       setCustomerPhone(match.phone);
                       setCustomerGstin(match.gstin || '');
+                      setCustomerRegion(match.region || 'Bhusawal Town');
+                      if (match.address) setCustomerAddress(match.address);
                       setCustomerType(match.gstin ? 'registered' : 'walkin');
                       if (errorMessage) setErrorMessage('');
                     }}
@@ -1149,6 +1154,36 @@ export function POSPage() {
                 ))}
               </div>
             )}
+
+            {/* Customer Region / Area */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-medium text-muted block">Customer Area / Region</span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Bhusawal Town',
+                  'Khadka / Varangaon Rd',
+                  'Jalgaon City',
+                  'Jamner / Bodwad',
+                  'Raver / Yawal',
+                  'Muktainagar',
+                  'Outstation',
+                ].map((regionOption) => (
+                  <button
+                    key={regionOption}
+                    type="button"
+                    onClick={() => setCustomerRegion(regionOption)}
+                    className={cn(
+                      'px-2.5 py-1 rounded-md border text-xs font-medium cursor-pointer transition-colors',
+                      customerRegion === regionOption
+                        ? 'bg-accent text-accent-fg border-accent'
+                        : 'bg-surface text-muted border-border hover:text-text'
+                    )}
+                  >
+                    {regionOption}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Customer Address */}
             <div className="space-y-1.5">

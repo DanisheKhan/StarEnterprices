@@ -241,7 +241,7 @@ export function AdminConsoleLayout() {
                 onMouseEnter={() => import('@/features/reports').catch(() => {})}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors',
-                  path === '/admin/reports'
+                  isReportsActive
                     ? 'bg-sidebar-active text-sidebar-active-fg font-semibold border border-border shadow-2xs'
                     : 'text-sidebar-text hover:text-sidebar-text-hover hover:bg-sidebar-surface font-medium'
                 )}
@@ -315,21 +315,6 @@ export function AdminConsoleLayout() {
               >
                 <Barcode size={15} className="shrink-0" />
                 <span>Serial Number</span>
-              </Link>
-
-              {/* 5. Reports & P&L */}
-              <Link
-                to={`${basePath}/reports`}
-                onMouseEnter={() => import('@/features/reports').catch(() => {})}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-colors',
-                  isReportsActive
-                    ? 'bg-sidebar-active text-sidebar-active-fg font-semibold border border-border shadow-2xs'
-                    : 'text-sidebar-text hover:text-sidebar-text-hover hover:bg-sidebar-surface font-medium'
-                )}
-              >
-                <BarChart3 size={15} className="shrink-0" />
-                <span>Reports &amp; P&amp;L</span>
               </Link>
             </div>
           </nav>

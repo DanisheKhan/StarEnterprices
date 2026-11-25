@@ -9,6 +9,8 @@ export async function placeSale({
   customerName = 'Walk-in Customer',
   customerPhone = null,
   customerGstin = null,
+  customerRegion = null,
+  customerAddress = null,
   items,
   payments,
 }) {
@@ -19,6 +21,8 @@ export async function placeSale({
     p_customer_gstin: customerGstin,
     p_items: items,
     p_payments: payments,
+    p_customer_region: customerRegion,
+    p_customer_address: customerAddress,
   });
 
   if (error) throw error;
@@ -405,7 +409,7 @@ export async function searchCustomersByPhone(phonePrefix) {
 
   const { data, error } = await supabase
     .from('invoices')
-    .select('id, customer_name, customer_phone, customer_gstin, created_at')
+    .select('id, customer_name, customer_phone, customer_gstin, customer_region, customer_address, created_at')
     .ilike('customer_phone', `%${digits}%`)
     .neq('status', 'void')
     .order('created_at', { ascending: false })
@@ -423,6 +427,8 @@ export async function searchCustomersByPhone(phonePrefix) {
       name: row.customer_name || 'Walk-in Customer',
       phone: row.customer_phone,
       gstin: row.customer_gstin || '',
+      region: row.customer_region || 'Bhusawal Town',
+      address: row.customer_address || '',
     });
     if (matches.length >= 5) break;
   }
