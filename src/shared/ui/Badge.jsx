@@ -2,29 +2,34 @@ import { cn } from '@/shared/lib/cn';
 
 const variants = {
   default: 'border-border bg-surface-subtle text-text',
-  success: 'border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text font-medium',
-  sage: 'border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text font-medium',
-  amber: 'border-pastel-amber-border bg-pastel-amber text-pastel-amber-text font-medium',
-  warning: 'border-pastel-amber-border bg-pastel-amber text-pastel-amber-text font-medium',
-  danger: 'border-danger/20 bg-danger/10 text-danger font-medium',
-  accent: 'border-accent bg-accent text-accent-fg font-medium',
+  outline: 'border-border bg-surface text-muted',
+  success: 'border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text',
+  sage: 'border-brand-sage-border bg-brand-sage-subtle text-brand-sage-text',
+  amber: 'border-pastel-amber-border bg-pastel-amber text-pastel-amber-text',
+  warning: 'border-pastel-amber-border bg-pastel-amber text-pastel-amber-text',
+  purple: 'border-pastel-purple-border bg-pastel-purple text-pastel-purple-text',
+  blue: 'border-brand-blue-border bg-brand-blue-subtle text-brand-blue-text',
+  danger: 'border-brand-crimson-border bg-brand-crimson-subtle text-brand-crimson-text',
+  crimson: 'border-brand-crimson-border bg-brand-crimson-subtle text-brand-crimson-text',
+  accent: 'border-accent bg-accent text-accent-fg',
 };
 
 /**
- * Modern status badge.
+ * Token-driven status badge consistent across light and dark themes.
  * @param {Object} props
- * @param {'default'|'success'|'sage'|'amber'|'warning'|'danger'|'accent'} [props.variant]
+ * @param {'default'|'outline'|'success'|'sage'|'amber'|'warning'|'purple'|'blue'|'danger'|'crimson'|'accent'} [props.variant]
  * @param {string} [props.className]
- * @param {React.ReactNode} props.children
+ * @param {import('react').ReactNode} props.children
  */
-export function Badge({ variant = 'default', className, children }) {
+export function Badge({ variant = 'default', className, children, ...rest }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold whitespace-nowrap shrink-0 select-none',
-        variants[variant],
+        'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold whitespace-nowrap shrink-0 select-none',
+        variants[variant] || variants.default,
         className
       )}
+      {...rest}
     >
       {children}
     </span>

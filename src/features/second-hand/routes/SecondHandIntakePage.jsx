@@ -13,12 +13,19 @@ import {
   TableRow,
   TableCell,
   TableHeaderCell,
+  RecordCard,
+  RecordCardHeader,
+  RecordCardBody,
+  RecordCardSection,
+  RecordCardSectionTitle,
+  RecordCardFooter,
+  RecordCardAction,
 } from '@/shared/ui';
 import { useBuybackIntakes, useCreateBuybackIntake } from '../hooks/useSecondHand';
-import { formatCurrency, formatDate } from '@/shared/lib/format';
+import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import { isValidIndianPhone, isValidImei, cleanPhone } from '@/shared/lib/validation';
 import { getErrorMessage } from '@/shared/lib/errors';
-import { Plus, ShieldAlert, FileText, Printer } from 'lucide-react';
+import { Plus, ShieldAlert, FileText, Printer, Smartphone, User, Calendar, Phone, Barcode } from 'lucide-react';
 
 export function SecondHandIntakePage() {
   const { store } = useOutletContext();
@@ -151,56 +158,35 @@ export function SecondHandIntakePage() {
           No second-hand intake records yet. Click "New Device Intake" to start a buyback.
         </Card>
       ) : (
-        <Table className="table-auto w-full">
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Seller & Contact</TableHeaderCell>
-              <TableHeaderCell>Device & Model</TableHeaderCell>
-              <TableHeaderCell>IMEI Number</TableHeaderCell>
-              <TableHeaderCell>Grade</TableHeaderCell>
-              <TableHeaderCell>Buyback Price</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <>
+          {/* Mobile Structured RecordCards View */}
+          <div className="space-y-3.5 md:hidden">
             {intakes.map((intake) => (
-              <TableRow key={intake.id}>
-                <TableCell>
-                  <div className="font-medium text-text truncate max-w-44 leading-tight" title={intake.seller_name}>
-                    {intake.seller_name}
+              <RecordCard key={intake.id}>
+                <RecordCardHeader>
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="w-7 h-7 rounded-lg bg-brand-sage-subtle border border-brand-sage-border text-brand-sage flex items-center justify-center shrink-0">
+                      <Smartphone size={14} />
+                    </span>
+                    <span className="font-bold text-sm text-text truncate">
+                      {intake.brand_name} {intake.model_name}
+                    </span>
+                    <Badge
+                      variant={intake.calculated_grade === 'A+' ? 'success' : 'default'}
+                      className="text-[10px] font-bold uppercase px-2 py-0.5"
+                    >
+                      Grade {intake.calculated_grade}
+                    </Badge>
                   </div>
-                  <div className="text-xs text-muted truncate max-w-44 leading-tight" title={`${intake.seller_phone} (${intake.seller_id_type.toUpperCase()})`}>
-                    {intake.seller_phone} ({intake.seller_id_type.toUpperCase()})
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium truncate max-w-44 leading-tight" title={`${intake.brand_name} ${intake.model_name}`}>
-                    {intake.brand_name} {intake.model_name}
-                  </div>
-                  <div className="text-xs text-muted whitespace-nowrap">{formatDate(intake.created_at)}</div>
-                </TableCell>
-                <TableCell className="font-mono text-xs font-medium whitespace-nowrap">
-                  {intake.imei}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={intake.calculated_grade === 'A+' ? 'success' : 'default'} className="h-5">
-                    Grade {intake.calculated_grade}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-medium whitespace-nowrap">
-                  {formatCurrency(intake.agreed_price)}
-                </TableCell>
-                <TableCell>
                   <Badge
-                    className="h-5"
                     variant={
                       intake.status === 'added_to_stock'
                         ? 'success'
                         : intake.status === 'rejected'
                         ? 'danger'
-                        : 'accent'
+                        : 'sage'
                     }
+                    className="text-[10px] font-bold uppercase px-2 py-0.5"
                   >
                     {intake.status === 'intake_completed'
                       ? 'Intake Completed'
@@ -210,23 +196,135 @@ export function SecondHandIntakePage() {
                       ? 'Rejected'
                       : 'Draft'}
                   </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end h-8">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 py-1 px-2.5 inline-flex items-center gap-1.5 cursor-pointer"
-                      onClick={() => setSelectedIntake(intake)}
-                    >
-                      <FileText size={14} /> Receipt
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+                </RecordCardHeader>
+
+                <RecordCardBody>
+                  <RecordCardSection className="space-y-1.5">
+                    <RecordCardSectionTitle icon={User}>Seller KYC</RecordCardSectionTitle>
+                    <div className="font-bold text-sm text-text truncate">{intake.seller_name}</div>
+                    <div className="text-xs text-muted flex items-center gap-1.5 font-mono">
+                      <Phone size={11} className="shrink-0" />
+                      <span>{formatPhone(intake.seller_phone)}</span>
+                    </div>
+                    <div className="text-[11px] font-mono text-muted uppercase">
+                      {intake.seller_id_type} • {intake.seller_id_number}
+                    </div>
+                  </RecordCardSection>
+
+                  <RecordCardSection className="space-y-1.5">
+                    <RecordCardSectionTitle icon={Barcode}>Device &amp; IMEI</RecordCardSectionTitle>
+                    <div className="font-mono text-xs font-semibold text-brand-sage-text">
+                      IMEI: {intake.imei}
+                    </div>
+                    <div className="text-[11px] text-muted flex items-center gap-1.5">
+                      <Calendar size={11} className="shrink-0" />
+                      <span>{formatDate(intake.created_at)}</span>
+                    </div>
+                  </RecordCardSection>
+
+                  <RecordCardSection className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                      Agreed Payout
+                    </span>
+                    <span className="font-mono tabular-nums text-lg font-bold text-text">
+                      {formatCurrency(intake.agreed_price)}
+                    </span>
+                  </RecordCardSection>
+                </RecordCardBody>
+
+                <RecordCardFooter>
+                  <div className="text-xs text-muted">Buyback intake record</div>
+                  <RecordCardAction
+                    variant="neutral"
+                    onClick={() => setSelectedIntake(intake)}
+                  >
+                    <FileText size={13} className="shrink-0" />
+                    <span>Receipt</span>
+                  </RecordCardAction>
+                </RecordCardFooter>
+              </RecordCard>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+
+          <div className="hidden md:block">
+            <Table className="table-auto w-full">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Seller & Contact</TableHeaderCell>
+                  <TableHeaderCell>Device & Model</TableHeaderCell>
+                  <TableHeaderCell>IMEI Number</TableHeaderCell>
+                  <TableHeaderCell>Grade</TableHeaderCell>
+                  <TableHeaderCell>Buyback Price</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {intakes.map((intake) => (
+                  <TableRow key={intake.id}>
+                    <TableCell>
+                      <div className="font-medium text-text truncate max-w-44 leading-tight" title={intake.seller_name}>
+                        {intake.seller_name}
+                      </div>
+                      <div className="text-xs text-muted truncate max-w-44 leading-tight" title={`${intake.seller_phone} (${intake.seller_id_type.toUpperCase()})`}>
+                        {intake.seller_phone} ({intake.seller_id_type.toUpperCase()})
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium truncate max-w-44 leading-tight" title={`${intake.brand_name} ${intake.model_name}`}>
+                        {intake.brand_name} {intake.model_name}
+                      </div>
+                      <div className="text-xs text-muted whitespace-nowrap">{formatDate(intake.created_at)}</div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs font-medium whitespace-nowrap">
+                      {intake.imei}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={intake.calculated_grade === 'A+' ? 'success' : 'default'} className="h-5">
+                        Grade {intake.calculated_grade}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {formatCurrency(intake.agreed_price)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className="h-5"
+                        variant={
+                          intake.status === 'added_to_stock'
+                            ? 'success'
+                            : intake.status === 'rejected'
+                            ? 'danger'
+                            : 'accent'
+                        }
+                      >
+                        {intake.status === 'intake_completed'
+                          ? 'Intake Completed'
+                          : intake.status === 'added_to_stock'
+                          ? 'In Stock'
+                          : intake.status === 'rejected'
+                          ? 'Rejected'
+                          : 'Draft'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end h-8">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 py-1 px-2.5 inline-flex items-center gap-1.5 cursor-pointer"
+                          onClick={() => setSelectedIntake(intake)}
+                        >
+                          <FileText size={14} /> Receipt
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {/* New Device Intake Modal */}

@@ -1,8 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { LoadingState } from '@/shared/ui';
+import {
+  Badge,
+  LoadingState,
+  RecordCard,
+  RecordCardHeader,
+  RecordCardBody,
+  RecordCardSection,
+  RecordCardSectionTitle,
+  RecordCardFooter,
+  RecordCardAction,
+} from '@/shared/ui';
 import { formatCurrency, formatPhone } from '@/shared/lib/format';
-import { cn } from '@/shared/lib/cn';
 import {
   Search,
   Building2,
@@ -175,15 +184,12 @@ export function DealerDirectoryTable({
             const initials = (d.brand_name || d.name || 'DL').slice(0, 2).toUpperCase();
 
             return (
-              <div
-                key={d.id}
-                className="bg-surface border border-border rounded-xl shadow-2xs hover:border-brand-sage/40 transition-all overflow-hidden"
-              >
+              <RecordCard key={d.id}>
                 {/* 1. Header: Brand Identity & Balance Status */}
-                <div className="px-4 py-3 bg-surface-subtle/70 border-b border-border flex flex-wrap items-center justify-between gap-2.5">
+                <RecordCardHeader>
                   <div className="flex items-center gap-3 min-w-0">
                     {/* Brand Avatar */}
-                    <div className="w-9 h-9 rounded-lg bg-brand-sage-subtle border border-brand-sage-border/60 text-brand-sage flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                    <div className="w-9 h-9 rounded-lg bg-brand-sage-subtle border border-brand-sage-border text-brand-sage-text flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                       {initials}
                     </div>
 
@@ -197,15 +203,15 @@ export function DealerDirectoryTable({
                         </Link>
 
                         {/* Category Badge */}
-                        <span
-                          className={cn(
-                            'text-[10px] font-semibold px-2 py-0.5 rounded border shrink-0',
+                        <Badge
+                          variant={
                             d.dealer_type === 'brand_direct'
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              ? 'blue'
                               : d.dealer_type === 'distributor'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          )}
+                              ? 'purple'
+                              : 'sage'
+                          }
+                          className="text-[10px] font-semibold px-2 py-0.5"
                         >
                           {d.dealer_type === 'brand_direct'
                             ? 'OEM / Brand Direct'
@@ -214,7 +220,7 @@ export function DealerDirectoryTable({
                             : d.dealer_type === 'wholesaler'
                             ? 'Wholesaler'
                             : 'Local Vendor'}
-                        </span>
+                        </Badge>
 
                         {d.brand_name && d.brand_name !== d.name && (
                           <span className="text-xs text-muted font-medium">
@@ -231,44 +237,45 @@ export function DealerDirectoryTable({
                             <span>{d.city}</span>
                           </span>
                         )}
-                        {d.city && d.contact_person && <span>•</span>}
+                        {d.city && d.contact_person && <span aria-hidden="true">•</span>}
                         {d.contact_person && (
-                          <span>Contact: <strong>{d.contact_person}</strong></span>
+                          <span>
+                            Contact: <strong className="text-text font-medium">{d.contact_person}</strong>
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Balance status indicator */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     {overdueAmount > 0 ? (
-                      <span className="text-[11px] font-bold text-brand-crimson bg-brand-crimson-subtle border border-brand-crimson-border rounded px-2.5 py-0.5 flex items-center gap-1">
-                        <AlertCircle size={12} className="shrink-0" />
+                      <Badge variant="danger" className="text-[11px] font-bold px-2.5 py-0.5">
+                        <AlertCircle size={11} className="shrink-0" />
                         <span>{formatCurrency(overdueAmount)} Overdue</span>
-                      </span>
+                      </Badge>
                     ) : totalBalance > 0 ? (
-                      <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-300 rounded px-2.5 py-0.5">
+                      <Badge variant="amber" className="text-[11px] font-semibold px-2.5 py-0.5">
                         Balance Active
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2.5 py-0.5 flex items-center gap-1">
-                        <CheckCircle2 size={12} />
+                      <Badge variant="success" className="text-[11px] font-semibold px-2.5 py-0.5">
+                        <CheckCircle2 size={11} className="shrink-0" />
                         <span>Khata Settled</span>
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                </div>
+                </RecordCardHeader>
 
                 {/* 2. Body Grid: Contact / Billing / Financials */}
-                <div className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                <RecordCardBody>
                   {/* Column A: Contact & Compliance */}
-                  <div className="space-y-1.5 md:col-span-4 md:border-r md:border-border/60 md:pr-4 text-xs">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <Phone size={12} className="text-brand-sage" />
-                      <span>Contact & Compliance</span>
-                    </div>
+                  <RecordCardSection className="md:col-span-4 space-y-2 text-xs">
+                    <RecordCardSectionTitle icon={Phone}>
+                      Contact & Compliance
+                    </RecordCardSectionTitle>
 
-                    <div className="space-y-1 pt-0.5">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted text-[11px]">Phone:</span>
                         <span className="font-mono font-medium text-text">
@@ -279,7 +286,7 @@ export function DealerDirectoryTable({
                       {d.gstin ? (
                         <div className="flex items-center gap-1.5">
                           <span className="text-muted text-[11px]">GSTIN:</span>
-                          <span className="font-mono font-bold text-brand-sage uppercase">
+                          <span className="font-mono font-bold text-brand-sage-text uppercase">
                             {d.gstin}
                           </span>
                         </div>
@@ -290,39 +297,38 @@ export function DealerDirectoryTable({
                       )}
 
                       {d.address && (
-                        <div className="text-[11px] text-muted truncate pt-0.5">
+                        <div className="text-[11px] text-muted truncate" title={d.address}>
                           {d.address}
                         </div>
                       )}
                     </div>
-                  </div>
+                  </RecordCardSection>
 
                   {/* Column B: Billing Terms & Credit Agreement */}
-                  <div className="space-y-1.5 md:col-span-4 md:border-r md:border-border/60 md:pr-4 text-xs">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <FileText size={12} className="text-brand-sage" />
-                      <span>Billing & Credit Terms</span>
-                    </div>
+                  <RecordCardSection className="md:col-span-4 space-y-2 text-xs">
+                    <RecordCardSectionTitle icon={FileText}>
+                      Billing & Credit Terms
+                    </RecordCardSectionTitle>
 
-                    <div className="space-y-1 pt-0.5">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-muted text-[11px]">Book Mode:</span>
-                        <span
-                          className={cn(
-                            'text-[10px] font-semibold px-2 py-0.5 rounded border',
+                        <Badge
+                          variant={
                             d.billing_mode === 'both'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              ? 'purple'
                               : d.billing_mode === 'gst'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          )}
+                              ? 'sage'
+                              : 'amber'
+                          }
+                          className="text-[10px] font-semibold px-2 py-0.5"
                         >
                           {d.billing_mode === 'both'
                             ? 'GST & Kaccha Separation'
                             : d.billing_mode === 'gst'
                             ? 'GST Invoices Only'
                             : 'Kaccha / Cash Only'}
-                        </span>
+                        </Badge>
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -333,7 +339,7 @@ export function DealerDirectoryTable({
                       </div>
 
                       {avgSpeed != null && (
-                        <div className="text-[11px] text-muted flex items-center gap-1">
+                        <div className="text-[11px] text-muted flex items-center gap-1.5">
                           <Clock size={11} className="text-muted shrink-0" />
                           <span>
                             Avg Clearance Speed: <strong className="text-text">{avgSpeed} days</strong>
@@ -341,48 +347,60 @@ export function DealerDirectoryTable({
                         </div>
                       )}
                     </div>
-                  </div>
+                  </RecordCardSection>
 
                   {/* Column C: Outstanding Khata Balance */}
-                  <div className="space-y-2 md:col-span-4 text-left md:text-right">
+                  <RecordCardSection className="md:col-span-4 flex flex-col justify-between gap-3 text-left md:text-right">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
                         Outstanding Khata Balance
                       </span>
-                      <span
-                        className={cn(
-                          'font-mono text-xl font-bold block',
-                          totalBalance > 0 ? 'text-brand-crimson' : 'text-emerald-600'
-                        )}
-                      >
-                        {totalBalance > 0 ? formatCurrency(totalBalance) : '₹0 (Settled)'}
-                      </span>
+                      {totalBalance > 0 ? (
+                        <span className="font-mono tabular-nums text-xl sm:text-2xl font-bold tracking-tight text-brand-crimson block">
+                          {formatCurrency(totalBalance)}
+                        </span>
+                      ) : (
+                        <div className="flex items-center md:justify-end gap-2 mt-1">
+                          <span className="font-mono tabular-nums text-xl sm:text-2xl font-bold tracking-tight text-brand-sage-text">
+                            ₹0
+                          </span>
+                          <Badge variant="success" className="text-[10px] px-2 py-0.5">
+                            Settled
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
                     {totalBalance > 0 && (
-                      <div className="pt-2 border-t border-border/60 flex items-center justify-between md:justify-end gap-3 text-xs">
+                      <div className="pt-2.5 border-t border-border/70 flex items-center justify-between md:justify-end gap-2.5 text-xs">
                         <div className="text-[11px] text-muted flex items-center gap-2 flex-wrap">
                           {gstBalance > 0 && (
                             <span>
-                              GST Book: <strong className="font-mono text-text">{formatCurrency(gstBalance)}</strong>
+                              GST Book:{' '}
+                              <strong className="font-mono tabular-nums text-text">
+                                {formatCurrency(gstBalance)}
+                              </strong>
                             </span>
                           )}
-                          {gstBalance > 0 && kacchaBalance > 0 && <span>•</span>}
+                          {gstBalance > 0 && kacchaBalance > 0 && <span aria-hidden="true">•</span>}
                           {kacchaBalance > 0 && (
                             <span>
-                              Kaccha Book: <strong className="font-mono text-amber-800">{formatCurrency(kacchaBalance)}</strong>
+                              Kaccha Book:{' '}
+                              <strong className="font-mono tabular-nums text-pastel-amber-text">
+                                {formatCurrency(kacchaBalance)}
+                              </strong>
                             </span>
                           )}
                         </div>
                       </div>
                     )}
-                  </div>
-                </div>
+                  </RecordCardSection>
+                </RecordCardBody>
 
                 {/* 3. Footer Toolbar Actions */}
-                <div className="px-4 py-2.5 bg-surface-subtle/40 border-t border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <RecordCardFooter>
                   {/* Left: Summary Metrics */}
-                  <div className="text-xs text-muted flex items-center gap-2 flex-wrap">
+                  <div className="text-xs text-muted flex items-center gap-x-2.5 gap-y-1 flex-wrap min-w-0">
                     <span>
                       Supplier Ledger ID:{' '}
                       <strong className="font-mono text-[11px] text-text">
@@ -391,8 +409,8 @@ export function DealerDirectoryTable({
                     </span>
                     {d.metrics?.totalBillsCount != null && (
                       <>
-                        <span>•</span>
-                        <span>
+                        <span aria-hidden="true">•</span>
+                        <span className="text-text font-medium">
                           {d.metrics.totalBillsCount}{' '}
                           {d.metrics.totalBillsCount === 1 ? 'bill recorded' : 'bills recorded'}
                         </span>
@@ -401,42 +419,40 @@ export function DealerDirectoryTable({
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    {/* Add Bill Link */}
-                    <Link
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto flex-wrap">
+                    <RecordCardAction
+                      as={Link}
                       to={`${basePath}/billing`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle shadow-2xs transition-all cursor-pointer font-medium"
+                      variant="neutral"
                       title={`Record purchase bill for ${d.name || d.brand_name}`}
                     >
-                      <Plus size={13} className="stroke-[2.5]" />
+                      <Plus size={13} className="stroke-[2.5] shrink-0" />
                       <span>New Bill</span>
-                    </Link>
+                    </RecordCardAction>
 
-                    {/* Pay Khata Button (if balance > 0) */}
                     {totalBalance > 0 && onOpenRecordPayment && (
-                      <button
-                        type="button"
+                      <RecordCardAction
+                        variant="amber-solid"
                         onClick={() => onOpenRecordPayment(d)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white shadow-2xs transition-all cursor-pointer font-medium"
                         title={`Record payment against balance of ${formatCurrency(totalBalance)}`}
                       >
-                        <CreditCard size={13} className="stroke-[2.5]" />
+                        <CreditCard size={13} className="stroke-[2.5] shrink-0" />
                         <span>Pay Khata ({formatCurrency(totalBalance)})</span>
-                      </button>
+                      </RecordCardAction>
                     )}
 
-                    {/* View Passbook / Complete Ledger */}
-                    <Link
+                    <RecordCardAction
+                      as={Link}
                       to={`${basePath}/${d.id}`}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-accent hover:bg-accent/90 active:scale-[0.99] text-accent-fg shadow-2xs transition-all cursor-pointer font-medium"
+                      variant="primary"
                       title="Open complete multi-book khata ledger and statement passbook"
                     >
                       <span>Passbook & Ledger</span>
-                      <ArrowRight size={13} />
-                    </Link>
+                      <ArrowRight size={13} className="shrink-0" />
+                    </RecordCardAction>
                   </div>
-                </div>
-              </div>
+                </RecordCardFooter>
+              </RecordCard>
             );
           })}
         </div>

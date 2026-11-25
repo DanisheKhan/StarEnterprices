@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, LoadingState } from '@/shared/ui';
+import { Badge, Card, LoadingState, RecordCardAction } from '@/shared/ui';
 import { useDealerStatement } from '../hooks/useDealers';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import {
@@ -37,7 +37,7 @@ export function DealerKhataLedger({
       <Card className="p-5 bg-surface border border-border rounded-xl shadow-2xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-brand-sage-subtle border border-brand-sage-border text-brand-sage flex items-center justify-center font-bold text-lg shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-brand-sage-subtle border border-brand-sage-border text-brand-sage-text flex items-center justify-center font-bold text-lg shrink-0">
               {dealer?.brand_name?.slice(0, 2).toUpperCase() || 'DL'}
             </div>
             <div>
@@ -45,13 +45,13 @@ export function DealerKhataLedger({
                 <h2 className="text-xl font-bold text-text">
                   {dealer?.brand_name || dealer?.name}
                 </h2>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-surface-subtle border border-border font-medium text-text">
+                <Badge variant="default" className="text-xs px-2.5 py-0.5 font-medium">
                   {dealer?.dealer_type?.replace('_', ' ').toUpperCase()}
-                </span>
+                </Badge>
                 {dealer?.billing_mode && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                  <Badge variant="purple" className="text-[10px] font-semibold px-2 py-0.5">
                     Mode: {dealer.billing_mode.toUpperCase()}
-                  </span>
+                  </Badge>
                 )}
               </div>
               <div className="text-xs text-muted mt-0.5">{dealer?.name}</div>
@@ -72,32 +72,24 @@ export function DealerKhataLedger({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-border bg-surface text-text hover:bg-surface-subtle active:scale-[0.99] shadow-2xs transition-all cursor-pointer"
-            >
-              <Printer size={14} />
+          <div className="flex flex-wrap items-center gap-2">
+            <RecordCardAction variant="neutral" onClick={handlePrint}>
+              <Printer size={13} />
               <span>Print Ledger</span>
-            </button>
+            </RecordCardAction>
 
-            <Link
-              to="/admin/dealers/billing"
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-xs transition-all cursor-pointer"
-            >
-              <Plus size={14} className="stroke-[2.5]" />
+            <RecordCardAction as={Link} to="/admin/dealers/billing" variant="primary">
+              <Plus size={13} className="stroke-[2.5]" />
               <span>Record Purchase Bill</span>
-            </Link>
+            </RecordCardAction>
 
-            <button
-              type="button"
+            <RecordCardAction
+              variant="sage-active"
               onClick={() => onOpenRecordPayment(dealer)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-brand-sage text-white hover:bg-brand-sage-hover active:scale-[0.99] shadow-xs transition-all cursor-pointer"
             >
-              <CreditCard size={14} className="stroke-[2.5]" />
+              <CreditCard size={13} className="stroke-[2.5]" />
               <span>Record Payment</span>
-            </button>
+            </RecordCardAction>
           </div>
         </div>
 
@@ -107,34 +99,34 @@ export function DealerKhataLedger({
             <div className="text-[11px] text-muted uppercase font-bold tracking-wider">
               Total Invoiced
             </div>
-            <div className="text-base font-bold font-mono text-text mt-1">
+            <div className="text-base font-bold font-mono tabular-nums text-text mt-1">
               {isLoading ? '...' : formatCurrency(statement?.totalBillsAmount || 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-surface-subtle border border-brand-sage-border/60">
-            <div className="text-[11px] text-brand-sage uppercase font-bold tracking-wider">
+          <div className="p-3 rounded-lg bg-brand-sage-subtle/50 border border-brand-sage-border">
+            <div className="text-[11px] text-brand-sage-text uppercase font-bold tracking-wider">
               Total Paid
             </div>
-            <div className="text-base font-bold font-mono text-brand-sage mt-1">
+            <div className="text-base font-bold font-mono tabular-nums text-brand-sage-text mt-1">
               {isLoading ? '...' : formatCurrency(statement?.totalPaidAmount || 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-surface-subtle border border-purple-200">
-            <div className="text-[11px] text-purple-800 uppercase font-bold tracking-wider">
+          <div className="p-3 rounded-lg bg-pastel-purple/60 border border-pastel-purple-border">
+            <div className="text-[11px] text-pastel-purple-text uppercase font-bold tracking-wider">
               Debit Notes (Returns)
             </div>
-            <div className="text-base font-bold font-mono text-purple-900 mt-1">
+            <div className="text-base font-bold font-mono tabular-nums text-pastel-purple-text mt-1">
               {isLoading ? '...' : formatCurrency(statement?.totalDebitsAmount || 0)}
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-surface-subtle border border-amber-300">
-            <div className="text-[11px] text-amber-900 uppercase font-bold tracking-wider">
+          <div className="p-3 rounded-lg bg-pastel-amber/60 border border-pastel-amber-border">
+            <div className="text-[11px] text-pastel-amber-text uppercase font-bold tracking-wider">
               Current Outstanding
             </div>
-            <div className="text-lg font-bold font-mono text-amber-950 mt-1">
+            <div className="text-lg font-bold font-mono tabular-nums text-pastel-amber-text mt-1">
               {isLoading ? '...' : formatCurrency(statement?.closingBalance || 0)}
             </div>
           </div>
@@ -212,23 +204,20 @@ export function DealerKhataLedger({
                         {formatDate(row.date, false)}
                       </span>
                       {isBill ? (
-                        <span
-                          className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
-                            row.billType === 'gst'
-                              ? 'bg-brand-sage-subtle text-brand-sage border-brand-sage-border'
-                              : 'bg-amber-50 text-amber-800 border-amber-300'
-                          }`}
+                        <Badge
+                          variant={row.billType === 'gst' ? 'sage' : 'amber'}
+                          className="text-[9px] font-bold uppercase px-1.5 py-0.5"
                         >
                           {row.billType === 'gst' ? 'GST Bill' : 'Kaccha'}
-                        </span>
+                        </Badge>
                       ) : isPayment ? (
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <Badge variant="success" className="text-[9px] font-bold uppercase px-1.5 py-0.5">
                           Payment
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300">
+                        <Badge variant="purple" className="text-[9px] font-bold uppercase px-1.5 py-0.5">
                           Debit Note
-                        </span>
+                        </Badge>
                       )}
                     </div>
                     <span className="font-mono font-semibold text-text truncate">{row.refNumber}</span>
@@ -238,17 +227,17 @@ export function DealerKhataLedger({
                     <p className="text-[11px] text-muted line-clamp-2">{row.description}</p>
                   )}
 
-                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/60 font-mono">
+                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/60 font-mono tabular-nums">
                     <div className="flex items-center gap-3">
                       {row.debit > 0 && (
                         <span className="text-text font-semibold">+{formatCurrency(row.debit)}</span>
                       )}
                       {row.credit > 0 && (
-                        <span className="text-brand-sage font-semibold">-{formatCurrency(row.credit)}</span>
+                        <span className="text-brand-sage-text font-semibold">-{formatCurrency(row.credit)}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-950 font-bold">Bal: {formatCurrency(row.runningBalance)}</span>
+                      <span className="text-pastel-amber-text font-bold">Bal: {formatCurrency(row.runningBalance)}</span>
                       {isBill && onOpenTimeline && (
                         <button
                           type="button"
@@ -317,23 +306,20 @@ export function DealerKhataLedger({
                       {/* Entry Type */}
                       <td className="py-2.5 px-3 whitespace-nowrap min-w-0">
                         {isBill ? (
-                          <span
-                            className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border inline-block ${
-                              row.billType === 'gst'
-                                ? 'bg-brand-sage-subtle text-brand-sage border-brand-sage-border'
-                                : 'bg-amber-50 text-amber-800 border-amber-300'
-                            }`}
+                          <Badge
+                            variant={row.billType === 'gst' ? 'sage' : 'amber'}
+                            className="text-[9px] font-bold uppercase px-1.5 py-0.5"
                           >
                             {row.billType === 'gst' ? 'GST Bill' : 'Kaccha'}
-                          </span>
+                          </Badge>
                         ) : isPayment ? (
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 inline-block">
+                          <Badge variant="success" className="text-[9px] font-bold uppercase px-1.5 py-0.5">
                             Payment
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300 inline-block">
+                          <Badge variant="purple" className="text-[9px] font-bold uppercase px-1.5 py-0.5">
                             Debit Note
-                          </span>
+                          </Badge>
                         )}
                       </td>
 
@@ -358,7 +344,7 @@ export function DealerKhataLedger({
                       </td>
 
                       {/* Running Balance */}
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-950 whitespace-nowrap min-w-0">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-pastel-amber-text whitespace-nowrap min-w-0">
                         {formatCurrency(row.runningBalance)}
                       </td>
 

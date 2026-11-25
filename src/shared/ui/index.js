@@ -2,6 +2,16 @@ export { Button } from './Button';
 export { Input } from './Input';
 export { Select } from './Select';
 export { Card } from './Card';
+export {
+  RecordCard,
+  RecordCardHeader,
+  RecordCardBody,
+  RecordCardSection,
+  RecordCardSectionTitle,
+  RecordCardLineItem,
+  RecordCardFooter,
+  RecordCardAction,
+} from './RecordCard';
 export { Badge } from './Badge';
 export { Container } from './Container';
 export { Modal } from './Modal';

@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Badge, RecordCard, RecordCardAction } from '@/shared/ui';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import {
@@ -92,12 +93,12 @@ export const ProductSerialCard = memo(function ProductSerialCard({
       : usedUnits.slice(0, INITIAL_RENDER_CAP);
 
   return (
-    <div className="rounded-xl border border-border bg-surface shadow-2xs overflow-hidden transition-colors">
+    <RecordCard>
       {/* Product Card Header */}
-      <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border bg-surface">
+      <div className="px-4 sm:px-5 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border bg-surface-subtle/60">
         <div className="flex items-start gap-3.5 min-w-0">
           {/* Thumbnail */}
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border border-border bg-bg/40 flex items-center justify-center shrink-0 overflow-hidden">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border border-border bg-surface flex items-center justify-center shrink-0 overflow-hidden">
             {product?.image_url ? (
               <img
                 src={product.image_url}
@@ -119,13 +120,13 @@ export const ProductSerialCard = memo(function ProductSerialCard({
           {/* Product Meta */}
           <div className="min-w-0 space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-surface-subtle border border-border text-muted uppercase tracking-wider">
+              <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 uppercase tracking-wider">
                 {product?.categories?.name || 'General'}
-              </span>
+              </Badge>
               {product?.brands?.name && product.brands.name !== '-' && (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-surface-subtle border border-border text-muted uppercase tracking-wider">
+                <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 uppercase tracking-wider">
                   {product.brands.name}
-                </span>
+                </Badge>
               )}
             </div>
 
@@ -137,8 +138,8 @@ export const ProductSerialCard = memo(function ProductSerialCard({
               {product?.sku && <span className="font-mono text-[11px]">SKU: {product.sku}</span>}
               {product?.selling_price > 0 && (
                 <>
-                  <span>•</span>
-                  <span className="font-semibold font-mono text-text">
+                  <span aria-hidden="true">•</span>
+                  <span className="font-semibold font-mono tabular-nums text-text">
                     {formatCurrency(product.selling_price)}
                   </span>
                 </>
@@ -148,40 +149,39 @@ export const ProductSerialCard = memo(function ProductSerialCard({
         </div>
 
         {/* Stock Badges & Card Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:self-center">
+        <div className="flex flex-wrap items-center gap-2 sm:self-center">
           {/* Stock Health status */}
           {isOutOfStock ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-danger/10 border border-danger/30 text-danger">
+            <Badge variant="danger" className="px-2.5 py-1 text-xs font-semibold">
               <AlertCircle size={12} className="shrink-0" />
               <span>Out of Stock</span>
-            </span>
+            </Badge>
           ) : isLowStock ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-600">
+            <Badge variant="amber" className="px-2.5 py-1 text-xs font-semibold">
               <AlertCircle size={12} className="shrink-0" />
               <span>Low Stock ({unusedCount})</span>
-            </span>
+            </Badge>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-sage-subtle border border-brand-sage-border text-brand-sage-text">
+            <Badge variant="success" className="px-2.5 py-1 text-xs font-semibold">
               <PackageCheck size={12} className="shrink-0 text-brand-sage" />
               <span>{unusedCount} In Stock</span>
-            </span>
+            </Badge>
           )}
 
           {/* Quick Add Serials specifically for this product */}
-          <button
-            type="button"
+          <RecordCardAction
+            variant="primary"
             onClick={() => onAddSerials?.(product?.id)}
-            className="inline-flex items-center gap-1.5 bg-accent text-accent-fg hover:opacity-95 active:scale-[0.99] font-semibold text-xs px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs"
           >
             <Plus size={13} className="stroke-[2.5]" />
             <span>Add Serials</span>
-          </button>
+          </RecordCardAction>
 
           {/* Expand/Collapse Toggle */}
           <button
             type="button"
             onClick={() => setIsExpanded((prev) => !prev)}
-            className="p-1.5 rounded-lg border border-border bg-surface hover:bg-surface-subtle text-muted hover:text-text cursor-pointer transition-colors"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-border bg-surface hover:bg-surface-subtle text-muted hover:text-text cursor-pointer transition-colors shadow-2xs"
             title={isExpanded ? 'Collapse serial units tray' : 'Expand serial units tray'}
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
@@ -439,6 +439,6 @@ export const ProductSerialCard = memo(function ProductSerialCard({
           )}
         </div>
       )}
-    </div>
+    </RecordCard>
   );
 });

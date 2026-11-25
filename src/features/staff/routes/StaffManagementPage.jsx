@@ -486,18 +486,18 @@ export function StaffManagementPage() {
         <div className="space-y-6">
           {/* Pending Leaves Callout */}
           {pendingLeaves.length > 0 && (
-            <Card className="p-4 sm:p-5 border-accent bg-surface space-y-3">
+            <Card className="p-4 sm:p-5 border-border bg-surface space-y-3 rounded-xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-text" />
+                  <Clock size={16} className="text-brand-sage" />
                   <h3 className="font-semibold text-text text-sm">
                     Pending Leave Requests ({pendingLeaves.length})
                   </h3>
                 </div>
-                <Badge variant="accent">Action Required</Badge>
+                <Badge variant="amber">Action Required</Badge>
               </div>
 
-              <div className="divide-y divide-border border border-border rounded-2xl bg-bg overflow-hidden">
+              <div className="divide-y divide-border border border-border rounded-xl bg-surface-subtle/50 overflow-hidden">
                 {pendingLeaves.map((leave) => (
                   <div key={leave.id} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div className="space-y-1 text-xs">

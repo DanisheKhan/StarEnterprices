@@ -616,15 +616,13 @@ We appreciate your business and look forward to serving you again!`;
                             ? 'amber'
                             : effectiveStatus === 'pending'
                             ? 'danger'
+                            : effectiveStatus === 'returned' || effectiveStatus === 'partially_returned'
+                            ? 'purple'
                             : effectiveStatus === 'void'
                             ? 'default'
                             : 'outline'
                         }
-                        className={cn(
-                          'text-[10px] font-semibold uppercase px-2 py-0.5 inline-flex justify-center',
-                          (effectiveStatus === 'returned' || effectiveStatus === 'partially_returned') &&
-                            'border-purple-300 text-purple-700 bg-purple-50'
-                        )}
+                        className="text-[10px] font-semibold uppercase px-2 py-0.5 inline-flex justify-center"
                       >
                         {effectiveStatus === 'partially_returned' ? 'Part Return' : effectiveStatus}
                       </Badge>

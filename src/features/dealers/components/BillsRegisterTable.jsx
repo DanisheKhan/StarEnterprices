@@ -1,7 +1,17 @@
 import { useState, useMemo } from 'react';
-import { Badge, LoadingState } from '@/shared/ui';
+import {
+  Badge,
+  LoadingState,
+  RecordCard,
+  RecordCardHeader,
+  RecordCardBody,
+  RecordCardSection,
+  RecordCardSectionTitle,
+  RecordCardLineItem,
+  RecordCardFooter,
+  RecordCardAction,
+} from '@/shared/ui';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
-import { cn } from '@/shared/lib/cn';
 import { DealerBillPrintModal } from './DealerBillPrintModal';
 import {
   FileText,
@@ -15,6 +25,8 @@ import {
   Clock,
   AlertCircle,
   Printer,
+  Phone,
+  CheckCircle2,
 } from 'lucide-react';
 
 export function BillsRegisterTable({
@@ -194,42 +206,37 @@ export function BillsRegisterTable({
             const paymentsCount = Array.isArray(b.payments) ? b.payments.length : 0;
 
             return (
-              <div
-                key={b.id}
-                className="bg-surface border border-border rounded-xl shadow-2xs hover:border-brand-sage/40 transition-all overflow-hidden"
-              >
+              <RecordCard key={b.id}>
                 {/* 1. Bill Section Header */}
-                <div className="px-4 py-3 bg-surface-subtle/70 border-b border-border flex flex-wrap items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    {/* Bill / Invoice Number */}
-                    <div className="flex items-center gap-1.5">
-                      <FileText size={15} className="text-brand-sage shrink-0" />
-                      <span className="font-mono font-bold text-sm text-text">
+                <RecordCardHeader>
+                  <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+                    {/* Bill / Invoice Number with icon badge */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-7 h-7 rounded-lg bg-brand-sage-subtle border border-brand-sage-border text-brand-sage flex items-center justify-center shrink-0">
+                        <FileText size={14} />
+                      </span>
+                      <span className="font-mono font-bold text-sm text-text tracking-tight">
                         #{b.bill_number}
                       </span>
                     </div>
 
                     {/* GST vs Kaccha Badge */}
-                    <span
-                      className={cn(
-                        'text-[10px] font-bold uppercase px-2 py-0.5 rounded border shrink-0',
-                        b.bill_type === 'gst'
-                          ? 'bg-brand-sage-subtle text-brand-sage border-brand-sage-border'
-                          : 'bg-amber-50 text-amber-800 border-amber-300'
-                      )}
+                    <Badge
+                      variant={b.bill_type === 'gst' ? 'sage' : 'amber'}
+                      className="text-[10px] font-bold uppercase px-2 py-0.5"
                     >
                       {b.bill_type === 'gst' ? 'GST Tax Invoice' : 'Kaccha / Estimate'}
-                    </span>
+                    </Badge>
 
                     {/* Bill Date */}
-                    <div className="flex items-center gap-1 text-xs text-muted font-medium">
+                    <div className="flex items-center gap-1.5 text-xs text-muted font-medium">
                       <Calendar size={13} className="shrink-0" />
                       <span>{b.bill_date ? formatDate(b.bill_date, false) : '—'}</span>
                     </div>
                   </div>
 
                   {/* Right: Payment Status Badge & Due Countdown */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     <Badge
                       variant={
                         b.status === 'paid'
@@ -238,92 +245,93 @@ export function BillsRegisterTable({
                           ? 'amber'
                           : 'danger'
                       }
-                      className="text-[10px] font-bold uppercase px-2 py-0.5"
+                      className="text-[10px] font-bold uppercase px-2.5 py-0.5"
                     >
-                      {b.status === 'paid'
-                        ? 'Fully Settled'
-                        : b.status === 'partially_paid'
-                        ? 'Partially Paid'
-                        : 'Unpaid'}
+                      {b.status === 'paid' && <CheckCircle2 size={11} className="shrink-0" />}
+                      <span>
+                        {b.status === 'paid'
+                          ? 'Fully Settled'
+                          : b.status === 'partially_paid'
+                          ? 'Partially Paid'
+                          : 'Unpaid'}
+                      </span>
                     </Badge>
 
                     {b.status === 'paid' ? (
-                      <span className="text-[11px] text-emerald-700 font-medium bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
-                        Cleared in {b.payment_days_taken || 0}d
-                      </span>
+                      b.payment_days_taken != null && (
+                        <Badge variant="outline" className="text-[11px] font-medium px-2 py-0.5">
+                          <Clock size={11} className="shrink-0" />
+                          <span>Cleared in {b.payment_days_taken || 0}d</span>
+                        </Badge>
+                      )
                     ) : b.isOverdue ? (
-                      <span className="text-[11px] text-brand-crimson font-bold bg-brand-crimson-subtle border border-brand-crimson-border rounded px-2 py-0.5 flex items-center gap-1">
+                      <Badge variant="danger" className="text-[11px] font-bold px-2.5 py-0.5">
                         <AlertCircle size={11} className="shrink-0" />
                         <span>{b.daysOverdue}d overdue! Pay dealer</span>
-                      </span>
+                      </Badge>
                     ) : b.daysUntilDue === 0 ? (
-                      <span className="text-[11px] text-amber-900 font-bold bg-amber-500/15 border border-amber-500/30 rounded px-2 py-0.5 flex items-center gap-1">
+                      <Badge variant="amber" className="text-[11px] font-bold px-2.5 py-0.5">
                         <Clock size={11} className="shrink-0" />
                         <span>Payment due today</span>
-                      </span>
+                      </Badge>
                     ) : b.daysUntilDue <= 7 ? (
-                      <span className="text-[11px] text-amber-800 font-semibold bg-amber-50 border border-amber-200 rounded px-2 py-0.5 flex items-center gap-1">
+                      <Badge variant="amber" className="text-[11px] font-semibold px-2.5 py-0.5">
                         <Clock size={11} className="shrink-0" />
                         <span>Due in {b.daysUntilDue}d</span>
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="text-[11px] text-muted bg-surface border border-border rounded px-2 py-0.5">
+                      <Badge variant="outline" className="text-[11px] font-medium px-2 py-0.5">
                         Due in {b.daysUntilDue}d ({b.credit_days}d credit)
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                </div>
+                </RecordCardHeader>
 
                 {/* 2. Bill Section Body (3-Column Breakdown) */}
-                <div className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                <RecordCardBody>
                   {/* Column A: Supplier / Brand Details */}
-                  <div className="space-y-1.5 md:col-span-4 md:border-r md:border-border/60 md:pr-4">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <Building2 size={12} className="text-brand-sage" />
-                      <span>Supplier / Brand Dealer</span>
-                    </div>
-                    <div className="font-bold text-sm text-text leading-snug">
+                  <RecordCardSection className="md:col-span-4 space-y-2">
+                    <RecordCardSectionTitle icon={Building2}>
+                      Supplier / Brand Dealer
+                    </RecordCardSectionTitle>
+
+                    <div className="font-bold text-sm text-text leading-snug truncate" title={b.dealer?.name || b.dealer?.brand_name}>
                       {b.dealer?.name || b.dealer?.brand_name || 'Unknown Supplier'}
                     </div>
-                    <div className="space-y-0.5 text-xs text-muted">
+                    <div className="space-y-1 text-xs text-muted">
                       {b.dealer?.phone && (
-                        <div className="font-mono">{formatPhone(b.dealer.phone)}</div>
+                        <div className="flex items-center gap-1.5 font-mono text-text/80">
+                          <Phone size={11} className="text-muted shrink-0" />
+                          <span>{formatPhone(b.dealer.phone)}</span>
+                        </div>
                       )}
                       {b.dealer?.gstin && b.bill_type === 'gst' && (
-                        <div className="text-[11px] font-mono text-brand-sage uppercase">
+                        <div className="text-[11px] font-mono text-brand-sage-text uppercase">
                           GSTIN: {b.dealer.gstin}
                         </div>
                       )}
                     </div>
-                  </div>
+                  </RecordCardSection>
 
                   {/* Column B: Items & What Was Bought */}
-                  <div className="space-y-1.5 md:col-span-5 md:border-r md:border-border/60 md:pr-4">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <Package size={12} className="text-brand-sage" />
-                      <span>Stock Bought / Description</span>
-                      {itemsCount > 0 && (
-                        <span className="text-[10px] font-normal text-muted lowercase">
-                          ({itemsCount} {itemsCount === 1 ? 'item' : 'items'})
-                        </span>
-                      )}
-                    </div>
+                  <RecordCardSection className="md:col-span-5 space-y-2">
+                    <RecordCardSectionTitle
+                      icon={Package}
+                      meta={itemsCount > 0 ? `(${itemsCount} ${itemsCount === 1 ? 'item' : 'items'})` : null}
+                    >
+                      Stock Bought / Description
+                    </RecordCardSectionTitle>
 
                     {itemsCount > 0 ? (
                       <div className="space-y-1.5">
                         {b.items.slice(0, 3).map((it, idx) => (
-                          <div
+                          <RecordCardLineItem
                             key={idx}
-                            className="flex items-center justify-between text-xs gap-2 p-1.5 rounded-lg bg-surface-subtle/50 border border-border/50"
-                          >
-                            <span className="text-text font-bold truncate">
-                              {it.name || it.description}
-                            </span>
-                            <span className="font-mono text-muted text-[11px] shrink-0 font-semibold">
-                              Qty: {it.quantity || 1}
-                              {it.unit_price ? ` × ₹${Number(it.unit_price).toLocaleString('en-IN')}` : ''}
-                            </span>
-                          </div>
+                            title={it.name || it.description || 'Item'}
+                            qtyLabel={`Qty: ${it.quantity || 1}${
+                              it.unit_price ? ` × ₹${Number(it.unit_price).toLocaleString('en-IN')}` : ''
+                            }`}
+                          />
                         ))}
                         {itemsCount > 3 && (
                           <div className="text-[11px] text-muted font-medium italic pl-1">
@@ -332,65 +340,73 @@ export function BillsRegisterTable({
                         )}
                       </div>
                     ) : b.notes ? (
-                      <p className="text-xs text-text font-medium italic leading-relaxed bg-surface-subtle/40 p-2 rounded-lg border border-border/50">
-                        "{b.notes}"
+                      <p className="text-xs text-text font-medium italic leading-relaxed bg-surface-subtle/70 px-3 py-2 rounded-lg border border-border/80">
+                        &ldquo;{b.notes}&rdquo;
                       </p>
                     ) : (
                       <p className="text-xs text-muted italic">
                         Consignment purchase entry
                       </p>
                     )}
-                  </div>
+                  </RecordCardSection>
 
                   {/* Column C: Financial Breakdown & Money to Give */}
-                  <div className="space-y-2 md:col-span-3 text-left md:text-right">
+                  <RecordCardSection className="md:col-span-3 flex flex-col justify-between gap-3 text-left md:text-right">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted block mb-1">
                         Total Purchase Cost
                       </span>
-                      <span className="font-mono text-xl font-bold text-text block">
+                      <span className="font-mono tabular-nums text-xl sm:text-2xl font-bold tracking-tight text-text block">
                         {formatCurrency(total)}
                       </span>
                       {b.bill_type === 'gst' && totalTax > 0 && (
-                        <span className="text-[10px] font-mono text-muted block mt-0.5">
+                        <span className="text-[11px] font-mono tabular-nums text-muted block mt-0.5">
                           (incl. {formatCurrency(totalTax)} GST)
                         </span>
                       )}
                     </div>
 
-                    <div className="pt-2 border-t border-border/60 flex items-center justify-between md:justify-end gap-3 text-xs">
-                      <span className="text-muted text-[11px] font-semibold">Money to Give:</span>
-                      <span
-                        className={cn(
-                          'font-mono font-bold text-base',
-                          balance > 0.01 ? 'text-brand-crimson' : 'text-emerald-600'
-                        )}
-                      >
-                        {balance > 0.01 ? formatCurrency(balance) : '₹0 (Settled)'}
+                    <div className="pt-2.5 border-t border-border/70 flex items-center justify-between md:justify-end gap-2.5 text-xs">
+                      <span className="text-muted text-[11px] font-semibold">
+                        Money to Give:
                       </span>
+                      {balance > 0.01 ? (
+                        <span className="font-mono tabular-nums font-bold text-base text-brand-crimson">
+                          {formatCurrency(balance)}
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono tabular-nums font-bold text-sm text-brand-sage-text">
+                            ₹0
+                          </span>
+                          <Badge variant="success" className="text-[10px] px-1.5 py-0">
+                            Settled
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </RecordCardSection>
+                </RecordCardBody>
 
                 {/* 3. Bill Section Footer & Actions */}
-                <div className="px-4 py-2.5 bg-surface-subtle/40 border-t border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <RecordCardFooter>
                   {/* Left: Summary Metrics */}
-                  <div className="flex items-center gap-2.5 text-xs text-muted flex-wrap">
+                  <div className="flex items-center gap-x-2.5 gap-y-1 text-xs text-muted flex-wrap min-w-0">
                     <span>
                       Paid so far:{' '}
-                      <strong className="font-mono text-text">{formatCurrency(paid)}</strong>
+                      <strong className="font-mono tabular-nums text-text">{formatCurrency(paid)}</strong>
                     </span>
-                    <span>•</span>
+                    <span aria-hidden="true">•</span>
                     <span>
                       Credit terms:{' '}
-                      <strong className="text-text font-medium">
+                      <strong className="text-text font-semibold">
                         {b.credit_days ? `${b.credit_days} days` : 'Immediate'}
                       </strong>
                     </span>
                     {paymentsCount > 0 && (
                       <>
-                        <span>•</span>
-                        <span className="text-emerald-700 font-medium">
+                        <span aria-hidden="true">•</span>
+                        <span className="text-text font-medium">
                           {paymentsCount} payment {paymentsCount === 1 ? 'voucher' : 'vouchers'} recorded
                         </span>
                       </>
@@ -398,46 +414,40 @@ export function BillsRegisterTable({
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    {/* Print Bill */}
-                    <button
-                      type="button"
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto flex-wrap">
+                    <RecordCardAction
+                      variant="neutral"
                       onClick={() => setPrintingBill(b)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-muted hover:border-brand-sage hover:text-brand-sage hover:bg-brand-sage-subtle shadow-2xs transition-all cursor-pointer"
                       title="Print purchase bill or voucher"
                     >
                       <Printer size={13} className="shrink-0" />
                       <span>Print</span>
-                    </button>
+                    </RecordCardAction>
 
-                    {/* Payment History & Timeline */}
                     {onOpenTimeline && (
-                      <button
-                        type="button"
+                      <RecordCardAction
+                        variant="sage"
                         onClick={() => onOpenTimeline(b.id, b)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface text-muted hover:border-brand-sage hover:text-brand-sage hover:bg-brand-sage-subtle shadow-2xs transition-all cursor-pointer"
                         title="View payment vouchers and timeline for this bill"
                       >
                         <History size={13} className="shrink-0" />
                         <span>Payment History</span>
-                      </button>
+                      </RecordCardAction>
                     )}
 
-                    {/* Give Money (if balance > 0) */}
                     {balance > 0.01 && onOpenRecordPayment && (
-                      <button
-                        type="button"
+                      <RecordCardAction
+                        variant="primary"
                         onClick={() => onOpenRecordPayment(b.dealer, b)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-accent-fg hover:bg-accent/90 active:scale-[0.99] shadow-2xs transition-all cursor-pointer"
                         title={`Give money to ${b.dealer?.name || 'dealer'}: ${formatCurrency(balance)}`}
                       >
-                        <Coins size={13} className="stroke-[2.5]" />
+                        <Coins size={13} className="stroke-[2.5] shrink-0" />
                         <span>Give Money ({formatCurrency(balance)})</span>
-                      </button>
+                      </RecordCardAction>
                     )}
                   </div>
-                </div>
-              </div>
+                </RecordCardFooter>
+              </RecordCard>
             );
           })}
         </div>
