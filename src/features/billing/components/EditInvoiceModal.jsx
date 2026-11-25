@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Modal, Button, Input, Badge } from '@/shared/ui';
-import { formatCurrency } from '@/shared/lib/format';
+import { Modal, Button, Input, CurrencyInput, TitleCaseInput, Badge } from '@/shared/ui';
+import { formatCurrency, toTitleCase } from '@/shared/lib/format';
 import { isValidIndianPhone, isValidGstin, cleanPhone } from '@/shared/lib/validation';
 import { useInvoiceDetail, useUpdateInvoice } from '../hooks/useBilling';
 import {
@@ -200,11 +200,11 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
       await updateInvoiceMutation.mutateAsync({
         invoiceId,
         updates: {
-          customer_name: customerName.trim(),
+          customer_name: toTitleCase(customerName.trim()),
           customer_phone: cleanPhone(customerPhone),
           customer_gstin: customerGstin.trim().toUpperCase() || null,
-          customer_city: customerCity.trim() || null,
-          customer_address: customerAddress.trim() || null,
+          customer_city: toTitleCase(customerCity.trim()) || null,
+          customer_address: toTitleCase(customerAddress.trim()) || null,
           status,
           subtotal: financialTotals.subtotal,
           cgst_amount: financialTotals.cgst,
@@ -212,7 +212,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
           grand_total: financialTotals.grandTotal,
           removedItemIds,
         },
-        items,
+        items: items.map((it) => ({ ...it, item_name: toTitleCase(it.item_name) })),
         payment: {
           id: paymentId,
           payment_method: paymentMethod,
@@ -257,6 +257,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
           <Input
             id="edit-customer-name"
             label="Customer Name"
+            titleCase
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="e.g. Rahul Sharma"
@@ -289,6 +290,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
           <Input
             id="edit-customer-city"
             label="City"
+            titleCase
             value={customerCity}
             onChange={(e) => setCustomerCity(e.target.value)}
             placeholder="e.g. Bhusawal, Jalgaon"
@@ -297,6 +299,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
             <Input
               id="edit-customer-address"
               label="Address"
+              titleCase
               value={customerAddress}
               onChange={(e) => setCustomerAddress(e.target.value)}
               placeholder="e.g. Khadka Road, Near Station, Bhusawal"
@@ -425,6 +428,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
                 <Input
                   id="new-item-name"
                   label="Item / Product Name"
+                  titleCase
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
                   placeholder="e.g. USB-C Cable"
@@ -435,10 +439,10 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
                 <Input
                   id="new-item-price"
                   label="Unit Price (₹)"
-                  type="number"
+                  formatCommas
                   value={newItemPrice}
                   onChange={(e) => setNewItemPrice(e.target.value)}
-                  placeholder="e.g. 1499"
+                  placeholder="e.g. 1,499"
                   required
                 />
               </div>
@@ -505,8 +509,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
                 return (
                   <tr key={it.id || idx} className="hover:bg-surface-subtle/50 transition-colors">
                     <td className="py-2.5 px-3 min-w-44">
-                      <input
-                        type="text"
+                      <TitleCaseInput
                         value={it.item_name}
                         onChange={(e) => handleItemChange(idx, 'item_name', e.target.value)}
                         className="w-full rounded border border-border bg-surface px-2 py-1 text-xs font-medium text-text focus:outline-brand-sage"
@@ -538,10 +541,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
                     </td>
 
                     <td className="py-2.5 px-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
+                      <CurrencyInput
                         value={it.unit_price}
                         onChange={(e) =>
                           handleItemChange(idx, 'unit_price', parseFloat(e.target.value) || 0)
@@ -552,10 +552,7 @@ function EditInvoiceForm({ invoiceDetail, invoiceId, onClose }) {
                     </td>
 
                     <td className="py-2.5 px-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
+                      <CurrencyInput
                         value={it.discount}
                         onChange={(e) =>
                           handleItemChange(idx, 'discount', parseFloat(e.target.value) || 0)

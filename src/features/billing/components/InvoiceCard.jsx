@@ -11,7 +11,7 @@ import {
   RecordCardFooter,
   RecordCardAction,
 } from '@/shared/ui';
-import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
+import { formatCurrency, formatDate, formatPhone, toTitleCase } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import {
   FileText,
@@ -163,8 +163,8 @@ export const InvoiceCard = memo(function InvoiceCard({
             Customer / Buyer
           </RecordCardSectionTitle>
 
-          <div className="font-bold text-sm text-text leading-snug truncate" title={inv.customer_name}>
-            {inv.customer_name || 'Walk-in Customer'}
+          <div className="font-bold text-sm text-text leading-snug truncate" title={toTitleCase(inv.customer_name)}>
+            {toTitleCase(inv.customer_name || 'Walk-in Customer')}
           </div>
 
           <div className="space-y-1 text-xs text-muted">
@@ -177,15 +177,15 @@ export const InvoiceCard = memo(function InvoiceCard({
             {(inv.customer_city || inv.customer_address) && (
               <div
                 className="text-[11px] text-muted flex items-start gap-1.5"
-                title={[inv.customer_address, inv.customer_city].filter(Boolean).join(', ')}
+                title={[toTitleCase(inv.customer_address), toTitleCase(inv.customer_city)].filter(Boolean).join(', ')}
               >
                 <MapPin size={11} className="shrink-0 mt-0.5" />
                 <span className="truncate">
                   {inv.customer_city
                     ? inv.customer_address
-                      ? `${inv.customer_city} — ${inv.customer_address}`
-                      : inv.customer_city
-                    : inv.customer_address}
+                      ? `${toTitleCase(inv.customer_city)} — ${toTitleCase(inv.customer_address)}`
+                      : toTitleCase(inv.customer_city)
+                    : toTitleCase(inv.customer_address)}
                 </span>
               </div>
             )}

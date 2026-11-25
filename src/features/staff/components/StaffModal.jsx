@@ -128,6 +128,7 @@ function StaffForm({ staffToEdit, stores, onClose }) {
         <Input
           id="emp-name"
           label="Full Name"
+          titleCase
           placeholder="e.g. Imran Khan"
           value={formData.full_name}
           onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
@@ -176,7 +177,7 @@ function StaffForm({ staffToEdit, stores, onClose }) {
         <div>
           <Input
             id="emp-salary"
-            type="number"
+            formatCommas
             label="Monthly Base Salary (₹)"
             value={formData.base_salary}
             onChange={(e) => setFormData({ ...formData, base_salary: e.target.value })}
@@ -227,6 +228,7 @@ function StaffForm({ staffToEdit, stores, onClose }) {
           <Input
             id="emp-bank"
             label="Bank Name"
+            titleCase
             placeholder="HDFC / SBI / ICICI"
             value={formData.bank_name}
             onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}

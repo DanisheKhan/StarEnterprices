@@ -56,13 +56,13 @@ export function ProfitDoublingLevers({
               {highValueOppCount} bills
             </div>
             <p className="text-xs text-muted leading-relaxed">
-              Full Cash/UPI bills of ₹15k+ ({formatCurrency(highValueOppAmount)}) in this period without EMI financing.
+              Full Cash/UPI bills of ₹15,000+ ({formatCurrency(highValueOppAmount)}) in this period without EMI financing.
             </p>
           </div>
           <div className="pt-2 border-t border-border text-[11px] text-text font-medium">
             {cashVsEmi.emiMultiplier
               ? `EMI bills average ${cashVsEmi.emiMultiplier}x Cash bills — pitch Bajaj/TVS 0% EMI for higher-margin models.`
-              : 'Pitch Bajaj Finserv / TVS 0% EMI on ₹15k+ items to upgrade customers to higher-margin tiers.'}
+              : 'Pitch Bajaj Finserv / TVS 0% EMI on ₹15,000+ items to upgrade customers to higher-margin tiers.'}
           </div>
         </div>
 

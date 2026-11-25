@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOutletContext, useNavigate, useParams, Link } from 'react-router-dom';
-import { Badge, Button } from '@/shared/ui';
+import { Badge, Button, CurrencyInput, TitleCaseInput } from '@/shared/ui';
 import { useDealers } from '../hooks/useDealers';
 import { createDealerBill } from '../api/dealers.api';
 import { AddDealerModal } from '../components/AddDealerModal';
@@ -920,10 +920,8 @@ export function PurchaseBillingPage() {
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-bold text-lg">₹</span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="e.g. 199999"
+                    <CurrencyInput
+                      placeholder="e.g. 1,99,999"
                       value={lumpSumAmount}
                       onChange={(e) => setLumpSumAmount(e.target.value)}
                       className="w-full h-14 pl-9 pr-4 text-xl font-bold font-mono rounded-xl border border-border bg-surface-subtle text-text focus:outline-none focus:ring-2 focus:ring-brand-sage/20 focus:border-brand-sage"
@@ -947,8 +945,7 @@ export function PurchaseBillingPage() {
                         <label className="block text-[10px] font-bold uppercase text-muted mb-1">
                           Item Description / Model
                         </label>
-                        <input
-                          type="text"
+                        <TitleCaseInput
                           placeholder="e.g. Samsung 55 Crystal 4K Smart TV / 7-Seater Teakwood Sofa"
                           value={it.name}
                           onChange={(e) => handleUpdateItemRow(it.id, 'name', e.target.value)}
@@ -973,9 +970,7 @@ export function PurchaseBillingPage() {
                         <label className="block text-[10px] font-bold uppercase text-muted mb-1">
                           Unit Rate (₹)
                         </label>
-                        <input
-                          type="number"
-                          min="0"
+                        <CurrencyInput
                           placeholder="0"
                           value={it.unitPrice}
                           onChange={(e) => handleUpdateItemRow(it.id, 'unitPrice', e.target.value)}
@@ -1228,8 +1223,7 @@ export function PurchaseBillingPage() {
                   <label className="block text-xs font-semibold text-text mb-1.5">
                     Cash Payment Notes / Cash Register Reference
                   </label>
-                  <input
-                    type="text"
+                  <TitleCaseInput
                     placeholder="e.g. Paid in full from shop daily cash drawer"
                     value={fullPaymentNotes}
                     onChange={(e) => setFullPaymentNotes(e.target.value)}
@@ -1338,9 +1332,7 @@ export function PurchaseBillingPage() {
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted font-bold text-xs">₹</span>
-                      <input
-                        type="number"
-                        min="0"
+                      <CurrencyInput
                         placeholder="0 (None)"
                         value={cashAmount}
                         onChange={(e) => setCashAmount(e.target.value)}
@@ -1353,8 +1345,7 @@ export function PurchaseBillingPage() {
                     <label className="block text-xs font-semibold text-text mb-1.5">
                       Cash Note / Receipt Slip
                     </label>
-                    <input
-                      type="text"
+                    <TitleCaseInput
                       placeholder="e.g. Paid in cash to tempo driver upon unloading"
                       value={cashNotes}
                       onChange={(e) => setCashNotes(e.target.value)}
@@ -1370,9 +1361,7 @@ export function PurchaseBillingPage() {
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted font-bold text-xs">₹</span>
-                      <input
-                        type="number"
-                        min="0"
+                      <CurrencyInput
                         placeholder="0 (None)"
                         value={onlineAmount}
                         onChange={(e) => setOnlineAmount(e.target.value)}
@@ -1462,9 +1451,7 @@ export function PurchaseBillingPage() {
                             </label>
                             <div className="relative">
                               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted font-bold text-xs">₹</span>
-                              <input
-                                type="number"
-                                min="0"
+                              <CurrencyInput
                                 placeholder="0"
                                 value={chq.amount}
                                 onChange={(e) => handleUpdateChequeRow(chq.id, 'amount', e.target.value)}
@@ -1517,8 +1504,7 @@ export function PurchaseBillingPage() {
 
                         {chq.bankName === 'Other Bank' && (
                           <div>
-                            <input
-                              type="text"
+                            <TitleCaseInput
                               placeholder="Enter custom bank name..."
                               value={chq.customBankName}
                               onChange={(e) => handleUpdateChequeRow(chq.id, 'customBankName', e.target.value)}
@@ -1607,8 +1593,7 @@ export function PurchaseBillingPage() {
                   <label className="block text-xs font-semibold text-text mb-1.5">
                     Store Promise / Settlement Notes
                   </label>
-                  <input
-                    type="text"
+                  <TitleCaseInput
                     placeholder="e.g. Promised balance via RTGS after showroom weekend sales"
                     value={promiseNotes}
                     onChange={(e) => setPromiseNotes(e.target.value)}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/shared/ui';
-import { formatCurrency, formatDate, formatPhone, amountToWords } from '@/shared/lib/format';
+import { formatCurrency, formatDate, formatPhone, amountToWords, toTitleCase } from '@/shared/lib/format';
 import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { cn } from '@/shared/lib/cn';
 import { SITE } from '@/shared/lib/site';
@@ -158,11 +158,11 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
             Supplier / Brand Dealer (Consignor):
           </div>
           <div className="font-bold text-sm tracking-wide text-slate-950">
-            {dealer.name || dealer.brand_name || 'Vendor / Wholesaler'}
+            {toTitleCase(dealer.name || dealer.brand_name || 'Vendor / Wholesaler')}
           </div>
           {dealer.contact_person && dealer.contact_person !== dealer.name && (
             <div>
-              <span className="font-semibold text-slate-900">Contact Person:</span> {dealer.contact_person}
+              <span className="font-semibold text-slate-900">Contact Person:</span> {toTitleCase(dealer.contact_person)}
             </div>
           )}
           {dealer.phone && (
@@ -182,7 +182,7 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
             </span>
           </div>
           {dealer.address && (
-            <div className="text-slate-700">{dealer.address}</div>
+            <div className="text-slate-700">{toTitleCase(dealer.address)}</div>
           )}
         </div>
       </div>
@@ -275,7 +275,7 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
                   <tr key={idx} className="border-b border-slate-900">
                     <td className="border border-slate-900 p-2 text-center text-slate-600">{idx + 1}</td>
                     <td className="border border-slate-900 p-2">
-                      <div className="font-bold text-slate-950">{it.name || it.description}</div>
+                      <div className="font-bold text-slate-950">{toTitleCase(it.name || it.description)}</div>
                     </td>
                     <td className="border border-slate-900 p-2 text-center font-semibold text-slate-950">{qty}</td>
                     <td className="border border-slate-900 p-2 text-right font-mono tabular-nums">
@@ -312,7 +312,7 @@ export function DealerBillPrintModal({ isOpen, onClose, bill, currentStore }) {
                   className="border border-slate-900 p-2 italic text-slate-700"
                   colSpan={isGst ? 7 : 3}
                 >
-                  {bill.notes || 'Consignment / Wholesale Stock Purchase Entry'}
+                  {toTitleCase(bill.notes || 'Consignment / Wholesale Stock Purchase Entry')}
                 </td>
                 <td className="border border-slate-900 p-2 text-right font-bold font-mono tabular-nums text-slate-950">
                   {formatCurrency(totalAmount, true)}

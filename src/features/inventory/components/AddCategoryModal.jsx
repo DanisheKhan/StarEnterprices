@@ -81,6 +81,7 @@ export function AddCategoryModal({ storeId, storeName, isOpen, onClose, onSucces
         <Input
           id="custom-category-name"
           label="Category Name"
+          titleCase
           placeholder="e.g. Ergonomic Office Chairs, Gaming Consoles..."
           value={name}
           onChange={(e) => setName(e.target.value)}

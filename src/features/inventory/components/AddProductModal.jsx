@@ -91,6 +91,11 @@ export function AddProductModal({ storeId, storeCode = 'mobiles', isOpen, onClos
       return;
     }
 
+    if (cp > sp) {
+      setError('Cost price cannot exceed the selling price (this would block POS billing).');
+      return;
+    }
+
     setError('');
     setImageError('');
     try {
@@ -151,6 +156,7 @@ export function AddProductModal({ storeId, storeCode = 'mobiles', isOpen, onClos
         <Input
           id="prod-name"
           label="Product Full Name"
+          titleCase
           placeholder="e.g. OnePlus 12R 256GB / 3-Seater Fabric Recliner Sofa"
           value={name}
           onChange={(e) => {
@@ -205,6 +211,7 @@ export function AddProductModal({ storeId, storeCode = 'mobiles', isOpen, onClos
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Input
                   id="new-inline-cat-name"
+                  titleCase
                   placeholder="Category Name (e.g. Gaming Chairs)"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
@@ -277,18 +284,18 @@ export function AddProductModal({ storeId, storeCode = 'mobiles', isOpen, onClos
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <Input
             id="prod-selling-price"
-            type="number"
+            formatCommas
             label="Selling Price (₹)"
-            placeholder="42999"
+            placeholder="42,999"
             value={sellingPrice}
             onChange={(e) => setSellingPrice(e.target.value)}
             required
           />
           <Input
             id="prod-cost-price"
-            type="number"
+            formatCommas
             label="Cost Price (₹)"
-            placeholder="36000"
+            placeholder="36,000"
             value={costPrice}
             onChange={(e) => setCostPrice(e.target.value)}
             required
@@ -311,6 +318,7 @@ export function AddProductModal({ storeId, storeCode = 'mobiles', isOpen, onClos
         <Input
           id="prod-desc"
           label="Product Description / Specs"
+          titleCase
           placeholder="Short specifications overview for billing and customer receipts"
           value={description}
           onChange={(e) => setDescription(e.target.value)}

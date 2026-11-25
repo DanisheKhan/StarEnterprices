@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal } from '@/shared/ui';
+import { Modal, CurrencyInput, TitleCaseInput } from '@/shared/ui';
 import { useCreateDealerDebitNote, useDealerBills } from '../hooks/useDealers';
 import { formatCurrency } from '@/shared/lib/format';
 
@@ -116,12 +116,9 @@ export function DebitNoteModal({
             <label className="block text-xs font-semibold text-text mb-1">
               Debit Amount (₹) <span className="text-brand-crimson">*</span>
             </label>
-            <input
-              type="number"
-              step="0.01"
-              min="1"
+            <CurrencyInput
               required
-              placeholder="e.g. 5000"
+              placeholder="e.g. 5,000"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="w-full px-3 py-2 text-xs font-bold font-mono rounded-lg border border-border bg-surface text-text"
@@ -162,8 +159,7 @@ export function DebitNoteModal({
           <label className="block text-xs font-semibold text-text mb-1">
             Description / Item Details
           </label>
-          <input
-            type="text"
+          <TitleCaseInput
             placeholder="e.g. Returned 2 defective 43-inch LED TVs"
             value={description}
             onChange={(e) => setDescription(e.target.value)}

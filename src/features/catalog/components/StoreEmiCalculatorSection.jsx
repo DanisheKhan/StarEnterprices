@@ -145,7 +145,7 @@ export function StoreEmiCalculatorSection({ initialAmount = null }) {
               <div className="grid grid-cols-3 gap-1.5 sm:hidden text-center text-[10px] text-muted">
                 <div className="p-2 rounded-lg bg-surface border border-border">
                   <div className="font-bold text-text">1. Select Item</div>
-                  <div>₹5k+ purchase</div>
+                  <div>₹5,000+ purchase</div>
                 </div>
                 <div className="p-2 rounded-lg bg-surface border border-border">
                   <div className="font-bold text-text">2. ID Docs</div>

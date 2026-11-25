@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, WhatsAppIcon } from '@/shared/ui';
-import { formatCurrency, formatDate, amountToWords } from '@/shared/lib/format';
+import { formatCurrency, formatDate, amountToWords, toTitleCase } from '@/shared/lib/format';
 import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { cn } from '@/shared/lib/cn';
 import { SITE } from '@/shared/lib/site';
@@ -103,9 +103,9 @@ export function InvoicePrintModal({ isOpen, onClose, invoiceDetail }) {
 
   function handleShareWhatsApp() {
     const isDue = balanceDue > 0.01;
-    const storeName = store.name || SITE.name;
+    const storeName = toTitleCase(store.name || SITE.name);
     const storePhone = store.phone || SITE.displayPhone;
-    const customerName = invoiceDetail.customer_name?.trim() || 'Valued Customer';
+    const customerName = toTitleCase(invoiceDetail.customer_name?.trim() || 'Valued Customer');
     const purchaseDate = invoiceDetail.created_at
       ? formatDate(invoiceDetail.created_at, false)
       : 'Recent Purchase';
@@ -219,10 +219,10 @@ We appreciate your business and look forward to serving you again!`;
             Billed By / Supplier (Consignor):
           </div>
           <div className="font-bold text-sm tracking-wide text-slate-950">
-            {store.name || 'STAR ENTERPRISES'}
+            {toTitleCase(store.name || 'STAR ENTERPRISES')}
           </div>
           <div className="text-slate-800">
-            {store.address_line1 || 'Khadka Road, Near Reliance Smart Bazar'}, {store.city || SITE.city}
+            {toTitleCase(store.address_line1 || 'Khadka Road, Near Reliance Smart Bazar')}, {toTitleCase(store.city || SITE.city)}
             {store.pincode ? ` - ${store.pincode}` : ` - ${SITE.pincode}`}
           </div>
           <div className="flex flex-wrap gap-x-3 text-slate-700">
@@ -259,7 +259,7 @@ We appreciate your business and look forward to serving you again!`;
             Details of Receiver / Billed To:
           </div>
           <div className="font-bold text-sm tracking-wide text-slate-950">
-            {invoiceDetail.customer_name || 'Walk-in Customer'}
+            {toTitleCase(invoiceDetail.customer_name || 'Walk-in Customer')}
           </div>
           {invoiceDetail.customer_phone && (
             <div>
@@ -270,7 +270,9 @@ We appreciate your business and look forward to serving you again!`;
           {(invoiceDetail.customer_address || invoiceDetail.customer_city) && (
             <div className="text-slate-700">
               <span className="font-semibold text-slate-900">Address:</span>{' '}
-              {[invoiceDetail.customer_address, invoiceDetail.customer_city].filter(Boolean).join(', ')}
+              {[toTitleCase(invoiceDetail.customer_address), toTitleCase(invoiceDetail.customer_city)]
+                .filter(Boolean)
+                .join(', ')}
             </div>
           )}
           <div>
@@ -378,7 +380,7 @@ We appreciate your business and look forward to serving you again!`;
                 <tr key={idx} className="border-b border-slate-900">
                   <td className="border border-slate-900 p-2 text-center text-slate-600">{idx + 1}</td>
                   <td className="border border-slate-900 p-2">
-                    <div className="font-bold text-slate-950">{item.item_name}</div>
+                    <div className="font-bold text-slate-950">{toTitleCase(item.item_name)}</div>
                     <div className="text-[9.5px] font-mono text-slate-600 mt-0.5 flex flex-wrap items-center gap-x-2">
                       {item.serial_number && <span>IMEI/Serial: {item.serial_number}</span>}
                       {item.serial_number && <span>•</span>}

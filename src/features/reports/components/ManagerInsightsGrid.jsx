@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/shared/lib/format';
+import { formatCurrency, toTitleCase } from '@/shared/lib/format';
 import {
   Layers,
   Trophy,
@@ -305,7 +305,7 @@ export function ManagerInsightsGrid({
                       <div className="min-w-0">
                         <div className="font-semibold text-text truncate flex items-center gap-1.5">
                           <span className="font-mono text-[11px] text-muted">{idx + 1}.</span>
-                          <span className="truncate">{item.city}</span>
+                          <span className="truncate">{toTitleCase(item.city)}</span>
                         </div>
                         <div className="text-[11px] text-muted font-mono">
                           {custCount} {custCount === 1 ? 'customer' : 'customers'} ({Number(item.customerSharePct ?? 0).toFixed(1)}%) • {item.billsCount || 0} bills • Cash {item.cashCount || 0} • EMI {item.emiCount || 0}

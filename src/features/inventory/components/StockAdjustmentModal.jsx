@@ -398,7 +398,7 @@ export function StockAdjustmentForm({ product, storeId, onClose }) {
                 <Input
                   id="add-serial-cost"
                   label="Unit Purchase Cost (₹)"
-                  type="number"
+                  formatCommas
                   placeholder="0"
                   value={purchaseCost}
                   onChange={(e) => setPurchaseCost(e.target.value)}
@@ -715,6 +715,7 @@ export function StockAdjustmentForm({ product, storeId, onClose }) {
               <Input
                 id="adjust-notes"
                 label="Adjustment Note / PO Ref (Optional)"
+                titleCase
                 placeholder="e.g. Supplier PO #4928, Batch #102..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

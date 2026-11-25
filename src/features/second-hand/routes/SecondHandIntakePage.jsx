@@ -354,6 +354,7 @@ export function SecondHandIntakePage() {
               <Input
                 id="seller-name"
                 label="Seller Full Name"
+                titleCase
                 placeholder="As per Government ID"
                 value={sellerName}
                 onChange={(e) => setSellerName(e.target.value)}
@@ -418,6 +419,7 @@ export function SecondHandIntakePage() {
               <Input
                 id="intake-model"
                 label="Model & Storage"
+                titleCase
                 placeholder="e.g. iPhone 13 128GB"
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
@@ -505,8 +507,8 @@ export function SecondHandIntakePage() {
             <Input
               id="agreed-price"
               label="Agreed Buyback Price (₹)"
-              type="number"
-              placeholder="e.g. 28000"
+              formatCommas
+              placeholder="e.g. 28,000"
               value={agreedPrice}
               onChange={(e) => setAgreedPrice(e.target.value)}
               required

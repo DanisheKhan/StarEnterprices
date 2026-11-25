@@ -1,5 +1,5 @@
 import { Modal, Button, Badge } from '@/shared/ui';
-import { formatCurrency, formatDate } from '@/shared/lib/format';
+import { formatCurrency, formatDate, toTitleCase } from '@/shared/lib/format';
 import { Printer, CheckCircle, Clock } from 'lucide-react';
 import { SITE } from '@/shared/lib/site';
 
@@ -17,7 +17,7 @@ export function PayslipModal({ salaryRecord, isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Payslip: ${staff?.full_name} (${salaryRecord.month_year})`}
+      title={`Payslip: ${toTitleCase(staff?.full_name)} (${salaryRecord.month_year})`}
       className="max-w-2xl"
     >
       <div className="space-y-4 text-text min-w-0" id="printable-payslip">
@@ -47,15 +47,15 @@ export function PayslipModal({ salaryRecord, isOpen, onClose }) {
           </div>
           <div>
             <span className="text-muted block text-[11px]">Employee Name:</span>
-            <span className="font-medium text-text">{staff?.full_name}</span>
+            <span className="font-medium text-text">{toTitleCase(staff?.full_name)}</span>
           </div>
           <div>
             <span className="text-muted block text-[11px]">Designation:</span>
-            <span className="font-medium text-text">{staff?.designation}</span>
+            <span className="font-medium text-text">{toTitleCase(staff?.designation)}</span>
           </div>
           <div>
             <span className="text-muted block text-[11px]">Assigned Store:</span>
-            <span className="font-medium text-text">{staff?.stores?.name || 'Star Enterprises'}</span>
+            <span className="font-medium text-text">{toTitleCase(staff?.stores?.name || 'Star Enterprises')}</span>
           </div>
         </div>
 

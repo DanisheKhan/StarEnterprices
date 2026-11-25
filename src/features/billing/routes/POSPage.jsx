@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   Button,
   Input,
+  CurrencyInput,
   Badge,
   Card,
   Modal,
@@ -10,7 +11,7 @@ import {
 import { useProducts, useProductUnits, findStoreUnitBySerial } from '@/features/inventory';
 import { usePlaceSale, useInvoiceDetail, useCustomerLookup } from '../hooks/useBilling';
 import { InvoicePrintModal } from '../components/InvoicePrintModal';
-import { formatCurrency } from '@/shared/lib/format';
+import { formatCurrency, formatIndianNumber, toTitleCase } from '@/shared/lib/format';
 import { isValidIndianPhone, isValidGstin, cleanPhone } from '@/shared/lib/validation';
 import { getErrorMessage } from '@/shared/lib/errors';
 import { cn } from '@/shared/lib/cn';
@@ -507,7 +508,7 @@ export function POSPage() {
     setErrorMessage('');
 
     try {
-      const resolvedCustomerName = customerName.trim();
+      const resolvedCustomerName = toTitleCase(customerName.trim());
       const resolvedCustomerPhone = cleanPhone(customerPhone);
 
       const paymentsPayload =
@@ -519,7 +520,7 @@ export function POSPage() {
                 reference_number:
                   paymentReference.trim() ||
                   (paymentMode === 'cash' && cashReceivedNum > 0
-                    ? `Cash: ₹${Math.round(cashReceivedNum)}, Change: ₹${Math.round(changeDue)}`
+                    ? `Cash: ${formatCurrency(cashReceivedNum)}, Change: ${formatCurrency(changeDue)}`
                     : null),
               },
             ]
@@ -530,8 +531,8 @@ export function POSPage() {
         customerName: resolvedCustomerName,
         customerPhone: resolvedCustomerPhone,
         customerGstin: customerGstin.trim().toUpperCase() || null,
-        customerCity: customerCity.trim() || null,
-        customerAddress: customerAddress.trim() || null,
+        customerCity: toTitleCase(customerCity.trim()) || null,
+        customerAddress: toTitleCase(customerAddress.trim()) || null,
         items: cart.map((item) => {
           const itemGross = (item.selling_price || 0) * (item.quantity || 1);
           const itemShareDiscount = grossTotal > 0 ? (billDiscountAmount * itemGross) / grossTotal : 0;
@@ -1123,6 +1124,7 @@ export function POSPage() {
               <Input
                 id="pos-customer-name"
                 label="Customer Name"
+                titleCase
                 value={customerName}
                 onChange={(e) => {
                   setCustomerName(e.target.value);
@@ -1172,18 +1174,18 @@ export function POSPage() {
                     key={match.phone}
                     type="button"
                     onClick={() => {
-                      setCustomerName(match.name);
+                      setCustomerName(toTitleCase(match.name));
                       setCustomerPhone(match.phone);
                       setCustomerGstin(match.gstin || '');
-                      if (match.city) setCustomerCity(match.city);
-                      if (match.address) setCustomerAddress(match.address);
+                      if (match.city) setCustomerCity(toTitleCase(match.city));
+                      if (match.address) setCustomerAddress(toTitleCase(match.address));
                       setCustomerType(match.gstin ? 'registered' : 'walkin');
                       if (errorMessage) setErrorMessage('');
                     }}
                     className="px-2.5 py-1 rounded-md border border-border bg-surface hover:border-brand-sage text-text cursor-pointer transition-colors font-medium"
                   >
-                    {match.name}
-                    {match.city ? ` • ${match.city}` : ''} • <span className="font-mono text-muted">{match.phone}</span>
+                    {toTitleCase(match.name)}
+                    {match.city ? ` • ${toTitleCase(match.city)}` : ''} • <span className="font-mono text-muted">{match.phone}</span>
                   </button>
                 ))}
               </div>
@@ -1210,6 +1212,7 @@ export function POSPage() {
                   <Input
                     id="pos-customer-city"
                     label="City"
+                    titleCase
                     value={customerCity}
                     onChange={(e) => {
                       setCustomerCity(e.target.value);
@@ -1223,6 +1226,7 @@ export function POSPage() {
                   <Input
                     id="pos-customer-address"
                     label="Address"
+                    titleCase
                     value={customerAddress}
                     onChange={(e) => {
                       setCustomerAddress(e.target.value);
@@ -1416,12 +1420,10 @@ export function POSPage() {
                     </div>
                     <Input
                       id="partial-collected"
-                      type="number"
-                      min="1"
-                      max={grandTotal}
+                      formatCommas
                       value={partialCollectedAmount}
                       onChange={(e) => setPartialCollectedAmount(e.target.value)}
-                      placeholder="e.g. 10000"
+                      placeholder="e.g. 10,000"
                       className="font-mono text-sm font-bold"
                     />
                     <div className="flex items-center justify-between text-xs pt-1">
@@ -1527,11 +1529,10 @@ export function POSPage() {
                           <Input
                             id="pos-cash-tendered"
                             label="Cash Received From Customer (₹)"
-                            type="number"
-                            min="0"
+                            formatCommas
                             value={cashTendered}
                             onChange={(e) => setCashTendered(e.target.value)}
-                            placeholder={`e.g. ${targetCashAmount}`}
+                            placeholder={`e.g. ${formatIndianNumber(targetCashAmount)}`}
                             className="text-base font-mono font-bold"
                           />
 
@@ -1542,7 +1543,7 @@ export function POSPage() {
                               onClick={() => setCashTendered(String(targetCashAmount))}
                               className="px-2 py-0.5 rounded bg-surface border border-border text-[11px] font-mono hover:bg-surface-hover cursor-pointer"
                             >
-                              Exact (₹{targetCashAmount})
+                              Exact ({formatCurrency(targetCashAmount)})
                             </button>
                             {targetCashAmount < 500 && (
                               <button
@@ -1777,14 +1778,23 @@ export function POSPage() {
                     </button>
                   </div>
 
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder={billDiscountType === 'flat' ? 'e.g. 500' : 'e.g. 5'}
-                    value={billDiscountValue}
-                    onChange={(e) => setBillDiscountValue(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-mono text-text focus:outline-brand-sage text-right"
-                  />
+                  {billDiscountType === 'flat' ? (
+                    <CurrencyInput
+                      placeholder="e.g. 500"
+                      value={billDiscountValue}
+                      onChange={(e) => setBillDiscountValue(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-mono text-text focus:outline-brand-sage text-right"
+                    />
+                  ) : (
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 5"
+                      value={billDiscountValue}
+                      onChange={(e) => setBillDiscountValue(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-mono text-text focus:outline-brand-sage text-right"
+                    />
+                  )}
                 </div>
 
                 {/* Quick Presets */}
@@ -1802,7 +1812,7 @@ export function POSPage() {
                           : 'bg-surface text-muted hover:text-text'
                       )}
                     >
-                      {billDiscountType === 'flat' ? `₹${val}` : `${val}%`}
+                      {billDiscountType === 'flat' ? formatCurrency(val) : `${val}%`}
                     </button>
                   ))}
                 </div>

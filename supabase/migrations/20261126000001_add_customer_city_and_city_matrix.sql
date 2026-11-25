@@ -11,10 +11,7 @@ ALTER TABLE public.invoices
 CREATE INDEX IF NOT EXISTS idx_invoices_store_created_city
   ON public.invoices (store_id, created_at DESC, customer_city);
 
--- 2. Replace overloaded place_sale signatures with unified 9-arg RPC
-DROP FUNCTION IF EXISTS public.place_sale(uuid, text, text, text, jsonb, jsonb);
-DROP FUNCTION IF EXISTS public.place_sale(uuid, text, text, text, jsonb, jsonb, text, text);
-
+-- 2. Add 9-arg place_sale RPC with p_customer_city support
 CREATE OR REPLACE FUNCTION public.place_sale(
   p_store_id uuid,
   p_customer_name text,

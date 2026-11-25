@@ -19,6 +19,68 @@ export function formatCurrency(amount, _showDecimals = false) {
 }
 
 /**
+ * Formats a numeric value or raw digit string with Indian comma grouping (e.g. "3000000" -> "30,00,000").
+ * Preserves decimals while typing (e.g. "1234.50" -> "1,234.50", "1234." -> "1,234.").
+ * @param {number|string|null|undefined} value
+ * @returns {string}
+ */
+export function formatIndianNumber(value) {
+  if (value === null || value === undefined || value === '') return '';
+  const str = String(value).replace(/,/g, '').trim();
+  if (!str) return '';
+
+  const isNegative = str.startsWith('-');
+  const unsigned = isNegative ? str.slice(1) : str;
+  const dotIdx = unsigned.indexOf('.');
+  const intPartRaw = (dotIdx >= 0 ? unsigned.slice(0, dotIdx) : unsigned).replace(/\D/g, '');
+  const decPartRaw = dotIdx >= 0 ? unsigned.slice(dotIdx + 1).replace(/\D/g, '') : null;
+
+  if (!intPartRaw && decPartRaw === null) return isNegative ? '-' : '';
+
+  const formattedInt = intPartRaw
+    ? new Intl.NumberFormat('en-IN').format(Number(intPartRaw))
+    : '0';
+
+  const prefix = isNegative ? '-' : '';
+  if (decPartRaw !== null) {
+    return `${prefix}${formattedInt}.${decPartRaw}`;
+  }
+  return `${prefix}${formattedInt}`;
+}
+
+/**
+ * Extracts a clean numeric string (no commas) from a formatted or raw amount string.
+ * @param {number|string|null|undefined} value
+ * @param {{ allowDecimals?: boolean }} [options]
+ * @returns {string}
+ */
+export function parseNumericInput(value, { allowDecimals = true } = {}) {
+  if (value === null || value === undefined) return '';
+  const str = String(value).replace(/,/g, '');
+  if (!allowDecimals) {
+    return str.replace(/\D/g, '');
+  }
+  const firstDot = str.indexOf('.');
+  if (firstDot === -1) {
+    return str.replace(/\D/g, '');
+  }
+  const intDigits = str.slice(0, firstDot).replace(/\D/g, '');
+  const decDigits = str.slice(firstDot + 1).replace(/\D/g, '').slice(0, 2);
+  return `${intDigits}.${decDigits}`;
+}
+
+/**
+ * Converts text to Title / Pascal Case (capitalizing the first letter of each word)
+ * while preserving spaces, punctuation, and uppercase acronyms (e.g. "khadka road, bhusawal" -> "Khadka Road, Bhusawal").
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
+export function toTitleCase(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/(^|[\s,/(&.-])([a-zA-Z])/g, (_match, sep, char) => `${sep}${char.toUpperCase()}`);
+}
+
+/**
  * Formats an ISO date string to readable format (e.g., "15 Oct 2026, 03:45 PM").
  * @param {string|Date|null|undefined} dateInput
  * @param {boolean} [includeTime=true]

@@ -272,8 +272,7 @@ function CreateSerialsForm({ storeId, products, initialProductId = '', onClose, 
         <Input
           id="serials-cost"
           label="Unit Purchase Cost (₹)"
-          type="number"
-          min="0"
+          formatCommas
           value={purchaseCost}
           onChange={(e) => setPurchaseCost(e.target.value)}
         />

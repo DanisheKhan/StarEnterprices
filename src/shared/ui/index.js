@@ -1,5 +1,5 @@
 export { Button } from './Button';
-export { Input } from './Input';
+export { Input, CurrencyInput, TitleCaseInput } from './Input';
 export { Select } from './Select';
 export { Card } from './Card';
 export {

@@ -1,4 +1,4 @@
-import { formatDate } from '@/shared/lib/format';
+import { formatDate, toTitleCase } from '@/shared/lib/format';
 
 function xmlEscape(value) {
   return String(value ?? '')
@@ -84,10 +84,10 @@ export function downloadBillingHistoryExcel(invoices = []) {
       stringCell(invoice.invoice_number || ''),
       stringCell(invoice.created_at ? formatDate(invoice.created_at) : ''),
       stringCell(invoice.stores?.name || ''),
-      stringCell(invoice.customer_name || 'Walk-in Customer'),
+      stringCell(toTitleCase(invoice.customer_name || 'Walk-in Customer')),
       stringCell(invoice.customer_phone || ''),
-      stringCell(invoice.customer_city || ''),
-      stringCell(invoice.customer_address || ''),
+      stringCell(toTitleCase(invoice.customer_city || '')),
+      stringCell(toTitleCase(invoice.customer_address || '')),
       stringCell(invoice.customer_gstin || ''),
       stringCell(itemsSummary(invoice)),
       numberCell(invoice.subtotal),

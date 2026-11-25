@@ -56,6 +56,11 @@ export function EditProductModal({
       setError('Please provide a valid non-negative cost price.');
       return;
     }
+    const minSp = parseFloat(minSellingPrice) || cp;
+    if (minSp > sp) {
+      setError('Floor price (minimum selling price) cannot exceed the selling price.');
+      return;
+    }
 
     setError('');
     try {
@@ -72,8 +77,8 @@ export function EditProductModal({
           name: name.trim(),
           sku: sku.trim(),
           selling_price: sp,
-          cost_price: parseFloat(costPrice) || 0,
-          min_selling_price: parseFloat(minSellingPrice) || sp,
+          cost_price: cp,
+          min_selling_price: minSp,
           gst_rate: !isNaN(parseInt(gstRate, 10)) ? parseInt(gstRate, 10) : 18,
           reorder_level: parseInt(reorderLevel, 10) || 5,
           image_url: finalImageUrl,
@@ -179,6 +184,7 @@ export function EditProductModal({
               <Input
                 id="edit-prod-name"
                 label="Product Name"
+                titleCase
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -196,7 +202,7 @@ export function EditProductModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 id="edit-prod-sp"
-                type="number"
+                formatCommas
                 label="Selling Price (₹)"
                 value={sellingPrice}
                 onChange={(e) => setSellingPrice(e.target.value)}
@@ -204,7 +210,7 @@ export function EditProductModal({
               />
               <Input
                 id="edit-prod-cp"
-                type="number"
+                formatCommas
                 label="Cost Price (₹)"
                 value={costPrice}
                 onChange={(e) => setCostPrice(e.target.value)}
@@ -215,7 +221,7 @@ export function EditProductModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Input
                 id="edit-prod-min-sp"
-                type="number"
+                formatCommas
                 label="Floor Price (₹)"
                 value={minSellingPrice}
                 onChange={(e) => setMinSellingPrice(e.target.value)}

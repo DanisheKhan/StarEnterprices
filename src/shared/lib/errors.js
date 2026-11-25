@@ -1,3 +1,13 @@
+import { formatCurrency } from './format';
+
+function formatAmountsInMessage(msg) {
+  if (!msg) return msg;
+  return String(msg).replace(/\b(\d{4,})\.\d{2}\b/g, (full, intPart) => {
+    const num = Number(intPart);
+    return Number.isFinite(num) ? formatCurrency(num) : full;
+  });
+}
+
 /**
  * Maps Supabase/Postgres error objects or codes to concise, helpful messages.
  * @param {any} error
@@ -5,7 +15,7 @@
  */
 export function getErrorMessage(error) {
   if (!error) return 'An unexpected error occurred.';
-  if (typeof error === 'string') return error;
+  if (typeof error === 'string') return formatAmountsInMessage(error);
 
   // Supabase/Postgres specific codes
   if (error.code === '23505') {
@@ -24,8 +34,8 @@ export function getErrorMessage(error) {
 
   if (error.code === 'P0001') {
     // Custom exception raised in Postgres PL/pgSQL
-    return error.message || 'Operation failed business validation.';
+    return formatAmountsInMessage(error.message) || 'Operation failed business validation.';
   }
 
-  return error.message || 'Something went wrong. Please try again.';
+  return formatAmountsInMessage(error.message) || 'Something went wrong. Please try again.';
 }

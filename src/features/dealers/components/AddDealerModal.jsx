@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal } from '@/shared/ui';
+import { Modal, TitleCaseInput } from '@/shared/ui';
 import { useCreateDealer } from '../hooks/useDealers';
 
 export function AddDealerModal({ isOpen, onClose, storeId }) {
@@ -79,8 +79,7 @@ export function AddDealerModal({ isOpen, onClose, storeId }) {
             <label className="block text-xs font-semibold text-text mb-1">
               Brand Display Name <span className="text-brand-crimson">*</span>
             </label>
-            <input
-              type="text"
+            <TitleCaseInput
               required
               placeholder="e.g. Godrej, Samsung, Onida..."
               value={formData.brand_name}
@@ -94,8 +93,7 @@ export function AddDealerModal({ isOpen, onClose, storeId }) {
             <label className="block text-xs font-semibold text-text mb-1">
               Full Legal Company / Firm Name <span className="text-brand-crimson">*</span>
             </label>
-            <input
-              type="text"
+            <TitleCaseInput
               required
               placeholder="e.g. Godrej Appliances Ltd / Sri Balaji Distributors"
               value={formData.name}
@@ -109,8 +107,7 @@ export function AddDealerModal({ isOpen, onClose, storeId }) {
             <label className="block text-xs font-semibold text-text mb-1">
               Contact Person / Sales Manager
             </label>
-            <input
-              type="text"
+            <TitleCaseInput
               placeholder="e.g. Rajesh Sharma"
               value={formData.contact_person}
               onChange={(e) => handleChange('contact_person', e.target.value)}
@@ -205,8 +202,7 @@ export function AddDealerModal({ isOpen, onClose, storeId }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-[11px] text-muted mb-1">Bank Name</label>
-              <input
-                type="text"
+              <TitleCaseInput
                 placeholder="e.g. HDFC Bank"
                 value={formData.bank_name}
                 onChange={(e) => handleChange('bank_name', e.target.value)}

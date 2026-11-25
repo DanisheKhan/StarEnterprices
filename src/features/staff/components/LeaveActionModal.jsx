@@ -65,6 +65,7 @@ export function LeaveActionModal({ leave, isOpen, onClose }) {
         <Input
           id="review-notes"
           label="Owner Decision Notes (Optional)"
+          titleCase
           placeholder="e.g. Approved. Please ensure handover to Imran before leaving."
           value={reviewNotes}
           onChange={(e) => setReviewNotes(e.target.value)}

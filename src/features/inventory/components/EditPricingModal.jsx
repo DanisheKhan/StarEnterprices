@@ -86,18 +86,18 @@ function EditPricingForm({ product, onClose }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           id="selling-price"
-          type="number"
+          formatCommas
           label="Selling Price (₹)"
-          placeholder="e.g. 42999"
+          placeholder="e.g. 42,999"
           value={sellingPrice}
           onChange={(e) => setSellingPrice(e.target.value)}
           required
         />
         <Input
           id="cost-price"
-          type="number"
+          formatCommas
           label="Purchase Cost Price (₹)"
-          placeholder="e.g. 36000"
+          placeholder="e.g. 36,000"
           value={costPrice}
           onChange={(e) => setCostPrice(e.target.value)}
           required
@@ -107,9 +107,9 @@ function EditPricingForm({ product, onClose }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           id="min-selling-price"
-          type="number"
+          formatCommas
           label="Minimum Floor Price (₹)"
-          placeholder="e.g. 39999"
+          placeholder="e.g. 39,999"
           value={minSellingPrice}
           onChange={(e) => setMinSellingPrice(e.target.value)}
           required

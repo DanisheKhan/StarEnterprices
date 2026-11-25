@@ -224,10 +224,7 @@ function CollectPaymentForm({ invoice, onClose }) {
             </span>
             <Input
               id="collect-amount"
-              type="number"
-              step="1"
-              min="1"
-              max={balanceDue}
+              formatCommas
               value={collectAmount}
               onChange={(e) => setCollectAmount(e.target.value)}
               className="font-mono text-2xl sm:text-3xl font-extrabold pl-9 py-2.5 min-h-14 tracking-tight text-text"

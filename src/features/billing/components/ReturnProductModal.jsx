@@ -421,9 +421,7 @@ function ReturnProductForm({ invoice, onClose }) {
 
             <Input
               id="return-deduction"
-              type="number"
-              min="0"
-              max={grossRefundAmount || undefined}
+              formatCommas
               value={deductionAmount}
               onChange={(e) => setDeductionAmount(e.target.value)}
               placeholder="0"
@@ -445,6 +443,7 @@ function ReturnProductForm({ invoice, onClose }) {
           <Input
             id="return-notes"
             label="Inspector Remarks & Serial Inspection"
+            titleCase
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. Unit tested, flawless condition, original packaging"

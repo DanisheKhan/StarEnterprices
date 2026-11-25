@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Modal } from '@/shared/ui';
+import { Modal, CurrencyInput, TitleCaseInput } from '@/shared/ui';
 import { useRecordDealerPayment, useDealerBills } from '../hooks/useDealers';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -558,11 +558,7 @@ function RecordPaymentModalContent({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">
                       ₹
                     </span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      max={selectedBill.balance_amount}
+                    <CurrencyInput
                       required
                       placeholder="0.00"
                       value={paymentAmount}
@@ -623,10 +619,7 @@ function RecordPaymentModalContent({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">
                   ₹
                 </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="1"
+                <CurrencyInput
                   required
                   placeholder="0.00"
                   value={paymentAmount}
@@ -713,8 +706,7 @@ function RecordPaymentModalContent({
                   <label className="block text-[11px] font-semibold text-text mb-1">
                     Bank Name (Optional)
                   </label>
-                  <input
-                    type="text"
+                  <TitleCaseInput
                     placeholder="e.g. HDFC / SBI"
                     value={chequeBank}
                     onChange={(e) => setChequeBank(e.target.value)}
@@ -794,8 +786,7 @@ function RecordPaymentModalContent({
             <label className="block text-xs font-semibold text-text mb-1">
               Payment Notes / Remarks
             </label>
-            <input
-              type="text"
+            <TitleCaseInput
               placeholder="e.g. Tranche settlement, cleared by Danish"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

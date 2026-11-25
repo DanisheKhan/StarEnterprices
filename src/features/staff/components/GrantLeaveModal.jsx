@@ -279,6 +279,7 @@ export function GrantLeaveModal({ isOpen, onClose, staffList = [], defaultStaff 
         <Input
           id="grant-reason"
           label="Leave Reason & Owner Notes"
+          titleCase
           placeholder="e.g. Approved extended leave of 15 days. Deducted from salary as requested."
           value={reason}
           onChange={(e) => setReason(e.target.value)}

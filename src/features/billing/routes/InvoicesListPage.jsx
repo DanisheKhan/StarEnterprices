@@ -20,7 +20,7 @@ import { CollectPaymentModal } from '../components/CollectPaymentModal';
 import { ReturnProductModal } from '../components/ReturnProductModal';
 import { InvoiceCard } from '../components/InvoiceCard';
 import { downloadBillingHistoryExcel } from '../lib/exportBillingHistory';
-import { formatCurrency, formatDate } from '@/shared/lib/format';
+import { formatCurrency, formatDate, toTitleCase } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import {
   Receipt,
@@ -162,7 +162,7 @@ export function InvoicesListPage() {
     const matchedStore = stores.find((s) => s.id === inv.store_id);
     const storeName = matchedStore?.name || 'Star Enterprises';
     const storePhone = matchedStore?.phone || '+91 93700 11653';
-    const customerName = inv.customer_name?.trim() || 'Valued Customer';
+    const customerName = toTitleCase(inv.customer_name?.trim() || 'Valued Customer');
     const purchaseDate = inv.created_at ? formatDate(inv.created_at, false) : 'Recent Purchase';
 
     const itemsList =
@@ -568,8 +568,8 @@ We appreciate your business and look forward to serving you again!`;
 
                   {/* 2. Customer Name */}
                   <TableCell className="align-middle min-w-0">
-                    <div className="font-semibold text-sm text-text truncate" title={inv.customer_name}>
-                      {inv.customer_name || 'Walk-in Customer'}
+                    <div className="font-semibold text-sm text-text truncate" title={toTitleCase(inv.customer_name)}>
+                      {toTitleCase(inv.customer_name || 'Walk-in Customer')}
                     </div>
                     {inv.customer_phone && (
                       <div className="text-xs text-muted font-mono truncate">
