@@ -10,7 +10,7 @@ export function ReportsCoreKpis({
 }) {
   if (isLoading && !summary.totalSales && !thisMonthProfit.netProfit) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[0, 1, 2, 3].map((idx) => (
           <div
             key={idx}
@@ -52,7 +52,7 @@ export function ReportsCoreKpis({
   const totalGst = Number(summary.totalGst ?? 0);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 min-w-0">
       {/* 1. This Month's Net Profit */}
       <div className="p-5 rounded-xl border border-border bg-surface shadow-2xs flex flex-col justify-between space-y-3 min-w-0">
         <div className="flex items-start justify-between gap-2">

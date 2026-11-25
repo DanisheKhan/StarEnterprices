@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   useDealers,
@@ -89,14 +89,8 @@ export function DealersHubPage() {
 
   // Auto-open print preview if redirected from PurchaseBillingPage via ?print=id
   const printParamId = searchParams.get('print');
-  useEffect(() => {
-    if (printParamId && bills.length > 0) {
-      const match = bills.find((b) => b.id === printParamId);
-      if (match) {
-        setPrintingBill(match);
-      }
-    }
-  }, [printParamId, bills]);
+  const activePrintingBill =
+    printingBill || (printParamId && bills.length > 0 ? bills.find((b) => b.id === printParamId) : null);
 
   function handleClosePrintModal() {
     setPrintingBill(null);
@@ -118,11 +112,6 @@ export function DealersHubPage() {
     setSelectedDealer(dealer);
     setSelectedBill(bill);
     setIsRecordPaymentOpen(true);
-  }
-
-  function handleOpenDebitNote(dealer = null) {
-    setSelectedDealer(dealer);
-    setIsDebitNoteOpen(true);
   }
 
   function handleOpenTimeline(billId, bill = null) {
@@ -335,11 +324,11 @@ export function DealersHubPage() {
         />
       )}
 
-      {printingBill && (
+      {activePrintingBill && (
         <DealerBillPrintModal
-          isOpen={Boolean(printingBill)}
+          isOpen={Boolean(activePrintingBill)}
           onClose={handleClosePrintModal}
-          bill={printingBill}
+          bill={activePrintingBill}
           currentStore={currentStore}
         />
       )}

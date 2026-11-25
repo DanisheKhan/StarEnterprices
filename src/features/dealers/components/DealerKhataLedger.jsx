@@ -1,29 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, LoadingState } from '@/shared/ui';
+import { Card, LoadingState } from '@/shared/ui';
 import { useDealerStatement } from '../hooks/useDealers';
 import { formatCurrency, formatDate, formatPhone } from '@/shared/lib/format';
 import {
   FileText,
   CreditCard,
-  TrendingDown,
-  Building2,
   Phone,
   Printer,
   Plus,
   Layers,
-  CheckCircle2,
-  AlertTriangle,
   Clock,
-  ArrowLeft,
-  ArrowUpRight,
-  ArrowDownLeft,
 } from 'lucide-react';
 
 export function DealerKhataLedger({
   dealerId,
   onOpenRecordPayment,
-  onOpenDebitNote,
   onOpenTimeline,
 }) {
   const [billTypeFilter, setBillTypeFilter] = useState('all'); // all | gst | kaccha
@@ -311,7 +303,6 @@ export function DealerKhataLedger({
                 entries.map((row) => {
                   const isBill = row.entryType === 'BILL';
                   const isPayment = row.entryType === 'PAYMENT';
-                  const isDebit = row.entryType === 'DEBIT_NOTE';
 
                   return (
                     <tr

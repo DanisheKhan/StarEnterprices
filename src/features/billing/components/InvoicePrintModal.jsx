@@ -132,9 +132,8 @@ export function InvoicePrintModal({ isOpen, onClose, invoiceDetail }) {
             .join('\n')
         : '• Purchased Store Goods';
 
-    let message = '';
-    if (isDue) {
-      message = `*PAYMENT REMINDER - ${storeName.toUpperCase()}*
+    const message = isDue
+      ? `*PAYMENT REMINDER - ${storeName.toUpperCase()}*
 ----------------------------------------
 *Dear ${customerName},*
 This is a gentle reminder regarding the outstanding balance for your purchase invoice:
@@ -154,9 +153,8 @@ Kindly arrange payment clearance to ${storeName} at your earliest convenience.
 *Pay To:* ${storeName}
 *Store Contact:* ${storePhone}
 
-Thank you for your business!`;
-    } else {
-      message = `*TAX INVOICE RECEIPT - ${storeName.toUpperCase()}*
+Thank you for your business!`
+      : `*TAX INVOICE RECEIPT - ${storeName.toUpperCase()}*
 ----------------------------------------
 *Dear ${customerName},*
 Thank you for your purchase with ${storeName}!
@@ -174,7 +172,6 @@ ${itemsList}
 *Store Contact:* ${storePhone}
 
 We appreciate your business and look forward to serving you again!`;
-    }
 
     const cleanPhone = (invoiceDetail.customer_phone || '').replace(/\D/g, '');
     const phoneWithCountry = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;

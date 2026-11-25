@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { cn } from '@/shared/lib/cn';
+import { motion } from '@/shared/motion';
 import { lockBodyScroll, unlockBodyScroll } from '@/shared/lib/scrollLock';
 import { X } from 'lucide-react';
 
@@ -49,10 +50,13 @@ export function Modal({ isOpen, onClose, title, size = 'lg', className, children
       aria-modal="true"
       onClick={onClose}
     >
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         className={cn(
           'relative w-full rounded-xl border border-border bg-surface text-text',
-          'max-h-[92dvh] flex flex-col min-w-0 shadow-2xs animate-in zoom-in-95 duration-150',
+          'max-h-[92dvh] flex flex-col min-w-0 shadow-2xs',
           resolvedSizeClass,
           className
         )}
@@ -82,7 +86,7 @@ export function Modal({ isOpen, onClose, title, size = 'lg', className, children
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-7 min-w-0">
           {children}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

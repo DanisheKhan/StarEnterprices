@@ -1,17 +1,14 @@
 import { useState, useMemo } from 'react';
-import { Modal, Button, Badge } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
+import { motion } from '@/shared/motion';
 import { useDealerBillDetail } from '../hooks/useDealers';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import { DealerBillPrintModal } from './DealerBillPrintModal';
 import {
   Clock,
   CheckCircle2,
-  AlertTriangle,
-  Receipt,
   CreditCard,
   FileText,
-  Calendar,
-  Layers,
   TrendingDown,
   Building2,
   Package,
@@ -229,7 +226,7 @@ export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpen
                   </span>
                 </div>
 
-                <div className="rounded-lg border border-border bg-surface overflow-hidden">
+                <div className="rounded-lg border border-border bg-surface overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-surface-subtle text-[10px] uppercase font-bold text-muted border-b border-border">
                       <tr>
@@ -277,9 +274,22 @@ export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpen
               </span>
             </div>
 
-            <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-              {/* Event 0: Bill Issued */}
-              <div className="relative flex items-start gap-3">
+            <div className="relative pl-6 flex flex-col-reverse gap-4">
+              {/* Animated vertical spine drawing smoothly from bottom to top */}
+              <motion.div
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-border origin-bottom"
+              />
+
+              {/* Event 0: Bill Issued (starts at bottom and plays first) */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.05, ease: 'easeOut' }}
+                className="relative flex items-start gap-3"
+              >
                 <div className="absolute -left-6 mt-1 w-5 h-5 rounded-full bg-brand-sage text-white flex items-center justify-center">
                   <FileText size={11} />
                 </div>
@@ -300,14 +310,24 @@ export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpen
                     . Agreed credit: {bill.credit_days} days.
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Subsequent Payment / Debit Events */}
-              {bill.sortedTimeline?.map((item, idx) => {
+              {bill.sortedTimeline?.map((item, eventIdx) => {
                 const isPayment = item.timelineType === 'payment';
 
                 return (
-                  <div key={item.id} className="relative flex items-start gap-3">
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.25,
+                      delay: 0.13 + eventIdx * 0.08,
+                      ease: 'easeOut',
+                    }}
+                    className="relative flex items-start gap-3"
+                  >
                     <div
                       className={`absolute -left-6 mt-1 w-5 h-5 rounded-full text-white flex items-center justify-center ${
                         isPayment ? 'bg-emerald-600' : 'bg-purple-600'
@@ -370,13 +390,22 @@ export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpen
                         {item.notes && <div className="text-[11px] italic">"{item.notes}"</div>}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
 
               {/* Final State / Cleared */}
               {bill.status === 'paid' && (
-                <div className="relative flex items-start gap-3">
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    delay: 0.13 + (bill.sortedTimeline?.length || 0) * 0.08,
+                    ease: 'easeOut',
+                  }}
+                  className="relative flex items-start gap-3"
+                >
                   <div className="absolute -left-6 mt-1 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center">
                     <CheckCircle2 size={12} />
                   </div>
@@ -391,7 +420,7 @@ export function BillTimelineModal({ isOpen, onClose, billId, initialBill, onOpen
                       {velocity?.message}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
