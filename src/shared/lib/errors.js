@@ -37,5 +37,9 @@ export function getErrorMessage(error) {
     return formatAmountsInMessage(error.message) || 'Operation failed business validation.';
   }
 
+  if (error instanceof TypeError && /failed to fetch|networkerror|load failed/i.test(error.message || '')) {
+    return 'Unable to reach the server. Please check your internet connection and try again.';
+  }
+
   return formatAmountsInMessage(error.message) || 'Something went wrong. Please try again.';
 }

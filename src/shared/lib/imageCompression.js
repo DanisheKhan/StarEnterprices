@@ -1,5 +1,5 @@
 import imageCompression from 'browser-image-compression';
-import { supabase } from '@/shared/lib/supabase';
+import { supabase, SUPABASE_ORIGIN } from '@/shared/lib/supabase';
 
 /**
  * Maximum target size for product images in KB
@@ -101,6 +101,14 @@ export async function uploadProductImage(compressedFile, identifier = 'product')
     const { data: urlData } = supabase.storage
       .from('product-images')
       .getPublicUrl(filePath);
+
+    if (
+      typeof window !== 'undefined' &&
+      SUPABASE_ORIGIN &&
+      urlData?.publicUrl?.startsWith(`${window.location.origin}/sb/`)
+    ) {
+      return urlData.publicUrl.replace(`${window.location.origin}/sb`, SUPABASE_ORIGIN);
+    }
 
     return urlData.publicUrl;
   } catch (err) {

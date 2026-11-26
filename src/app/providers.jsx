@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { queryClient } from '@/shared/lib/queryClient';
 import { subscribeToFinancialEvents } from '@/shared/lib/supabase';
-import { AuthProvider } from '@/features/auth';
+import { AuthProvider, useAuth } from '@/features/auth';
 import { CartProvider } from '@/features/catalog';
 
 const TABLE_TO_QUERY_KEYS = {
@@ -24,12 +24,18 @@ const TABLE_TO_QUERY_KEYS = {
   staff_salaries: ['staff'],
 };
 
+const FALLBACK_POLL_INTERVAL_MS = 30_000;
+
 function RealtimeSyncManager({ children }) {
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return undefined;
+
     const pendingRoots = new Set();
     let flushTimer = null;
+    let pollTimer = null;
 
     function flushInvalidations() {
       flushTimer = null;
@@ -39,23 +45,35 @@ function RealtimeSyncManager({ children }) {
       pendingRoots.clear();
     }
 
+    function startPollingFallback() {
+      if (pollTimer) return;
+      pollTimer = setInterval(() => {
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+        qc.invalidateQueries({ refetchType: 'active' });
+      }, FALLBACK_POLL_INTERVAL_MS);
+    }
+
     // Coalesce multi-table DB transactions (e.g. place_sale) within 150ms into a single clean refetch per root
-    const unsubscribe = subscribeToFinancialEvents((table) => {
-      const roots = TABLE_TO_QUERY_KEYS[table];
-      if (!roots) return;
-      for (const root of roots) {
-        pendingRoots.add(root);
-      }
-      if (!flushTimer) {
-        flushTimer = setTimeout(flushInvalidations, 150);
-      }
-    });
+    const unsubscribe = subscribeToFinancialEvents(
+      (table) => {
+        const roots = TABLE_TO_QUERY_KEYS[table];
+        if (!roots) return;
+        for (const root of roots) {
+          pendingRoots.add(root);
+        }
+        if (!flushTimer) {
+          flushTimer = setTimeout(flushInvalidations, 150);
+        }
+      },
+      { onFallback: startPollingFallback }
+    );
 
     return () => {
       if (flushTimer) clearTimeout(flushTimer);
+      if (pollTimer) clearInterval(pollTimer);
       unsubscribe();
     };
-  }, [qc]);
+  }, [qc, user]);
 
   return children;
 }
@@ -63,11 +81,11 @@ function RealtimeSyncManager({ children }) {
 export function Providers({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <RealtimeSyncManager>
-        <AuthProvider>
+      <AuthProvider>
+        <RealtimeSyncManager>
           <CartProvider>{children}</CartProvider>
-        </AuthProvider>
-      </RealtimeSyncManager>
+        </RealtimeSyncManager>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
