@@ -57,13 +57,23 @@ function isLocalhost() {
   return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
 }
 
+function isDirectSupabaseDomain(url) {
+  if (!url) return false;
+  try {
+    return new URL(url).hostname.endsWith('.supabase.co');
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Subscribes to database change events across billing, inventory, dealers, staff, and stores.
  * Returns an unsubscribe teardown function.
  *
- * Uses Vite's /sb WebSocket proxy on localhost; on deployed hosts (where Vercel rewrites do
- * not upgrade WebSockets), connects directly to Supabase Realtime and tears down cleanly
- * on connection error so ISP-blocked networks fall back to polling without console spam.
+ * Uses Vite's /sb WebSocket proxy on localhost. On deployed hosts (where Vercel rewrites do
+ * not upgrade WebSockets), direct *.supabase.co WebSockets are skipped unless a custom/worker
+ * domain is configured (or VITE_ENABLE_DIRECT_REALTIME=true) so ISP DNS blocks do not cause
+ * console errors; callers fall back to background polling via onFallback.
  */
 export function subscribeToFinancialEvents(onChange, { onFallback } = {}) {
   if (!rawUrl || !key) {
@@ -71,8 +81,17 @@ export function subscribeToFinancialEvents(onChange, { onFallback } = {}) {
     return () => {};
   }
 
-  let tornDown = false;
   const useProxyWs = isLocalhost();
+  const allowDirectWs =
+    !isDirectSupabaseDomain(rawUrl) ||
+    import.meta.env.VITE_ENABLE_DIRECT_REALTIME === 'true';
+
+  if (!useProxyWs && !allowDirectWs) {
+    onFallback?.();
+    return () => {};
+  }
+
+  let tornDown = false;
   const rtClient = useProxyWs
     ? null
     : new RealtimeClient(`${rawUrl.replace(/^http/i, 'ws')}/realtime/v1`, {
@@ -81,7 +100,6 @@ export function subscribeToFinancialEvents(onChange, { onFallback } = {}) {
           const { data } = await supabase.auth.getSession();
           return data?.session?.access_token ?? key;
         },
-        // Disable automatic retries if direct *.supabase.co WebSocket is blocked
         reconnectAfterMs: () => 60 * 60 * 1000,
       });
 

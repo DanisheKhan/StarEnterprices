@@ -24,7 +24,7 @@ const TABLE_TO_QUERY_KEYS = {
   staff_salaries: ['staff'],
 };
 
-const FALLBACK_POLL_INTERVAL_MS = 30_000;
+const FALLBACK_POLL_INTERVAL_MS = 15_000;
 
 function RealtimeSyncManager({ children }) {
   const qc = useQueryClient();
